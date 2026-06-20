@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
+import { useCreateSubAccount } from "../../../hooks/api/useUsers";
+import { toast } from "sonner";
 
 /* ===================== TYPES ===================== */
 
@@ -11,12 +13,16 @@ type AddSubAccountModalProps = {
 
 type InputProps = {
   placeholder: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 type PasswordInputProps = {
   placeholder: string;
   show: boolean;
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 /* ===================== COMPONENT ===================== */
@@ -24,12 +30,58 @@ type PasswordInputProps = {
 export default function AddSubAccountModal({
   onClose,
 }: AddSubAccountModalProps) {
+  const createSubAccount = useCreateSubAccount();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const [form, setForm] = useState({
+    account: "",
+    password: "",
+    confirmPassword: "",
+    mobileNumber: "",
+    email: "",
+    timezone: "",
+  });
+
+  const handleSubmit = async () => {
+    if (
+      !form.account ||
+      !form.password ||
+      !form.confirmPassword ||
+      !form.mobileNumber ||
+      !form.email ||
+      !form.timezone
+    ) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      await createSubAccount.mutateAsync({
+        account: form.account,
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+        email: form.email,
+        mobileNumber: form.mobileNumber,
+        timezone: form.timezone,
+        role: "service_admin",
+        portal: "service",
+      });
+      toast.success("Sub-user created successfully");
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create subaccount");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-(--z-modal) flex items-center justify-center bg-black/40 px-4">
-
       {/* Modal */}
       <div
         className="
@@ -63,25 +115,45 @@ export default function AddSubAccountModal({
 
         {/* Form */}
         <div className="space-y-4">
-          <Input placeholder="Please enter user name" />
+          <Input
+            placeholder="Please enter user name"
+            value={form.account}
+            onChange={(e) => setForm({ ...form, account: e.target.value })}
+          />
 
           <PasswordInput
             placeholder="Please enter password"
             show={showPassword}
             setShow={setShowPassword}
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
 
           <PasswordInput
             placeholder="Please confirm password"
             show={showConfirm}
             setShow={setShowConfirm}
+            value={form.confirmPassword}
+            onChange={(e) =>
+              setForm({ ...form, confirmPassword: e.target.value })
+            }
           />
 
-          <Input placeholder="Please enter mobile number" />
-          <Input placeholder="Please enter email" />
+          <Input
+            placeholder="Please enter mobile number"
+            value={form.mobileNumber}
+            onChange={(e) => setForm({ ...form, mobileNumber: e.target.value })}
+          />
+          <Input
+            placeholder="Please enter email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
 
           {/* Timezone */}
           <select
+            value={form.timezone}
+            onChange={(e) => setForm({ ...form, timezone: e.target.value })}
             className="
               w-full
               h-10
@@ -120,6 +192,8 @@ export default function AddSubAccountModal({
           </button>
 
           <button
+            onClick={handleSubmit}
+            disabled={createSubAccount.isPending}
             className="
               w-full sm:w-auto
               rounded-md
@@ -130,10 +204,11 @@ export default function AddSubAccountModal({
               text-sm
               font-medium
               hover:bg-(--primary-hover)
+              disabled:opacity-50
               transition
             "
           >
-            Submit
+            {createSubAccount.isPending ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>
@@ -143,10 +218,12 @@ export default function AddSubAccountModal({
 
 /* ===================== REUSABLE INPUTS ===================== */
 
-function Input({ placeholder }: InputProps) {
+function Input({ placeholder, value, onChange }: InputProps) {
   return (
     <input
       placeholder={placeholder}
+      value={value}
+      onChange={onChange}
       className="
         w-full
         h-10
@@ -167,12 +244,16 @@ function PasswordInput({
   placeholder,
   show,
   setShow,
+  value,
+  onChange,
 }: PasswordInputProps) {
   return (
     <div className="relative">
       <input
         type={show ? "text" : "password"}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="
           w-full
           h-10
