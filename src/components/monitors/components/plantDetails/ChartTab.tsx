@@ -100,8 +100,18 @@ const ChartTab = ({
           },
         });
 
+      console.log({
+        date: chartDate,
+        range,
+        mode,
+        format: "csv",
+        ...serviceParams,
+      });
+
       const apiBase =
         process.env.NEXT_PUBLIC_API_URL ?? "";
+
+      console.log(result.downloadUrl);
 
       window.open(
         `${apiBase}${result.downloadUrl}`,

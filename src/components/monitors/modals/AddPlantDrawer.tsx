@@ -283,12 +283,12 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
               </div> */}
 
               {/* Upload */}
-              <div>
+              {/* <div>
                 <label className="text-sm font-medium">Upload picture :</label>
                 <button className="block mt-2 bg-blue-500 text-white px-4 py-2 rounded">
                   Select picture
                 </button>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </>

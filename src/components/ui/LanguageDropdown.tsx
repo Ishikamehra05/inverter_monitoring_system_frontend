@@ -16,15 +16,21 @@ export default function LanguageDropdown() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-700 rounded-md shadow-lg p-1 space-y-1 z-50">
-          <button className="block w-full px-3 py-1 text-left text-sm hover:bg-blue-500/80 text-black rounded cursor-pointer">
+          <button
+            onClick={() => {
+              // language change logic here
+              setOpen(false);
+            }}
+            className="block w-full px-3 py-1 text-left text-sm hover:bg-blue-500/80 text-black rounded cursor-pointer"
+          >
             English
           </button>
-          <button className="block w-full px-3 py-1 text-left text-sm hover:bg-blue-500/80 text-black rounded cursor-pointer">
+          {/* <button className="block w-full px-3 py-1 text-left text-sm hover:bg-blue-500/80 text-black rounded cursor-pointer">
             हिंदी
           </button>
           <button className="block w-full px-3 py-1 text-left text-sm hover:bg-blue-500/80 text-black rounded cursor-pointer">
             中文
-          </button>
+          </button> */}
         </div>
       )}
     </div>
