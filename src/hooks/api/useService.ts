@@ -129,3 +129,16 @@ export const useCreateMonitorUser = () => {
     },
   });
 };
+
+export const useAssignMonitorUsers = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: serviceApi.assignMonitorUsers,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["service", "monitorUsers"],
+      });
+    },
+  });
+};
