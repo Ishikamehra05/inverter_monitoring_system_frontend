@@ -72,7 +72,28 @@ export const createdMonitorUserSchema = z.object({
   createdAt: z.string(),
 });
 
-export type CreateMonitorUserPayload = z.infer<typeof createMonitorUserPayloadSchema>;
+export const assignMonitorUsersPayloadSchema = z.object({
+  monitorUserIds: z.array(z.string()),
+  assignedToUserId: z.string(),
+});
+
+export const assignMonitorUsersResponseSchema = z.object({
+  assignedToUserId: z.string(),
+  monitorUserIds: z.array(z.string()),
+  assignedCount: z.number(),
+  updatedAt: z.string(),
+});
+
+export type AssignMonitorUsersPayload = z.infer<
+  typeof assignMonitorUsersPayloadSchema
+>;
+export type AssignMonitorUsersResponse = z.infer<
+  typeof assignMonitorUsersResponseSchema
+>;
+
+export type CreateMonitorUserPayload = z.infer<
+  typeof createMonitorUserPayloadSchema
+>;
 export type CreatedMonitorUser = z.infer<typeof createdMonitorUserSchema>;
 export type MonitorUser = z.infer<typeof monitorUserSchema>;
 export type Profile = z.infer<typeof profileSchema>;

@@ -1,7 +1,13 @@
 import { apiClient, withQuery } from "./apiClient";
 import type {
-  Firmware, MonitorUser, Profile, ServiceTask, CreateMonitorUserPayload,
-  CreatedMonitorUser
+  Firmware,
+  MonitorUser,
+  Profile,
+  ServiceTask,
+  CreateMonitorUserPayload,
+  CreatedMonitorUser,
+  AssignMonitorUsersResponse,
+  AssignMonitorUsersPayload,
 } from "./schemas/service";
 
 type ApiEnvelope<T> = {
@@ -111,4 +117,13 @@ export const serviceApi = {
         body: payload,
       },
     ).then((res) => res),
+
+  assignMonitorUsers: (payload: AssignMonitorUsersPayload) =>
+    apiClient<ApiEnvelope<AssignMonitorUsersResponse>>(
+      "/service/monitor-users/assign",
+      {
+        method: "POST",
+        body: payload,
+      },
+    ).then((res) => res.data),
 };
