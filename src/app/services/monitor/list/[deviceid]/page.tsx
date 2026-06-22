@@ -14,6 +14,7 @@ import { usePlantDevices } from "@/hooks/api/useDevices";
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Device {
   id: number;
+  name: string;
   statusImg: string;
   deviceName: string;
   sn: string;
@@ -258,8 +259,8 @@ export default function DeviceListPage() {
                   <td className="px-4 py-4">
                     <span
                       className={`inline-block w-3 h-3 rounded-full ${device.status === "online"
-                          ? "bg-green-500"
-                          : "bg-red-500"
+                        ? "bg-green-500"
+                        : "bg-red-500"
                         }`}
                     />
                   </td>
@@ -364,7 +365,7 @@ export default function DeviceListPage() {
       <DeviceListSidePanel
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        deviceName={sidebarDevice?.deviceName}
+        deviceName={sidebarDevice?.name}
       />
 
       {/* Remote Setting modal */}

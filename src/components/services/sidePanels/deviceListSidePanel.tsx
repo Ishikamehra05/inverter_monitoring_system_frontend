@@ -286,7 +286,7 @@ function InformationTab() {
 export default function DeviceSidebar({
   isOpen,
   onClose,
-  deviceName = "PSIS4K6SM1R2 2502-65764179P",
+  deviceName,
 }: DeviceSidebarProps) {
   const [activeTab, setActiveTab] = useState<Tab>("information");
 
