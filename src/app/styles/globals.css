@@ -1,0 +1,359 @@
+@import "tailwindcss";
+
+/* ====================================================
+   ROOT VARIABLES (LIGHT MODE)
+==================================================== */
+
+:root {
+  /* Base */
+  --white: oklch(1 0 0);
+  --black: oklch(0 0 0);
+  --inverse: var(--black);
+  --theme-bg: var(--white);
+
+  --background: #f9fafb;
+  --foreground: oklch(0.15 0 0);
+
+  /* Neutrals */
+  --neutral: oklch(0.3 0 0);
+  --muted: oklch(0.93 0 0);
+  --muted-fg: oklch(0.5 0 0);
+
+  --subtle: oklch(0.96 0 0);
+  --subtle-fg: oklch(0.6 0 0);
+
+  --strong: oklch(0.1 0 0);
+  --strong-fg: var(--strong);
+
+  /* States */
+  --disabled: oklch(0.88 0 0);
+  --disabled-fg: oklch(0.6 0 0);
+
+  --focus-bg: oklch(0.96 0 0);
+  --focus-fg: var(--foreground);
+
+  --selected-bg: oklch(0.92 0.02 265);
+  --selected-fg: var(--foreground);
+
+  /* Primary */
+  --primary: oklch(0.57 0.22 264); /* #2563eb */
+  --primary-fg: var(--white);
+  --primary-hover: oklch(0.52 0.22 264); /* darker */
+  --primary-active: oklch(0.47 0.22 264); /* more darker */
+  --primary-pressed: oklch(0.42 0.22 264); /* deepest */
+
+  /* Secondary */
+  --secondary: oklch(0.93 0.01 240);
+  --secondary-fg: oklch(0.33 0.04 265);
+  --secondary-hover: oklch(0.9 0.01 240);
+  --secondary-active: oklch(0.87 0.01 240);
+  --secondary-pressed: oklch(0.83 0.01 240);
+
+  /* Surfaces */
+  --surface: var(--white);
+  --surface-fg: var(--black);
+
+  --card: var(--surface);
+  --card-fg: var(--surface-fg);
+
+  --popover: var(--surface);
+  --popover-fg: var(--surface-fg);
+
+  /* ========= ACCENT ========= */
+  --accent: oklch(0.93 0.01 240);
+  --accent-fg: oklch(0.33 0.04 265);
+  --accent-hover: oklch(0.9 0.01 240);
+  --accent-active: oklch(0.87 0.01 240);
+  --accent-pressed: oklch(0.84 0.01 240);
+
+  /* ========= STATUS COLORS ========= */
+  --success: oklch(0.63 0.21 150);
+  --success-fg: var(--white);
+  --success-hover: oklch(0.55 0.21 150);
+  --success-active: oklch(0.5 0.21 150);
+  --success-pressed: oklch(0.45 0.21 150);
+
+  --info: oklch(0.65 0.16 240);
+  --info-fg: var(--white);
+  --info-hover: oklch(0.58 0.16 240);
+  --info-active: oklch(0.52 0.16 240);
+  --info-pressed: oklch(0.47 0.16 240);
+
+  --warning: oklch(0.85 0.16 95);
+  --warning-fg: var(--black);
+  --warning-hover: oklch(0.78 0.16 95);
+  --warning-active: oklch(0.7 0.16 95);
+  --warning-pressed: oklch(0.62 0.16 95);
+
+  --danger: oklch(0.7 0.25 25);
+  --danger-fg: var(--white);
+  --danger-hover: oklch(0.62 0.25 25);
+  --danger-active: oklch(0.54 0.25 25);
+  --danger-pressed: oklch(0.48 0.25 25);
+
+  /* ========= UI SYSTEM: BORDERS, RING, DIVIDER ========= */
+  --border: oklch(0.8 0 0); /* default border */
+  --border-muted: oklch(0.9 0 0); /* subtle borders */
+  --border-strong: oklch(0.6 0 0); /* heavy borders (panels) */
+  --divider: oklch(0.9 0 0); /* hr, separators */
+
+  --input: oklch(0.8 0 0); /* input border */
+  --ring: oklch(0.45 0.07 265); /* focus ring color */
+
+  --focus: oklch(0.72 0.2 265); /* legacy focus outline, if needed */
+
+  /* ========= FOCUS RING GEOMETRY ========= */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ========= SPACING / RADII & SHADOWS ========= */
+  --radius: 0.5rem;
+  --radius-md: 8px;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
+  --shadow-md: 0 4px 6px rgb(0 0 0 / 10%);
+
+  /* ========= TYPOGRAPHY ========= */
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-md: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========= Z-INDEX / LAYERS ========= */
+  --z-dropdown: 900;
+  --z-sticky: 950;
+  --z-modal: 1000;
+  --z-popover: 1050;
+  --z-toast: 1100;
+  --z-tooltip: 1200;
+}
+
+ .input-dark {
+    background: #020817;
+    border: 1px solid #1f2937;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    color: white;
+  }
+
+  .input-dark:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+
+  .btn-primary {
+    background: #2563eb;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    color: white;
+  }
+
+  .btn-secondary {
+    background: #111827;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    color: white;
+  }
+/* ====================================================
+   DARK MODE – OVERRIDES
+   Trigger via: <html class="dark"> or [data-theme="dark"]
+==================================================== */
+
+.dark {
+  --theme-bg: var(--black);
+  --inverse: var(--white);
+
+  --background: #0b0f14;
+  --foreground: #ffffff;
+
+  --neutral: oklch(0.95 0 0);
+  --muted: oklch(0.24 0.01 255);
+  --muted-fg: oklch(0.75 0 0);
+
+  --subtle: oklch(0.2 0.01 255);
+  --subtle-fg: oklch(0.8 0 0);
+
+  --strong: oklch(0.98 0 0);
+  --strong-fg: var(--white);
+
+  --disabled: oklch(0.28 0 0);
+  --disabled-fg: oklch(0.6 0 0);
+
+  --focus-bg: oklch(0.24 0.01 255);
+  --focus-fg: var(--foreground);
+
+  --selected-bg: oklch(0.3 0.02 255);
+  --selected-fg: var(--foreground);
+
+  /* Primary */
+  --primary: oklch(0.95 0.01 255);
+  --primary-fg: oklch(0.16 0.01 255);
+  --primary-hover: oklch(0.9 0.01 255);
+  --primary-active: oklch(0.85 0.01 255);
+  --primary-pressed: oklch(0.8 0.01 255);
+
+  /* Secondary */
+  --secondary: oklch(0.29 0.02 255);
+  --secondary-fg: var(--white);
+  --secondary-hover: oklch(0.33 0.02 255);
+  --secondary-active: oklch(0.37 0.02 255);
+  --secondary-pressed: oklch(0.41 0.02 255);
+
+  /* Tertiary */
+  --tertiary: oklch(0.24 0.01 255);
+  --tertiary-fg: var(--white);
+  --tertiary-hover: oklch(0.28 0.01 255);
+  --tertiary-active: oklch(0.32 0.01 255);
+  --tertiary-pressed: oklch(0.36 0.01 255);
+
+  /* Surfaces */
+  --surface: oklch(0.22 0.01 255);
+  --surface-fg: var(--white);
+  --surface-hover: oklch(0.26 0.01 255);
+  --surface-active: oklch(0.3 0.01 255);
+  --surface-pressed: oklch(0.34 0.01 255);
+
+  --card: oklch(0.2 0.01 255);
+  --card-fg: var(--white);
+  --card-hover: oklch(0.24 0.01 255);
+  --card-active: oklch(0.28 0.01 255);
+  --card-pressed: oklch(0.32 0.01 255);
+
+  --popover: var(--surface);
+  --popover-fg: var(--surface-fg);
+
+  /* Accent */
+  --accent: oklch(0.29 0.02 255);
+  --accent-fg: var(--white);
+  --accent-hover: oklch(0.33 0.02 255);
+  --accent-active: oklch(0.37 0.02 255);
+  --accent-pressed: oklch(0.41 0.02 255);
+
+  /* Status */
+  --success: oklch(0.63 0.21 150);
+  --success-fg: var(--white);
+
+  --info: oklch(0.72 0.18 240);
+  --info-fg: var(--black);
+
+  --warning: oklch(0.85 0.16 95);
+  --warning-fg: var(--black);
+
+  --danger: oklch(0.7 0.25 25);
+  --danger-fg: var(--white);
+
+  /* Borders, divider, ring */
+  --border: oklch(0.35 0 0);
+  --border-muted: oklch(0.26 0 0);
+  --border-strong: oklch(0.45 0 0);
+  --divider: oklch(0.26 0 0);
+
+  --input: oklch(0.35 0 0);
+  --ring: oklch(0.8 0.05 255);
+}
+
+/* ====================================================
+   GLOBAL APPLICATION
+==================================================== */
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ====================================================
+   COMPONENT UTILITIES
+==================================================== */
+/* Remove outline and ring from all inputs */
+input:focus,
+input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.input-dark {
+  background: #020817;
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  color: white;
+}
+
+.input-dark:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  color: white;
+}
+
+.input-light {
+  width: 100%;
+  height: 40px;
+  background: var(--surface);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.input-light:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.btn-secondary {
+  background: #111827;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  color: white;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,47 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usersApi } from "../../lib/api/users";
+import type { CreateSubAccountRequest } from "../../lib/api/schemas/users";
+
+export const useCreateSubAccount = () => {
+  return useMutation({
+    mutationFn: (payload: CreateSubAccountRequest) =>
+      usersApi.createSubAccount(payload),
+  });
+};
+
+export const useGetSubAccounts = () => {
+  return useQuery({
+    queryKey: ["subaccounts"],
+    queryFn: () => usersApi.getViewUsers(),
+  });
+};
+
+export const useEditSubAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      payload,
+    }: {
+      userId: string;
+      payload: import("../../lib/api/schemas/users").EditSubAccountRequest;
+    }) => usersApi.editSubAccount(userId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subaccounts"] });
+    },
+  });
+};
+
+export const useDeleteSubAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.deleteSubAccount(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subaccounts"] });
+    },
+  });
+};
