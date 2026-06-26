@@ -16,6 +16,22 @@ export const monitorUserSchema = z.object({
   }),
 });
 
+export type MonitorUsersExportResponse = string;
+// export type MonitorUsersExportResponse = {
+//   fileName: string;
+//   downloadUrl: string;
+//   expiresAt: string;
+// };
+export const monitorFiltersSchema = z.object({
+  status: z.string(),
+  sortBy: z.string(),
+  sortOrder: z.string(),
+  searchUser: z.string(),
+  searchSN: z.string(),
+  searchInstallationDate: z.string(),
+  searchAffiliation: z.string(),
+});
+
 export const monitorUsersResponseSchema = z.object({
   items: z.array(monitorUserSchema),
   statusCounts: z.object({
@@ -25,6 +41,7 @@ export const monitorUsersResponseSchema = z.object({
     offline: z.number(),
   }),
   pagination: paginationSchema,
+  filters: monitorFiltersSchema,
 });
 
 export const profileSchema = z.object({
@@ -99,3 +116,4 @@ export type MonitorUser = z.infer<typeof monitorUserSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Firmware = z.infer<typeof firmwareSchema>;
 export type ServiceTask = z.infer<typeof taskSchema>;
+export type MonitorFilters = z.infer<typeof monitorFiltersSchema>;

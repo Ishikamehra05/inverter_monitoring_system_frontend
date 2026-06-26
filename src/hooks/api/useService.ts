@@ -43,11 +43,29 @@ export const useMonitorUsers = (params: Record<string, unknown> = {}) =>
             totalItems: 8384,
             totalPages: 839,
           },
+          filters: {
+            status: "all",
+            sortBy: "",
+            sortOrder: "asc",
+            searchUser: "",
+            searchSN: "",
+            searchInstallationDate: "",
+            searchAffiliation: "",
+          },
         };
       }
     },
   });
 
+export const useMonitorUsersExport = () =>
+  useMutation({
+    mutationFn: async (serviceParams?: {
+      fromService?: boolean;
+      targetEndUserId?: string;
+    }) => {
+      return serviceApi.monitorUsersExport(serviceParams);
+    },
+  });
 export const useServiceProfile = () =>
   useQuery({
     queryKey: serviceKeys.profile(),
@@ -108,7 +126,8 @@ export const useUpdateProfile = () => {
 
   return useMutation({
     mutationFn: serviceApi.updateProfile,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: serviceKeys.profile() }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: serviceKeys.profile() }),
   });
 };
 

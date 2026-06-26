@@ -8,12 +8,19 @@ import type {
   CreatedMonitorUser,
   AssignMonitorUsersResponse,
   AssignMonitorUsersPayload,
+  MonitorFilters,
+  MonitorUsersExportResponse,
 } from "./schemas/service";
 
 type ApiEnvelope<T> = {
   success: boolean;
   message?: string;
   data: T;
+};
+
+export type ServiceScopeParams = {
+  fromService?: boolean;
+  targetEndUserId?: string;
 };
 
 export const serviceApi = {
@@ -33,9 +40,14 @@ export const serviceApi = {
           totalItems: number;
           totalPages: number;
         };
+        filters: MonitorFilters;
       }>
     >(`/service/monitor-users${withQuery(params)}`).then((res) => res.data),
 
+monitorUsersExport: (params: ServiceScopeParams = {}) =>
+  apiClient<string>(
+    /service/monitor-users/export${withQuery(params)}
+  );
   profile: () =>
     apiClient<ApiEnvelope<Profile>>("/service/profile").then((res) => res.data),
 

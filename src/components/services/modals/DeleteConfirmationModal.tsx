@@ -1,7 +1,6 @@
 "use client";
 
 import { X } from "lucide-react";
-
 type Props = {
   accountName: string;
   isLoading: boolean;
