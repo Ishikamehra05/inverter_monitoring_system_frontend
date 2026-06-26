@@ -9,31 +9,42 @@
 
 //   router.push(`${path}`);
 // };
-
 export const navigateMonitor = (
   router: any,
   searchParams: URLSearchParams,
   path: string
 ) => {
-  // const userId = searchParams.get("userid");
   const userId =
-  searchParams.get("targetEndUserId") ||
-  searchParams.get("userid");
+    searchParams.get("targetEndUserId") ??
+    searchParams.get("userid");
 
-  const preserveUserIdRoutes = [
+  const fromService = searchParams.get("fromService");
+
+  const preserveRoutes = [
     "/monitor/plants",
     "/monitor/logs",
   ];
 
   const basePath = path.split("?")[0];
 
-  const shouldPreserveUserId =
-    preserveUserIdRoutes.includes(basePath);
-
   let url = path;
 
-  if (shouldPreserveUserId && userId) {
-    url = `${path}${path.includes("?") ? "&" : "?"}userid=${userId}`;
+  if (preserveRoutes.includes(basePath)) {
+    const params = new URLSearchParams();
+
+    if (userId) {
+      params.set("userid", userId);
+    }
+
+    if (fromService === "true") {
+      params.set("fromService", "true");
+    }
+
+    const query = params.toString();
+
+    if (query) {
+      url = `${basePath}?${query}`;
+    }
   }
 
   router.push(url);
