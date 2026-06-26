@@ -17,11 +17,7 @@ export const monitorUserSchema = z.object({
 });
 
 export type MonitorUsersExportResponse = string;
-// export type MonitorUsersExportResponse = {
-//   fileName: string;
-//   downloadUrl: string;
-//   expiresAt: string;
-// };
+
 export const monitorFiltersSchema = z.object({
   status: z.string(),
   sortBy: z.string(),
@@ -44,6 +40,38 @@ export const monitorUsersResponseSchema = z.object({
   filters: monitorFiltersSchema,
 });
 
+export interface UpdateProfileRequest {
+  phone?: string;
+  address?: string;
+  timezone?: string;
+}
+
+export interface UpdateProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    account: string;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    timezone: string | null;
+    updatedAt: string;
+  };
+}
+
+export interface RelateUserRequest {
+  account: string;
+  serialNumber: string;
+}
+
+export interface RelateUserResponse {
+  success: boolean;
+  message: string;
+  data: {
+    account: string;
+    serialNumber: string;
+  };
+}
 export const profileSchema = z.object({
   userName: z.string(),
   email: z.string(),

@@ -1,6 +1,6 @@
 "use client";
 
-import {  useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -8,6 +8,8 @@ import {
   useServiceProfile,
   useUpdateProfile,
 } from "@/hooks/api/useService";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 export default function InformationPage() {
   const [tab, setTab] = useState<"basic" | "security">("basic");
@@ -17,26 +19,68 @@ export default function InformationPage() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
-const [newPassword, setNewPassword] = useState("");
-const [confirmPassword, setConfirmPassword] = useState("");
-const [phone, setPhone] = useState("");
-const [address, setAddress] = useState("");
-const [timezone, setTimezone] = useState("(UTC+05:30) Colombo, New Delhi");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [timezone, setTimezone] = useState("");
 
-const [errors, setErrors] = useState<any>({});
-const handleSecurityUpdate = () => {
-  const newErrors: any = {};
+  const [errors, setErrors] = useState<any>({});
+  const handleSecurityUpdate = () => {
+    const newErrors: any = {};
 
-  if (!oldPassword.trim()) newErrors.oldPassword = "This is required!";
-  if (!newPassword.trim()) newErrors.newPassword = "This is required!";
-  if (!confirmPassword.trim()) newErrors.confirmPassword = "This is required!";
+    if (!oldPassword.trim()) newErrors.oldPassword = "This is required!";
+    if (!newPassword.trim()) newErrors.newPassword = "This is required!";
+    if (!confirmPassword.trim())
+      newErrors.confirmPassword = "This is required!";
 
-  setErrors(newErrors);
-  if (Object.keys(newErrors).length === 0) {
-    changePassword.mutate({ oldPassword, newPassword, confirmPassword });
-  }
-};
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length === 0) {
+      changePassword.mutate({ oldPassword, newPassword, confirmPassword });
+    }
+  };
 
+  const updateUserProfile = useUpdateProfile();
+
+  const searchParams = useSearchParams();
+
+  const selectedEndUserId = searchParams.get("userid") ?? undefined;
+
+  const serviceParams = selectedEndUserId
+    ? {
+        fromService: true,
+        targetEndUserId: selectedEndUserId,
+      }
+    : undefined;
+
+  const handleUpdateProfile = async () => {
+    if (!phone.trim()) {
+      toast.error("Phone is required.");
+      return;
+    }
+
+    if (!address.trim()) {
+      toast.error("Address is required.");
+      return;
+    }
+
+    if (!timezone.trim()) {
+      toast.error("Timezone is required.");
+      return;
+    }
+
+    try {
+      const result = await updateProfile.mutateAsync({
+        phone: phone.trim(),
+        address: address.trim(),
+        timezone,
+      });
+
+      toast.success(result.message ?? "Profile updated successfully.");
+    } catch (error: any) {
+      toast.error(error?.message ?? "Failed to update profile.");
+    }
+  };
   return (
     <div
       className="
@@ -61,14 +105,16 @@ const handleSecurityUpdate = () => {
           Basic Setting
         </MenuItem>
 
-        <MenuItem active={tab === "security"} onClick={() => setTab("security")}>
+        <MenuItem
+          active={tab === "security"}
+          onClick={() => setTab("security")}
+        >
           Security Setting
         </MenuItem>
       </aside>
 
       {/* ---------------- CONTENT ---------------- */}
       <section className="flex-1 px-4 sm:px-8 py-6">
-
         {tab === "basic" && (
           <>
             <h1 className="text-[16px] font-medium text-[rgba(0,0,0,0.85)] mb-6">
@@ -76,25 +122,41 @@ const handleSecurityUpdate = () => {
             </h1>
 
             <div className="space-y-5 w-full max-w-md">
-
               <Field label="User Name">
-                <Input disabled value={profileQuery.data?.userName ?? "polycab.admin"} />
+                <Input
+                  disabled
+                  value={profileQuery.data?.userName ?? "polycab.admin"}
+                />
               </Field>
 
               <Field label="Email">
-                <Input disabled value={profileQuery.data?.email ?? "Bipin.Sonsale@Polycab.com"} />
+                <Input
+                  disabled
+                  value={
+                    profileQuery.data?.email ?? "Bipin.Sonsale@Polycab.com"
+                  }
+                />
               </Field>
 
               <Field label="Phone">
-                <Input value={phone || profileQuery.data?.phone || ""} onChange={(e) => setPhone(e.target.value)} />
+                <Input
+                  value={phone || profileQuery.data?.phone || ""}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={updateProfile.isPending}
+                />
               </Field>
 
               <Field label="Address">
-                <Input value={address || profileQuery.data?.address || ""} onChange={(e) => setAddress(e.target.value)} />
+                <Input
+                  value={address || profileQuery.data?.address || ""}
+                  onChange={(e) => setAddress(e.target.value)}
+                  disabled={updateProfile.isPending}
+                />
               </Field>
 
               <Field label="Timezone">
                 <select
+                  disabled={updateProfile.isPending}
                   value={timezone || profileQuery.data?.timezone}
                   onChange={(e) => setTimezone(e.target.value)}
                   className="
@@ -125,13 +187,8 @@ const handleSecurityUpdate = () => {
                   hover:border-[#40a9ff]
                   transition
                 "
-                onClick={() =>
-                  updateProfile.mutate({
-                    phone: phone || profileQuery.data?.phone,
-                    address: address || profileQuery.data?.address,
-                    timezone,
-                  })
-                }
+                onClick={handleUpdateProfile}
+                disabled={updateProfile.isPending}
               >
                 {updateProfile.isPending ? "Updating..." : "Update"}
               </button>
@@ -146,52 +203,53 @@ const handleSecurityUpdate = () => {
             </h1>
 
             <div className="space-y-5 w-full max-w-md">
-
               <Field label="Old Password" required>
                 <Input
-  type="password"
-  value={oldPassword}
-  onChange={(e) => setOldPassword(e.target.value)}
-  className={errors.oldPassword ? "border border-[#ff4d4f]" : ""}
-/>
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  className={
+                    errors.oldPassword ? "border border-[#ff4d4f]" : ""
+                  }
+                />
 
-{errors.oldPassword && (
-  <p className="text-[#ff4d4f] text-[12px] mt-1">
-    {errors.oldPassword}
-  </p>
-)}
+                {errors.oldPassword && (
+                  <p className="text-[#ff4d4f] text-[12px] mt-1">
+                    {errors.oldPassword}
+                  </p>
+                )}
               </Field>
 
               <Field label="New Password" required>
                 <PasswordInput
-  value={newPassword}
-  onChange={(e)=>setNewPassword(e.target.value)}
-  visible={showNew}
-  toggle={() => setShowNew(!showNew)}
-  error={errors.newPassword}
-/>
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  visible={showNew}
+                  toggle={() => setShowNew(!showNew)}
+                  error={errors.newPassword}
+                />
 
-{errors.newPassword && (
-  <p className="text-[#ff4d4f] text-[12px] mt-1">
-    {errors.newPassword}
-  </p>
-)}
+                {errors.newPassword && (
+                  <p className="text-[#ff4d4f] text-[12px] mt-1">
+                    {errors.newPassword}
+                  </p>
+                )}
               </Field>
 
               <Field label="Confirm Password" required>
                 <PasswordInput
-  value={confirmPassword}
-  onChange={(e) => setConfirmPassword(e.target.value)}
-  visible={showConfirm}
-  toggle={() => setShowConfirm(!showConfirm)}
-  error={errors.confirmPassword}
-/>
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  visible={showConfirm}
+                  toggle={() => setShowConfirm(!showConfirm)}
+                  error={errors.confirmPassword}
+                />
 
-{errors.confirmPassword && (
-  <p className="text-[#ff4d4f] text-[12px] mt-1">
-    {errors.confirmPassword}
-  </p>
-)}
+                {errors.confirmPassword && (
+                  <p className="text-[#ff4d4f] text-[12px] mt-1">
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </Field>
 
               <button
@@ -237,7 +295,7 @@ function MenuItem({
         "relative whitespace-nowrap px-4 py-3 text-[14px] transition text-left",
         active
           ? "bg-[#e6f7ff] text-[#1890ff]"
-          : "text-[rgba(0,0,0,0.65)] hover:bg-[#f5f5f5]"
+          : "text-[rgba(0,0,0,0.65)] hover:bg-[#f5f5f5]",
       )}
     >
       {active && (
@@ -333,7 +391,7 @@ function PasswordInput({
           "w-full h-8 px-2.75 pr-10 text-[14px] rounded-xs transition focus:outline-none focus:ring-2",
           error
             ? "border border-[#ff4d4f] focus:ring-[#ff4d4f]/20"
-            : "border border-[#d9d9d9] focus:border-[#40a9ff] focus:ring-[#1890ff]/20"
+            : "border border-[#d9d9d9] focus:border-[#40a9ff] focus:ring-[#1890ff]/20",
         )}
       />
       <button

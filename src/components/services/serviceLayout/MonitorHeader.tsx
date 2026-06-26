@@ -31,22 +31,27 @@ export default function MonitorHeader({
 
   const handleExport = async () => {
     try {
-      const csv = await exportMonitorUsers.mutateAsync(serviceParams);
+      const csvContent = await exportMonitorUsers.mutateAsync(serviceParams);
 
-      const blob = new Blob([csv], {
+      const blob = new Blob([csvContent], {
         type: "text/csv;charset=utf-8;",
       });
 
-      const url = URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "monitor-users.csv";
-      a.click();
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `monitor-users-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`;
 
-      URL.revokeObjectURL(url);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(error);
+      console.error("Export failed", error);
     }
   };
   return (

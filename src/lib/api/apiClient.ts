@@ -1,7 +1,7 @@
 import { ApiError, BackendUnavailableError } from "./errors";
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
   body?: unknown;
   formData?: FormData;
   headers?: Record<string, string>;
