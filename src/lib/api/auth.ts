@@ -5,7 +5,7 @@ import type {
   LoginResponse,
   RegisterRequest,
   VerificationCodeRequest,
-  ChangePasswordRequest
+  ChangePasswordRequest,
 } from "./schemas/auth";
 
 type ApiEnvelope<T> = {
@@ -40,7 +40,7 @@ export const authApi = {
     }),
 
   forgotPassword: (payload: ForgotPasswordRequest) =>
-    apiClient<ApiEnvelope<null>>("/auth/forgot-password", {
+    apiClient<ApiEnvelope<null>>("/auth/forgetpassword", {
       method: "POST",
       body: payload,
     }),

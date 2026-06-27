@@ -64,7 +64,7 @@ export const serviceApi = {
     newPassword: string;
     confirmPassword: string;
   }) =>
-    apiClient<ApiEnvelope<null>>("/service/profile/password", {
+    apiClient<ApiEnvelope<null>>("/auth/changePassword", {
       method: "POST",
       body: payload,
     }),

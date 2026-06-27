@@ -26,17 +26,45 @@ export default function InformationPage() {
   const [timezone, setTimezone] = useState("");
 
   const [errors, setErrors] = useState<any>({});
-  const handleSecurityUpdate = () => {
+  const handleSecurityUpdate = async () => {
     const newErrors: any = {};
 
-    if (!oldPassword.trim()) newErrors.oldPassword = "This is required!";
-    if (!newPassword.trim()) newErrors.newPassword = "This is required!";
-    if (!confirmPassword.trim())
-      newErrors.confirmPassword = "This is required!";
+    if (!oldPassword.trim()) {
+      newErrors.oldPassword = "Old password is required";
+    }
+
+    if (!newPassword.trim()) {
+      newErrors.newPassword = "New password is required";
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = "Confirm password is required";
+    }
+
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
 
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) {
-      changePassword.mutate({ oldPassword, newPassword, confirmPassword });
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    try {
+      const response = await changePassword.mutateAsync({
+        oldPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      toast.success(response.message || "Password changed successfully");
+
+      // Clear fields
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setErrors({});
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to change password");
     }
   };
 
@@ -207,6 +235,7 @@ export default function InformationPage() {
                 <Input
                   type="password"
                   value={oldPassword}
+                  disabled={changePassword.isPending}
                   onChange={(e) => setOldPassword(e.target.value)}
                   className={
                     errors.oldPassword ? "border border-[#ff4d4f]" : ""
@@ -226,6 +255,7 @@ export default function InformationPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   visible={showNew}
                   toggle={() => setShowNew(!showNew)}
+                  disabled={changePassword.isPending}
                   error={errors.newPassword}
                 />
 
@@ -243,6 +273,7 @@ export default function InformationPage() {
                   visible={showConfirm}
                   toggle={() => setShowConfirm(!showConfirm)}
                   error={errors.confirmPassword}
+                  disabled={changePassword.isPending}
                 />
 
                 {errors.confirmPassword && (
@@ -266,6 +297,7 @@ export default function InformationPage() {
                   transition
                 "
                 onClick={handleSecurityUpdate}
+                disabled={changePassword.isPending}
               >
                 {changePassword.isPending ? "Updating..." : "Update"}
               </button>
@@ -374,12 +406,14 @@ function PasswordInput({
   value,
   onChange,
   error,
+  disabled,
 }: {
   visible: boolean;
   toggle: () => void;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div className="relative">
@@ -387,6 +421,7 @@ function PasswordInput({
         type={visible ? "text" : "password"}
         value={value}
         onChange={onChange}
+        disabled={disabled}
         className={clsx(
           "w-full h-8 px-2.75 pr-10 text-[14px] rounded-xs transition focus:outline-none focus:ring-2",
           error
@@ -397,6 +432,7 @@ function PasswordInput({
       <button
         type="button"
         onClick={toggle}
+        disabled={disabled}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgba(0,0,0,0.45)]"
       >
         {visible ? <EyeOff size={16} /> : <Eye size={16} />}

@@ -13,6 +13,8 @@ import {
   RelateUserRequest,
   UpdateProfileRequest,
 } from "@/lib/api/schemas/service";
+import { authApi } from "@/lib/api/auth";
+import { ChangePasswordRequest } from "@/lib/api/schemas/auth";
 
 export const serviceKeys = {
   all: ["service"] as const,
@@ -141,9 +143,9 @@ export const useUpdateProfile = () =>
 
 export const useChangePassword = () =>
   useMutation({
-    mutationFn: serviceApi.changePassword,
+    mutationFn: (payload: ChangePasswordRequest) =>
+      authApi.changePassword(payload),
   });
-
 export const useUserUpdateProfile = () =>
   useMutation({
     mutationFn: async ({
