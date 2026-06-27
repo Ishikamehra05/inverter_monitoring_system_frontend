@@ -8,12 +8,23 @@ import type {
   CreatedMonitorUser,
   AssignMonitorUsersResponse,
   AssignMonitorUsersPayload,
+  MonitorFilters,
+  MonitorUsersExportResponse,
+  RelateUserResponse,
+  RelateUserRequest,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
 } from "./schemas/service";
 
 type ApiEnvelope<T> = {
   success: boolean;
   message?: string;
   data: T;
+};
+
+export type ServiceScopeParams = {
+  fromService?: boolean;
+  targetEndUserId?: string;
 };
 
 export const serviceApi = {
@@ -33,26 +44,38 @@ export const serviceApi = {
           totalItems: number;
           totalPages: number;
         };
+        filters: MonitorFilters;
       }>
     >(`/service/monitor-users${withQuery(params)}`).then((res) => res.data),
 
+  monitorUsersExport: (params: ServiceScopeParams = {}) =>
+    apiClient<string>(`/service/monitor-users/export${withQuery(params)}`),
+
+  relateMonitorUser: (body: RelateUserRequest, params?: ServiceScopeParams) =>
+    apiClient<RelateUserResponse>("/service/monitor-users/relate", {
+      method: "POST",
+      body,
+    }),
   profile: () =>
     apiClient<ApiEnvelope<Profile>>("/service/profile").then((res) => res.data),
-
-  updateProfile: (payload: Partial<Profile>) =>
-    apiClient<ApiEnvelope<null>>("/service/profile", {
-      method: "PATCH",
-      body: payload,
-    }),
 
   changePassword: (payload: {
     oldPassword: string;
     newPassword: string;
     confirmPassword: string;
   }) =>
-    apiClient<ApiEnvelope<null>>("/service/profile/password", {
+    apiClient<ApiEnvelope<null>>("/auth/changePassword", {
       method: "POST",
       body: payload,
+    }),
+
+  updateUserProfile: (
+    body: UpdateProfileRequest,
+    params: ServiceScopeParams = {},
+  ) =>
+    apiClient<UpdateProfileResponse>(`/service/profile${withQuery(params)}`, {
+      method: "PUT",
+      body,
     }),
 
   firmware: (params: Record<string, unknown> = {}) =>

@@ -37,7 +37,9 @@ export const verificationCodeRequestSchema = z.object({
 });
 
 export const forgotPasswordRequestSchema = z.object({
-  account: z.string().min(1),
+  account: z.string().min(1, "Account is required"),
+  newPassword: z.string().min(1, "New password is required"),
+  confirmPassword: z.string().min(1, "Confirm password is required"),
 });
 
 export const ChangePasswordRequest = z.object({

@@ -61,7 +61,7 @@ export default function AssignUserModal({ onClose }: any) {
             <input
               value={monitorUserIdInput}
               onChange={(e) => setMonitorUserIdInput(e.target.value)}
-              placeholder="e.g. 3, 5"
+              placeholder="enter account name"
               className="w-full h-[44px] px-4 border border-[#d9d9d9] rounded-md focus:outline-none focus:border-[#1677ff]"
             />
           </div>

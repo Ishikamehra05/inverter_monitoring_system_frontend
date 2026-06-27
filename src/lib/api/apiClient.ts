@@ -1,7 +1,7 @@
 import { ApiError, BackendUnavailableError } from "./errors";
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
   body?: unknown;
   formData?: FormData;
   headers?: Record<string, string>;
@@ -20,74 +20,45 @@ const buildUrl = (endpoint: string) => {
 };
 
 const getRefreshToken = () => {
-  if (typeof window === "undefined")
-    return null;
+  if (typeof window === "undefined") return null;
 
-  return localStorage.getItem(
-    "refreshToken"
-  );
+  return localStorage.getItem("refreshToken");
 };
 
 async function refreshAccessToken() {
-  const refreshToken =
-    getRefreshToken();
+  const refreshToken = getRefreshToken();
 
-  if (!refreshToken)
-    throw new Error(
-      "No refresh token"
-    );
+  if (!refreshToken) throw new Error("No refresh token");
 
-  const response = await fetch(
-    buildUrl("/auth/refresh"),
-    {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-      body: JSON.stringify({
-        refreshToken,
-      }),
-    }
-  );
+  const response = await fetch(buildUrl("/auth/refresh"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      refreshToken,
+    }),
+  });
 
   if (!response.ok) {
-    localStorage.removeItem(
-      "token"
-    );
+    localStorage.removeItem("token");
 
-    localStorage.removeItem(
-      "refreshToken"
-    );
+    localStorage.removeItem("refreshToken");
 
-    window.location.href =
-      "/login";
+    window.location.href = "/login";
 
-    throw new Error(
-      "Refresh failed"
-    );
+    throw new Error("Refresh failed");
   }
 
-  const payload =
-    await response.json();
+  const payload = await response.json();
 
-  const {
-    accessToken,
-    refreshToken:
-    newRefreshToken,
-  } = payload.data;
+  const { accessToken, refreshToken: newRefreshToken } = payload.data;
 
-  localStorage.setItem(
-    "token",
-    accessToken
-  );
+  localStorage.setItem("token", accessToken);
 
-  localStorage.setItem(
-    "refreshToken",
-    newRefreshToken
-  );
+  localStorage.setItem("refreshToken", newRefreshToken);
 
-  console.log(refreshAccessToken)
+  console.log(refreshAccessToken);
 
   return accessToken;
 }
@@ -112,56 +83,37 @@ export async function apiClient<T>(
         : JSON.stringify(options.body),
   });
 
-
-  if (
-    response.status === 401 &&
-    getRefreshToken()
-  ) {
+  if (response.status === 401 && getRefreshToken()) {
     try {
-      const newToken =
-        await refreshAccessToken();
+      const newToken = await refreshAccessToken();
 
-      response = await fetch(
-        buildUrl(endpoint),
-        {
-          method:
-            options.method ??
-            "GET",
+      response = await fetch(buildUrl(endpoint), {
+        method: options.method ?? "GET",
 
-          headers: {
-            ...(isForm
-              ? {}
-              : {
-                "Content-Type":
-                  "application/json",
+        headers: {
+          ...(isForm
+            ? {}
+            : {
+                "Content-Type": "application/json",
               }),
 
-            Authorization:
-              `Bearer ${newToken}`,
+          Authorization: `Bearer ${newToken}`,
 
-            ...options.headers,
-          },
+          ...options.headers,
+        },
 
-          body: isForm
-            ? options.formData
-            : options.body ===
-              undefined
-              ? undefined
-              : JSON.stringify(
-                options.body
-              ),
-        }
-      );
+        body: isForm
+          ? options.formData
+          : options.body === undefined
+            ? undefined
+            : JSON.stringify(options.body),
+      });
     } catch (error) {
-      console.error(
-        "Token refresh failed",
-        error
-      );
+      console.error("Token refresh failed", error);
 
       throw new ApiError({
         status: 401,
-        message:
-          "Session expired",
+        message: "Session expired",
       });
     }
   }
@@ -186,7 +138,6 @@ export async function apiClient<T>(
           : undefined,
     });
   }
-
 
   return payload as T;
 }

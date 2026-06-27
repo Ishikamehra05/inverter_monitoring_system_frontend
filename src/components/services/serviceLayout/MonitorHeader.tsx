@@ -1,14 +1,63 @@
 "use client";
 
+import { useMonitorUsersExport } from "@/hooks/api/useService";
+import { MonitorFilters } from "@/lib/api/schemas/service";
 import { Calendar } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export default function MonitorHeader() {
+interface Props {
+  filters: MonitorFilters;
+  setFilters: React.Dispatch<React.SetStateAction<MonitorFilters>>;
+  onQuery: () => void;
+  onReset: () => void;
+}
+export default function MonitorHeader({
+  filters,
+  setFilters,
+  onQuery,
+  onReset,
+}: Props) {
+  const searchParams = useSearchParams();
+  const selectedEndUserId = searchParams.get("userid") ?? undefined;
+
+  const serviceParams = selectedEndUserId
+    ? {
+        fromService: true,
+        targetEndUserId: selectedEndUserId,
+      }
+    : undefined;
+  const exportMonitorUsers = useMonitorUsersExport();
+  const { isPending } = exportMonitorUsers;
+
+  const handleExport = async () => {
+    try {
+      const csvContent = await exportMonitorUsers.mutateAsync(serviceParams);
+
+      const blob = new Blob([csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `monitor-users-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export failed", error);
+    }
+  };
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
-
       {/* Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
         {/* Search User */}
         <div>
           <label className="block text-sm text-gray-600 mb-2">
@@ -16,6 +65,13 @@ export default function MonitorHeader() {
           </label>
           <input
             type="text"
+            value={filters.searchUser}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                searchUser: e.target.value,
+              }))
+            }
             placeholder="Please enter"
             className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff]"
           />
@@ -28,6 +84,13 @@ export default function MonitorHeader() {
           </label>
           <input
             type="text"
+            value={filters.searchSN}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                searchSN: e.target.value,
+              }))
+            }
             placeholder="Please enter"
             className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff]"
           />
@@ -41,6 +104,13 @@ export default function MonitorHeader() {
           <div className="relative">
             <input
               type="date"
+              value={filters.searchInstallationDate}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  searchInstallationDate: e.target.value,
+                }))
+              }
               className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff]"
             />
             <Calendar
@@ -55,21 +125,26 @@ export default function MonitorHeader() {
           <label className="block text-sm text-gray-600 mb-2">
             Search By Affiliation :
           </label>
-          <select
+          <input
+            value={filters.searchAffiliation}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                searchAffiliation: e.target.value,
+              }))
+            }
             className="w-full h-10 px-3 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1890ff]"
-          >
-            <option value="">Please select</option>
-            <option value="polycab.admin">polycab.admin</option>
-            <option value="admin2">admin2</option>
-          </select>
+          ></input>
         </div>
       </div>
 
       {/* Buttons */}
       <div className="flex justify-end gap-3 mt-6">
-
         {/* Reset Button */}
-        <button className="h-10 px-5 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition">
+        <button
+          onClick={onReset}
+          className="h-10 px-5 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition"
+        >
           Reset
         </button>
 
@@ -86,12 +161,15 @@ export default function MonitorHeader() {
             transition
           "
           style={{ textShadow: "0 -1px 0 rgba(0,0,0,.12)" }}
+          onClick={onQuery}
         >
           Query
         </button>
 
         {/* Download Button */}
         <button
+          onClick={handleExport}
+          disabled={isPending}
           className="
             h-10 px-6 rounded-md
             text-white
@@ -104,7 +182,7 @@ export default function MonitorHeader() {
           "
           style={{ textShadow: "0 -1px 0 rgba(0,0,0,.12)" }}
         >
-          Download
+          {isPending ? "Downloading..." : "Download"}
         </button>
       </div>
     </div>

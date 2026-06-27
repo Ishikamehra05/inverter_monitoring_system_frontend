@@ -16,6 +16,18 @@ export const monitorUserSchema = z.object({
   }),
 });
 
+export type MonitorUsersExportResponse = string;
+
+export const monitorFiltersSchema = z.object({
+  status: z.string(),
+  sortBy: z.string(),
+  sortOrder: z.string(),
+  searchUser: z.string(),
+  searchSN: z.string(),
+  searchInstallationDate: z.string(),
+  searchAffiliation: z.string(),
+});
+
 export const monitorUsersResponseSchema = z.object({
   items: z.array(monitorUserSchema),
   statusCounts: z.object({
@@ -25,8 +37,41 @@ export const monitorUsersResponseSchema = z.object({
     offline: z.number(),
   }),
   pagination: paginationSchema,
+  filters: monitorFiltersSchema,
 });
 
+export interface UpdateProfileRequest {
+  phone?: string;
+  address?: string;
+  timezone?: string;
+}
+
+export interface UpdateProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    account: string;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    timezone: string | null;
+    updatedAt: string;
+  };
+}
+
+export interface RelateUserRequest {
+  account: string;
+  serialNumber: string;
+}
+
+export interface RelateUserResponse {
+  success: boolean;
+  message: string;
+  data: {
+    account: string;
+    serialNumber: string;
+  };
+}
 export const profileSchema = z.object({
   userName: z.string(),
   email: z.string(),
@@ -99,3 +144,4 @@ export type MonitorUser = z.infer<typeof monitorUserSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Firmware = z.infer<typeof firmwareSchema>;
 export type ServiceTask = z.infer<typeof taskSchema>;
+export type MonitorFilters = z.infer<typeof monitorFiltersSchema>;
