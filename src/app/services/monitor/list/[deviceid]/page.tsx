@@ -9,11 +9,11 @@ import UpgradeInfoModal from "@/components/services/modals/UpgradeInfoModal";
 import DeviceListSidePanel from "@/components/services/sidePanels/deviceListSidePanel";
 import OperationPopover from "@/components/services/Operationpopover";
 import { useSearchParams } from "next/navigation";
-import { usePlantDevices } from "@/hooks/api/useDevices";
+import { usePlantDevices, useDeviceInformation } from "@/hooks/api/useDevices";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Device {
-  id: number;
+  id: number | string;
   name: string;
   statusImg: string;
   deviceName: string;
@@ -131,6 +131,24 @@ export default function DeviceListPage() {
     fromService: true,
     targetEndUserId,
   });
+
+  const normalizedDeviceId =
+    typeof sidebarDevice?.id === "string"
+      ? sidebarDevice.id.replace("device-", "")
+      : String(sidebarDevice?.id ?? "");
+
+  const informationQuery = useDeviceInformation(
+    normalizedDeviceId,
+    plantId,
+    {
+      fromService: true,
+      targetEndUserId,
+    }
+  );
+  const information = informationQuery.data;
+
+  const basicStats = information?.basicStats ?? [];
+  const stringStats = information?.stringStats ?? [];
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -366,6 +384,12 @@ export default function DeviceListPage() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         deviceName={sidebarDevice?.name}
+        deviceId={normalizedDeviceId}
+        plantId={plantId}
+        targetEndUserId={targetEndUserId}
+        basicStats={basicStats}
+        stringStats={stringStats}
+        loading={informationQuery.isLoading}
       />
 
       {/* Remote Setting modal */}

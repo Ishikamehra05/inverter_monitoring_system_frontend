@@ -116,7 +116,7 @@ export default function PlantPage() {
 
                   <td className="px-4 py-2">
                     <Link
-                      href={`/services/monitor/list/devices?plantId=${plant.id}&userid=${selectedEndUserId}`}
+                      href={`/services/monitor/list/devices?plantId=${plant.id}&userid=${selectedEndUserId}&targetEndUserId=${selectedEndUserId}`}
                       className="text-[#1890FF] hover:underline"
                     >
                       {plant.name}
@@ -134,7 +134,7 @@ export default function PlantPage() {
                   <td className="px-4 py-2">
                     {(plant.eTotal?.value ?? 0)} {plant.eTotal?.unit ?? ""}
                   </td>
-                  
+
                   <td className="px-4 py-2">
                     {Number(plant.kwp ?? 0)} kWp
                   </td>
