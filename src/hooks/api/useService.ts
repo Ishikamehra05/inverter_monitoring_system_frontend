@@ -134,20 +134,30 @@ export const useUpgradeTasks = (params: Record<string, unknown> = {}) =>
     },
   });
 
-export const useUpdateProfile = () =>
-  useMutation({
-    mutationFn: async (body: Partial<UpdateProfileRequest>) => {
-      return serviceApi.updateUserProfile(body);
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: Partial<UpdateProfileRequest>) =>
+      serviceApi.updateUserProfile(body),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: serviceKeys.profile(),
+      });
     },
   });
+};
 
 export const useChangePassword = () =>
   useMutation({
     mutationFn: (payload: ChangePasswordRequest) =>
       authApi.changePassword(payload),
   });
-export const useUserUpdateProfile = () =>
-  useMutation({
+export const useUserUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: async ({
       body,
     }: {
@@ -156,10 +166,19 @@ export const useUserUpdateProfile = () =>
         fromService?: boolean;
         targetEndUserId?: string;
       };
-    }) => {
-      return serviceApi.updateUserProfile(body);
+    }) => serviceApi.updateUserProfile(body),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: serviceKeys.profile(),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["service", "monitorUsers"],
+      });
     },
   });
+};
 export const useCreateMonitorUser = () => {
   const queryClient = useQueryClient();
 
