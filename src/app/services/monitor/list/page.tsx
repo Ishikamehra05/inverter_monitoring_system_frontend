@@ -1,10 +1,6 @@
 "use client";
 
-<<<<<<< HEAD
-import { useState, useMemo } from "react";
-=======
 import { useState, useMemo, useEffect } from "react";
->>>>>>> second/dev
 import Header from "@/components/services/serviceLayout/MonitorHeader";
 import Pagination from "@/components/ui/Pagination";
 import { useRouter } from "next/navigation";
@@ -13,10 +9,7 @@ import AssignUserModal from "@/components/services/modals/AssignUserModal";
 import RelateUserModal from "@/components/services/modals/RelateUserModal";
 import Link from "next/link";
 import { useMonitorUsers } from "@/hooks/api/useService";
-<<<<<<< HEAD
-=======
 import { MonitorFilters } from "@/lib/api/schemas/service";
->>>>>>> second/dev
 const PAGE_SIZE = 10;
 
 type MonitorUserRow = {
@@ -39,9 +32,6 @@ type MonitorUserSortKey = "power" | "today" | "total";
 export default function MonitorUserListPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
-<<<<<<< HEAD
-
-=======
   const initialFilters: MonitorFilters = {
     status: "all",
     sortBy: "",
@@ -53,7 +43,6 @@ export default function MonitorUserListPage() {
   };
   const [filterForm, setFilterForm] = useState(initialFilters);
   const [queryFilters, setQueryFilters] = useState(initialFilters);
->>>>>>> second/dev
   const [sortKey, setSortKey] = useState<MonitorUserSortKey | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -63,13 +52,6 @@ export default function MonitorUserListPage() {
   const monitorUsersQuery = useMonitorUsers({
     page,
     pageSize: PAGE_SIZE,
-<<<<<<< HEAD
-    status: statusFilter,
-    sortBy: sortKey ?? undefined,
-    sortOrder,
-  });
-
-=======
     ...queryFilters,
   });
 
@@ -80,7 +62,6 @@ export default function MonitorUserListPage() {
     }
   }, [monitorUsersQuery.data]);
 
->>>>>>> second/dev
   const totalPages = monitorUsersQuery.data?.pagination.totalPages ?? 1;
   const totalItems = monitorUsersQuery.data?.pagination.totalItems ?? 0;
 
@@ -123,25 +104,13 @@ export default function MonitorUserListPage() {
   };
 
   {
-<<<<<<< HEAD
-    !monitorUsersQuery.isLoading &&
-      users.length === 0 && (
-        <div className="py-6 text-center text-[#8c8c8c]">
-          No users found.
-        </div>
-      )
-=======
     !monitorUsersQuery.isLoading && users.length === 0 && (
       <div className="py-6 text-center text-[#8c8c8c]">No users found.</div>
     );
->>>>>>> second/dev
   }
 
   return (
     <div className="space-y-6">
-<<<<<<< HEAD
-      <Header />
-=======
       <Header
         filters={filterForm}
         setFilters={setFilterForm}
@@ -155,7 +124,6 @@ export default function MonitorUserListPage() {
           setQueryFilters(initialFilters);
         }}
       />
->>>>>>> second/dev
 
       {/* Table container with shadow, rounded corners, and border */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 space-y-4 overflow-hidden">
@@ -209,13 +177,9 @@ export default function MonitorUserListPage() {
 
         {/* DESKTOP TABLE */}
         {monitorUsersQuery.isLoading && (
-<<<<<<< HEAD
-          <div className="py-6 text-center text-[#8c8c8c]">Loading users...</div>
-=======
           <div className="py-6 text-center text-[#8c8c8c]">
             Loading users...
           </div>
->>>>>>> second/dev
         )}
         {monitorUsersQuery.isError && (
           <div className="py-6 text-center text-[#ff4d4f]">
@@ -320,13 +284,9 @@ export default function MonitorUserListPage() {
                   {/* OPERATION */}
                   <td className="px-4 py-3 border-b border-[#f0f0f0] text-right w-[90px] min-w-[90px]">
                     <div className="flex justify-end">
-<<<<<<< HEAD
-                      <Link href={`/services/monitor/list/plant?userid=${u.id}&fromService=true`}>
-=======
                       <Link
                         href={`/services/monitor/list/plant?userid=${u.id}&fromService=true`}
                       >
->>>>>>> second/dev
                         <div className="w-8 h-8 flex items-center justify-center rounded-full border border-[#d9d9d9] hover:border-[#1677ff] hover:text-[#1677ff] cursor-pointer transition flex-shrink-0">
                           &gt;
                         </div>
@@ -382,15 +342,7 @@ export default function MonitorUserListPage() {
         </div>
       </div>
 
-<<<<<<< HEAD
-      {openCreate && (
-        <CreateUserModal
-          onClose={() => setOpenCreate(false)}
-        />
-      )}
-=======
       {openCreate && <CreateUserModal onClose={() => setOpenCreate(false)} />}
->>>>>>> second/dev
       {openAssign && <AssignUserModal onClose={() => setOpenAssign(false)} />}
       {openRelate && <RelateUserModal onClose={() => setOpenRelate(false)} />}
     </div>
@@ -420,34 +372,20 @@ function SortableHeader({ label, sortKey, currentKey, order, onSort }: any) {
 
           <div className="flex flex-col text-[10px] leading-none ml-1">
             <span
-<<<<<<< HEAD
-              className={`${isActive && order === "asc"
-                ? "text-[#1677ff]"
-                : "text-[#bfbfbf]"
-                }`}
-=======
               className={`${
                 isActive && order === "asc"
                   ? "text-[#1677ff]"
                   : "text-[#bfbfbf]"
               }`}
->>>>>>> second/dev
             >
               ▲
             </span>
             <span
-<<<<<<< HEAD
-              className={`${isActive && order === "desc"
-                ? "text-[#1677ff]"
-                : "text-[#bfbfbf]"
-                }`}
-=======
               className={`${
                 isActive && order === "desc"
                   ? "text-[#1677ff]"
                   : "text-[#bfbfbf]"
               }`}
->>>>>>> second/dev
             >
               ▼
             </span>
