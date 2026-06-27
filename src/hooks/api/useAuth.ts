@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
 import { isBackendUnavailable } from "@/lib/api/errors";
@@ -10,11 +10,12 @@ import type {
   LoginRequest,
   RegisterRequest,
   VerificationCodeRequest,
-  ChangePasswordRequest
+  ChangePasswordRequest,
 } from "@/lib/api/schemas/auth";
 
 export const useLogin = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: LoginRequest) => {
@@ -22,7 +23,11 @@ export const useLogin = () => {
         return await authApi.login(payload);
       } catch (error) {
         if (!isBackendUnavailable(error)) throw error;
-        if (payload.portal === "monitoring" && payload.account === "PMPLASTIC" && payload.password === "polycab123") {
+        if (
+          payload.portal === "monitoring" &&
+          payload.account === "PMPLASTIC" &&
+          payload.password === "polycab123"
+        ) {
           return {
             accessToken: "dev-monitoring-token",
             redirect: "/monitor/plants",
@@ -34,7 +39,11 @@ export const useLogin = () => {
             },
           };
         }
-        if (payload.portal === "service" && payload.account === "service" && payload.password === "service123") {
+        if (
+          payload.portal === "service" &&
+          payload.account === "service" &&
+          payload.password === "service123"
+        ) {
           return {
             accessToken: "dev-service-token",
             redirect: "/services/monitor/list",
@@ -61,7 +70,7 @@ export const useLogin = () => {
             account: variables.account,
             password: variables.password,
             portal: variables.portal,
-          })
+          }),
         );
       } else {
         localStorage.removeItem("rememberedLogin");
@@ -73,7 +82,7 @@ export const useLogin = () => {
         data.user.portal,
         data.user.account || variables.account,
       );
-
+      queryClient.clear();
       router.push(data.redirect);
     },
   });

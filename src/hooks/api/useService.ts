@@ -141,9 +141,16 @@ export const useUpdateProfile = () => {
     mutationFn: (body: Partial<UpdateProfileRequest>) =>
       serviceApi.updateUserProfile(body),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      // Remove old cached profile
+      queryClient.removeQueries({
         queryKey: serviceKeys.profile(),
+      });
+
+      // Fetch fresh profile
+      await queryClient.fetchQuery({
+        queryKey: serviceKeys.profile(),
+        queryFn: serviceApi.profile, // your profile API
       });
     },
   });
@@ -154,6 +161,7 @@ export const useChangePassword = () =>
     mutationFn: (payload: ChangePasswordRequest) =>
       authApi.changePassword(payload),
   });
+
 export const useUserUpdateProfile = () => {
   const queryClient = useQueryClient();
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/hooks/api/useService";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api/apiClient";
 
 export default function InformationPage() {
   const [tab, setTab] = useState<"basic" | "security">("basic");
@@ -21,10 +22,37 @@ export default function InformationPage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [timezone, setTimezone] = useState("");
 
+  const [formData, setFormData] = useState({
+    account: "",
+    email: "",
+    phone: "",
+    address: "",
+    timezone: "",
+  });
+
+  useEffect(() => {
+    console.log(profileQuery.data);
+  }, [profileQuery.data]);
+
+  useEffect(() => {
+    console.log(" Profile API Response:", profileQuery.data);
+
+    if (profileQuery.data) {
+      const profile = profileQuery.data;
+
+      setFormData({
+        account: profile.account,
+        email: profile.email,
+        phone: profile.phone ?? "",
+        address: profile.address ?? "",
+        timezone: profile.timezone ?? "",
+      });
+    }
+  }, [profileQuery.data]);
+  useEffect(() => {
+    console.log("Form Data:", formData);
+  }, [formData]);
   const [errors, setErrors] = useState<any>({});
   const handleSecurityUpdate = async () => {
     const newErrors: any = {};
@@ -68,8 +96,6 @@ export default function InformationPage() {
     }
   };
 
-  const updateUserProfile = useUpdateProfile();
-
   const searchParams = useSearchParams();
 
   const selectedEndUserId = searchParams.get("userid") ?? undefined;
@@ -82,26 +108,27 @@ export default function InformationPage() {
     : undefined;
 
   const handleUpdateProfile = async () => {
-    if (!phone.trim()) {
+    if (!formData.phone.trim()) {
       toast.error("Phone is required.");
       return;
     }
 
-    if (!address.trim()) {
+    if (!formData.address.trim()) {
       toast.error("Address is required.");
       return;
     }
 
-    if (!timezone.trim()) {
+    if (!formData.timezone.trim()) {
       toast.error("Timezone is required.");
       return;
     }
 
     try {
       const result = await updateProfile.mutateAsync({
-        phone: phone.trim(),
-        address: address.trim(),
-        timezone,
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        timezone: formData.timezone,
       });
 
       toast.success(result.message ?? "Profile updated successfully.");
@@ -151,33 +178,43 @@ export default function InformationPage() {
 
             <div className="space-y-5 w-full max-w-md">
               <Field label="User Name">
-                <Input
-                  disabled
-                  value={profileQuery.data?.userName ?? "polycab.admin"}
-                />
+                <Input disabled value={formData.account} />
               </Field>
 
               <Field label="Email">
                 <Input
-                  disabled
-                  value={
-                    profileQuery.data?.email ?? "Bipin.Sonsale@Polycab.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      email: e.target.value,
+                    })
                   }
                 />
               </Field>
 
               <Field label="Phone">
                 <Input
-                  value={phone || profileQuery.data?.phone || ""}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      phone: e.target.value,
+                    })
+                  }
                   disabled={updateProfile.isPending}
                 />
               </Field>
 
               <Field label="Address">
                 <Input
-                  value={address || profileQuery.data?.address || ""}
-                  onChange={(e) => setAddress(e.target.value)}
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      address: e.target.value,
+                    })
+                  }
                   disabled={updateProfile.isPending}
                 />
               </Field>
@@ -185,8 +222,13 @@ export default function InformationPage() {
               <Field label="Timezone">
                 <select
                   disabled={updateProfile.isPending}
-                  value={timezone || profileQuery.data?.timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
+                  value={formData.timezone}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      timezone: e.target.value,
+                    })
+                  }
                   className="
                     w-full h-8 px-2.75 text-[14px]
                     border border-[#d9d9d9]
@@ -197,8 +239,6 @@ export default function InformationPage() {
                   "
                 >
                   <option>(UTC+05:30) Colombo, New Delhi</option>
-                  <option>(UTC+00:00) London</option>
-                  <option>(UTC-05:00) New York</option>
                 </select>
               </Field>
 

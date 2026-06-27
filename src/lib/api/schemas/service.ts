@@ -44,6 +44,7 @@ export interface UpdateProfileRequest {
   phone?: string;
   address?: string;
   timezone?: string;
+  email?: string;
 }
 
 export interface UpdateProfileResponse {
@@ -73,7 +74,7 @@ export interface RelateUserResponse {
   };
 }
 export const profileSchema = z.object({
-  userName: z.string(),
+  account: z.string(),
   email: z.string(),
   phone: z.string().optional(),
   address: z.string().optional(),
