@@ -12,6 +12,7 @@ import type {
   VerificationCodeRequest,
   ChangePasswordRequest,
 } from "@/lib/api/schemas/auth";
+import { UserRole } from "@/types/auth";
 
 export const useLogin = () => {
   const router = useRouter();
@@ -81,6 +82,7 @@ export const useLogin = () => {
         data.refreshToken!,
         data.user.portal,
         data.user.account || variables.account,
+        data.user.role as UserRole,
       );
       queryClient.clear();
       router.push(data.redirect);

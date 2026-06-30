@@ -15,10 +15,25 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { getAuthSession } from "@/lib/auth/session";
+import { UserRole } from "@/types/auth";
 
 /* ---------------- MENU ---------------- */
 
-const MENU = [
+type MenuChild = {
+  label: string;
+  href: string;
+  roles?: UserRole[];
+};
+
+type MenuItem = {
+  title: string;
+  icon: React.ElementType;
+  roles?: UserRole[];
+  children: MenuChild[];
+};
+
+const MENU: MenuItem[] = [
   {
     title: "Monitor",
     icon: Monitor,
@@ -27,8 +42,13 @@ const MENU = [
   {
     title: "User Management",
     icon: Users,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
     children: [
-      { label: "SubAccount", href: "/services/user/subaccount" },
+      {
+        label: "SubAccount",
+        href: "/services/user/subaccount",
+        roles: [UserRole.SUPER_ADMIN], // Only Super Admin
+      },
       { label: "Information", href: "/services/user/info" },
     ],
   },
@@ -74,6 +94,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   }, [isOpen]);
 
   const sidebarWidth = collapsed ? "w-16" : "w-64";
+  const { role } = getAuthSession();
+  console.log("User Role", role);
+  const filteredMenu = MENU.map((menu) => ({
+    ...menu,
+    children: menu.children.filter(
+      (child) => !child.roles || child.roles.includes(role!),
+    ),
+  })).filter((menu) => menu.children.length > 0);
 
   return (
     <>
@@ -101,7 +129,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* ================= MENU ================= */}
         <nav className="flex-1 overflow-y-auto py-2 space-y-1 relative">
-          {MENU.map((item) => {
+          {filteredMenu.map((item) => {
             const Icon = item.icon;
             const isExpanded = openMenu === item.title;
             const isHover = hoverMenu === item.title;

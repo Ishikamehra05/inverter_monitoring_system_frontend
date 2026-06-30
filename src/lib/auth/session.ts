@@ -1,3 +1,5 @@
+import { UserRole } from "@/types/auth";
+
 export type UserPortal = "monitoring" | "service";
 
 const TOKEN_KEY = "token";
@@ -5,12 +7,13 @@ const REFRESH_TOKEN_KEY = "refreshToken";
 const PORTAL_KEY = "userPortal";
 const ACCOUNT_KEY = "userAccount";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
-
+const ROLE_KEY = "userRole";
 type AuthSession = {
   token: string | null;
   refreshToken: string | null;
   portal: UserPortal | null;
   account: string | null;
+  role: UserRole | null;
 };
 
 const canUseStorage = () => typeof window !== "undefined";
@@ -52,7 +55,13 @@ const getAccountFromToken = (token: string | null): string | null => {
 
 export const getAuthSession = (): AuthSession => {
   if (!canUseStorage()) {
-    return { token: null, portal: null, account: null, refreshToken: null };
+    return {
+      token: null,
+      portal: null,
+      account: null,
+      refreshToken: null,
+      role: null,
+    };
   }
 
   const token = localStorage.getItem(TOKEN_KEY);
@@ -62,8 +71,16 @@ export const getAuthSession = (): AuthSession => {
   const portal =
     portalRaw === "monitoring" || portalRaw === "service" ? portalRaw : null;
   const account = storedAccount ?? getAccountFromToken(token);
-
-  return { token, refreshToken, portal, account };
+  const roleRaw = localStorage.getItem(ROLE_KEY);
+  const role: UserRole | null =
+    roleRaw === UserRole.SUPER_ADMIN
+      ? UserRole.SUPER_ADMIN
+      : roleRaw === UserRole.ADMIN
+        ? UserRole.ADMIN
+        : roleRaw === UserRole.END_USER
+          ? UserRole.END_USER
+          : null;
+  return { token, refreshToken, portal, account, role };
 };
 
 export const setAuthSession = (
@@ -71,13 +88,16 @@ export const setAuthSession = (
   refreshToken: string,
   portal: UserPortal,
   account: string,
+  role: UserRole,
 ) => {
   if (!canUseStorage()) return;
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(PORTAL_KEY, portal);
   localStorage.setItem(ACCOUNT_KEY, account);
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  localStorage.setItem(ROLE_KEY, role);
 
+  setCookie(ROLE_KEY, role, COOKIE_MAX_AGE_SECONDS);
   setCookie(REFRESH_TOKEN_KEY, refreshToken, COOKIE_MAX_AGE_SECONDS);
   setCookie(TOKEN_KEY, token, COOKIE_MAX_AGE_SECONDS);
   setCookie(PORTAL_KEY, portal, COOKIE_MAX_AGE_SECONDS);
@@ -90,6 +110,9 @@ export const clearAuthSession = () => {
   localStorage.removeItem(PORTAL_KEY);
   localStorage.removeItem(ACCOUNT_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(ROLE_KEY);
+
+  clearCookie(ROLE_KEY);
   clearCookie(REFRESH_TOKEN_KEY);
   clearCookie(TOKEN_KEY);
   clearCookie(PORTAL_KEY);
