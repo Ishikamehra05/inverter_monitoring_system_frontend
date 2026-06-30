@@ -2,7 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/lib/api/users";
-import type { CreateSubAccountRequest } from "@/lib/api/schemas/users";
+import type {
+  CreateSubAccountRequest,
+  SearchDeviceRequest,
+} from "@/lib/api/schemas/users";
 
 export const useCreateSubAccount = () => {
   const queryClient = useQueryClient();
@@ -54,5 +57,17 @@ export const useDeleteSubAccount = () => {
         queryKey: ["subaccounts"],
       });
     },
+  });
+};
+
+export const useSearchUser = () => {
+  return useMutation({
+    mutationFn: usersApi.searchUser,
+  });
+};
+export const useSearchDevice = () => {
+  return useMutation({
+    mutationFn: (payload: SearchDeviceRequest) =>
+      usersApi.searchDevice(payload),
   });
 };

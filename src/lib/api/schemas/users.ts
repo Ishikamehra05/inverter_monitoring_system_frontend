@@ -31,8 +31,49 @@ export const editSubAccountRequestSchema = z.object({
   password: z.string().optional(),
 });
 
+export const searchUserRequestSchema = z.object({
+  account: z.string().trim().min(1, "Account is required"),
+});
+
+export interface SearchUserResponse {
+  id: string;
+  account: string;
+  email: string | null;
+  portal: string;
+  role: string;
+  status: string;
+  timezone: string | null;
+  phone: string | null;
+  address: string | null;
+  assignedById: string | null;
+  isDeleted: boolean;
+  emailVerifiedAt: string | null;
+  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface SearchDeviceRequest {
+  sno: string;
+}
+
+export interface SearchDeviceResponse {
+  id: string;
+  sno: string;
+  inverterName: string | null;
+  dayDate: string;
+  latestTimestamp: string;
+  dailyProduction: number | null;
+  totalEnergy: number | null;
+  totalHours: number | null;
+  currentPower: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
 export type CreateSubAccountRequest = z.infer<
   typeof createSubAccountRequestSchema
 >;
 export type SubAccountResponse = z.infer<typeof subAccountResponseSchema>;
 export type EditSubAccountRequest = z.infer<typeof editSubAccountRequestSchema>;
+export type SearchUserRequest = z.infer<typeof searchUserRequestSchema>;

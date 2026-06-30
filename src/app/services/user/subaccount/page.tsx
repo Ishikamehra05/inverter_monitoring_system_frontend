@@ -5,10 +5,11 @@ import { Settings, Trash2 } from "lucide-react";
 
 import AddSubAccountModal from "@/components/services/modals/AddSubAccountModal";
 import EditOperatorModal from "@/components/services/modals/EditOperatorModal";
-import DeleteConfirmationModal from "@/components/services/modals/DeleteConfirmationModal";
+
 import Pagination from "@/components/ui/Pagination";
 import { useGetSubAccounts, useDeleteSubAccount } from "@/hooks/api/useUsers";
 import { toast } from "sonner";
+import DeleteConfirmationModal from "@/components/services/modals/deleteConfirmationModal";
 
 type SubAccount = {
   id: string;

@@ -1,6 +1,10 @@
 import { apiClient } from "./apiClient";
 import type {
   CreateSubAccountRequest,
+  SearchDeviceRequest,
+  SearchDeviceResponse,
+  SearchUserRequest,
+  SearchUserResponse,
   SubAccountResponse,
 } from "./schemas/users";
 
@@ -17,6 +21,23 @@ export const usersApi = {
       body: payload,
     }).then((res) => res.data),
 
+  searchUser: (payload: SearchUserRequest) =>
+    apiClient<ApiEnvelope<{ user: SearchUserResponse }>>(
+      "/service/search-user",
+      {
+        method: "POST",
+        body: payload,
+      },
+    ).then((res) => res.data),
+
+  searchDevice: (payload: SearchDeviceRequest) =>
+    apiClient<ApiEnvelope<{ device: SearchDeviceResponse }>>(
+      "/service/search-device",
+      {
+        method: "POST",
+        body: payload,
+      },
+    ).then((res) => res.data),
   getViewUsers: () =>
     apiClient<ApiEnvelope<any>>(`/service/admin`, {
       method: "GET",

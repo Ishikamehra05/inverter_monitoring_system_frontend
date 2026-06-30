@@ -2,8 +2,8 @@ import Image from "next/image";
 
 export default function QRSection() {
   return (
-    <div className="hidden md:flex md:w-1/2 bg-gray-100 flex-col items-center justify-center gap-4">
-      
+    <div className="hidden md:flex md:w-1/2 bg-gray-100 flex-col items-center justify-center gap-6">
+      {/* Polycab Logo */}
       <Image
         src="/images/polycab.png"
         alt="Polycab"
@@ -13,10 +13,16 @@ export default function QRSection() {
         priority
       />
 
-      <div className="w-36 h-36 bg-white border flex items-center justify-center">
-        <span className="text-xs text-gray-400">QR CODE</span>
+      {/* QR Code */}
+      <div className="rounded-xl bg-white p-3 shadow-lg border">
+        <Image
+          src="/images/qr-code.png" // <-- Your QR image
+          alt="Solar Logger QR Code"
+          width={180}
+          height={180}
+          className="rounded-md"
+        />
       </div>
-
     </div>
   );
 }

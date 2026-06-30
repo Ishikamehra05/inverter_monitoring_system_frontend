@@ -60,22 +60,18 @@ export default function LoginForm() {
   };
 
   useEffect(() => {
-  const saved = localStorage.getItem("rememberedLogin");
+    const saved = localStorage.getItem("rememberedLogin");
 
-  if (saved) {
-    const credentials = JSON.parse(saved);
+    if (saved) {
+      const credentials = JSON.parse(saved);
 
-    setAccount(credentials.account || "");
-    setPassword(credentials.password || "");
-    setRemember(true);
+      setAccount(credentials.account || "");
+      setPassword(credentials.password || "");
+      setRemember(true);
 
-    setActiveTab(
-      credentials.portal === "service"
-        ? "Service"
-        : "Monitoring"
-    );
-  }
-}, []);
+      setActiveTab(credentials.portal === "service" ? "Service" : "Monitoring");
+    }
+  }, []);
 
   return (
     <div className="w-full max-w-sm">
@@ -178,7 +174,6 @@ export default function LoginForm() {
           )}
         </div>
 
-
         {/* Buttons */}
         <div className="flex flex-col gap-4">
           <button
@@ -199,7 +194,7 @@ export default function LoginForm() {
           )}
         </div>
 
-        <p className="text-xs text-center text-gray-400 mt-6">V 1.11.2</p>
+        <p className="text-xs text-center text-gray-400 mt-6">V1.1.1.a</p>
       </form>
     </div>
   );

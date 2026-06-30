@@ -25,7 +25,6 @@ type EnergyNodeProps = {
   setHoveredNode: (id: string | null) => void;
 };
 
-
 const EnergyFlow = ({
   solarPower = 0,
   gridPower = 0,
@@ -65,17 +64,20 @@ const EnergyFlow = ({
     position: string;
   }) => (
     <div
-      className={`absolute ${position} flex flex-col items-center gap-1 sm:gap-2 transition-all duration-300 z-50 ${hoveredNode === nodeId ? "scale-110 z-10" : ""
-        }`}
+      className={`absolute ${position} flex flex-col items-center gap-1 sm:gap-2 transition-all duration-300 z-20 ${
+        hoveredNode === nodeId ? "scale-110 z-10" : ""
+      }`}
       onMouseEnter={() => setHoveredNode(nodeId)}
       onMouseLeave={() => setHoveredNode(null)}
     >
       <div
-        className={`relative ${isActive ? bgClass : "bg-gray-200"
-          } ${isActive ? colorClass : "text-gray-400"
-          } text-xl sm:text-2xl md:text-3xl p-2 sm:p-3 md:p-4 border-2 ${isActive ? "border-current" : "border-gray-400"
-          } rounded-full transition-all duration-300 shadow-lg ${isActive ? "shadow-current/30" : ""
-          } ${hoveredNode === nodeId && isActive ? "shadow-2xl" : ""}`}
+        className={`relative ${isActive ? bgClass : "bg-gray-200"} ${
+          isActive ? colorClass : "text-gray-400"
+        } text-xl sm:text-2xl md:text-3xl p-2 sm:p-3 md:p-4 border-2 ${
+          isActive ? "border-current" : "border-gray-400"
+        } rounded-full transition-all duration-300 shadow-lg ${
+          isActive ? "shadow-current/30" : ""
+        } ${hoveredNode === nodeId && isActive ? "shadow-2xl" : ""}`}
       >
         <Icon className={`${isActive ? "animate-pulse" : ""}`} />
         {isActive && (
@@ -83,25 +85,27 @@ const EnergyFlow = ({
         )}
       </div>
 
-      <div className="text-center">
+      {/* <div className="text-center">
         <span className="text-[10px] sm:text-xs font-medium text-gray-600 block">
           {label}
         </span>
-      </div>
+      </div> */}
 
       {/* Tooltip on hover */}
-      {hoveredNode === nodeId && (
+      {/* {hoveredNode === nodeId && (
         <div className="absolute -top-12 sm:-top-16 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-2 rounded-lg whitespace-nowrap shadow-xl z-20 animate-fade-in">
           {isActive ? `Active: ${Math.abs(value).toFixed(2)} ${unit}` : "Inactive"}
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
         </div>
-      )}
+      )} */}
     </div>
   );
 
   return (
     <>
-      <div className={`flex justify-center items-center p-2 sm:p-4 ${className}`}>
+      <div
+        className={`flex justify-center items-center p-2 sm:p-4 ${className}`}
+      >
         <div className="relative w-full max-w-2xl h-64 sm:h-80 md:h-96">
           {/* Solar */}
           <EnergyNode
@@ -147,7 +151,13 @@ const EnergyFlow = ({
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
             <defs>
               {/* Gradient for active lines */}
-              <linearGradient id="activeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id="activeGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
                 <stop offset="0%" stopColor="lime" stopOpacity="0.2" />
                 <stop offset="50%" stopColor="lime" stopOpacity="1" />
                 <stop offset="100%" stopColor="lime" stopOpacity="0.2" />
@@ -170,17 +180,28 @@ const EnergyFlow = ({
               y1="18%"
               x2="50%"
               y2="70%"
-              className={isSolarActive ? "energy-line-active" : "energy-line-disabled"}
+              className={
+                isSolarActive ? "energy-line-active" : "energy-line-disabled"
+              }
               stroke={isSolarActive ? "url(#activeGradient)" : "#d1d5db"}
               strokeWidth="2"
             />
             {isSolarActive && (
               <>
                 <circle r="4" className="sm:r-6" fill="lime" opacity="0.8">
-                  <animateMotion dur="2s" repeatCount="indefinite" path="M 160,60 L 320,250" />
+                  <animateMotion
+                    dur="2s"
+                    repeatCount="indefinite"
+                    path="M 160,60 L 320,250"
+                  />
                 </circle>
                 <circle r="3" className="sm:r-4" fill="yellow" opacity="0.6">
-                  <animateMotion dur="2s" begin="0.5s" repeatCount="indefinite" path="M 160,60 L 320,250" />
+                  <animateMotion
+                    dur="2s"
+                    begin="0.5s"
+                    repeatCount="indefinite"
+                    path="M 160,60 L 320,250"
+                  />
                 </circle>
               </>
             )}
@@ -191,17 +212,33 @@ const EnergyFlow = ({
               y1="18%"
               x2="50%"
               y2="70%"
-              className={isGridImporting ? "energy-line-active" : "energy-line-disabled"}
+              className={
+                isGridImporting ? "energy-line-active" : "energy-line-disabled"
+              }
               stroke={isGridImporting ? "deepskyblue" : "#d1d5db"}
               strokeWidth="2"
             />
             {isGridImporting && (
               <>
-                <circle r="4" className="sm:r-6" fill="deepskyblue" opacity="0.8">
-                  <animateMotion dur="2s" repeatCount="indefinite" path="M 75,18 L 50,70" />
+                <circle
+                  r="4"
+                  className="sm:r-6"
+                  fill="deepskyblue"
+                  opacity="0.8"
+                >
+                  <animateMotion
+                    dur="2s"
+                    repeatCount="indefinite"
+                    path="M 75,18 L 50,70"
+                  />
                 </circle>
                 <circle r="3" className="sm:r-4" fill="cyan" opacity="0.6">
-                  <animateMotion dur="2s" begin="0.7s" repeatCount="indefinite" path="M 75,18 L 50,70" />
+                  <animateMotion
+                    dur="2s"
+                    begin="0.7s"
+                    repeatCount="indefinite"
+                    path="M 75,18 L 50,70"
+                  />
                 </circle>
               </>
             )}
@@ -212,13 +249,19 @@ const EnergyFlow = ({
               y1="70%"
               x2="75%"
               y2="18%"
-              className={isGridExporting ? "energy-line-active" : "energy-line-disabled"}
+              className={
+                isGridExporting ? "energy-line-active" : "energy-line-disabled"
+              }
               stroke={isGridExporting ? "orange" : "#d1d5db"}
               strokeWidth="2"
             />
             {isGridExporting && (
               <circle r="4" className="sm:r-3" fill="orange" opacity="0.8">
-                <animateMotion dur="2s" repeatCount="indefinite" path="M 351,250 L 511,60" />
+                <animateMotion
+                  dur="2s"
+                  repeatCount="indefinite"
+                  path="M 351,250 L 511,60"
+                />
               </circle>
             )}
           </svg>

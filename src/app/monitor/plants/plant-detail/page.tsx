@@ -11,13 +11,10 @@ import { usePlantOverview } from "@/hooks/api/useDashboard";
 
 export default function PlantDetailsPage() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] =
-    useState<string>("chart");
+  const [activeTab, setActiveTab] = useState<string>("chart");
   const plantId = searchParams.get("plantId");
-  const targetEndUserId =
-    searchParams.get("targetEndUserId");
-  const fromService =
-    searchParams.get("fromService");
+  const targetEndUserId = searchParams.get("targetEndUserId");
+  const fromService = searchParams.get("fromService");
 
   if (!plantId) {
     return <div>Plant ID not found</div>;
@@ -39,9 +36,9 @@ export default function PlantDetailsPage() {
   } = usePlantOverview(plantId ?? "", {
     ...(fromService === "true" &&
       targetEndUserId && {
-      fromService: true,
-      targetEndUserId,
-    }),
+        fromService: true,
+        targetEndUserId,
+      }),
   });
 
   if (!plantId) {
@@ -53,11 +50,7 @@ export default function PlantDetailsPage() {
   }
 
   if (error) {
-    return (
-      <div>
-        Failed to load plant overview
-      </div>
-    );
+    return <div>Failed to load plant overview</div>;
   }
 
   if (!overview) {
@@ -66,44 +59,27 @@ export default function PlantDetailsPage() {
 
   return (
     <div className="flex flex-col p-4 md:p-6 rounded-lg gap-6">
-
       <div className="rounded-lg">
         <PlantOverview
           name={overview.plant.name}
           type={overview.plant.type}
           // status={overview.plant.status}
-          currentPower={
-            overview.metrics.currentPower.value
-          }
-          todayEnergy={
-            overview.metrics.eToday.value
-          }
-          totalEnergy={
-            overview.metrics.eTotal.value
-          }
-          income={
-            overview.plant.income.value
-          }
-          hours={
-            overview.metrics.hTotal.value
-          }
-          capacity={
-            overview.metrics.capacity.value
-          }
-          installDate={
-            overview.plant.installationDate
-          }
+          currentPower={overview.metrics.currentPower.value}
+          todayEnergy={overview.metrics.eToday.value}
+          totalEnergy={overview.metrics.eTotal.value}
+          income={overview.plant.income.value}
+          hours={overview.metrics.hTotal.value}
+          capacity={overview.metrics.capacity.value}
+          installDate={overview.plant.installationDate}
         />
       </div>
 
-      {activeTab === "chart" && (
-        <EnergyFlow
-          solarPower={5.2}
-          gridPower={-1.5}
-          consumption={3.8}
-          className="bg-(--theme-bg) p-6 rounded-lg"
-        />
-      )}
+      <EnergyFlow
+        solarPower={5.2}
+        gridPower={-1.5}
+        consumption={3.8}
+        className="bg-(--theme-bg) p-6 rounded-lg"
+      />
 
       <PlantsTabPanel
         plantId={plantId}
