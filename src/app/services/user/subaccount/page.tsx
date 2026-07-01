@@ -10,6 +10,9 @@ import Pagination from "@/components/ui/Pagination";
 import { useGetSubAccounts, useDeleteSubAccount } from "@/hooks/api/useUsers";
 import { toast } from "sonner";
 import DeleteConfirmationModal from "@/components/services/modals/deleteConfirmationModal";
+import { getAuthSession } from "@/lib/auth/session";
+import { useRouter } from "next/navigation";
+import { UserRole } from "@/types/auth";
 
 type SubAccount = {
   id: string;
@@ -34,7 +37,30 @@ export default function SubAccountPage() {
     account: string;
   } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
+  useEffect(() => {
+    const { role } = getAuthSession();
+
+    if (role !== UserRole.SUPER_ADMIN) {
+      router.replace("/services"); // or "/dashboard"
+    }
+  }, [router]);
+  const [authorized, setAuthorized] = useState(false);
+  useEffect(() => {
+    const { role } = getAuthSession();
+
+    if (role !== UserRole.SUPER_ADMIN) {
+      router.replace("/services");
+      return;
+    }
+
+    setAuthorized(true);
+  }, [router]);
+
+  if (!authorized) {
+    return null;
+  }
   const { data: subaccountsRaw = [], isLoading } = useGetSubAccounts();
   const deleteMutation = useDeleteSubAccount();
 
