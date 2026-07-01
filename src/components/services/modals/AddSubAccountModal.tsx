@@ -168,7 +168,7 @@ export default function AddSubAccountModal({
           >
             <option value="">Please select a timezone</option>
             <option value="UTC+05:30">(UTC+05:30) India</option>
-            <option value="UTC+08:00">(UTC+08:00) China</option>
+            {/* <option value="UTC+08:00">(UTC+08:00) China</option> */}
           </select>
         </div>
 
