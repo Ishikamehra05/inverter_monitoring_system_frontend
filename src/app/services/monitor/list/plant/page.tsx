@@ -37,6 +37,8 @@ export default function PlantPage() {
 
   const plants = plantsQuery.data?.items ?? [];
 
+  // console.log(plantsQuery.data?.items);
+
   const totalItems =
     plantsQuery.data?.pagination.totalItems ?? 0;
 
@@ -63,8 +65,8 @@ export default function PlantPage() {
     });
   }, [plants, sortKey, sortOrder]);
 
-  console.log("selectedEndUserId", selectedEndUserId);
-  console.log("plantsQuery", plantsQuery.data);
+  // console.log("selectedEndUserId", selectedEndUserId);
+  // console.log("plantsQuery", plantsQuery.data);
 
   if (plantsQuery.isLoading) {
     return (
@@ -111,7 +113,7 @@ export default function PlantPage() {
               {sortedPlants.map((plant) => (
                 <tr key={plant.id}>
                   <td className="px-4 py-2">
-                    {plant.status}
+                    {plant.plantStatus.status}
                   </td>
 
                   <td className="px-4 py-2">

@@ -37,10 +37,10 @@ export const usePlants = (params: PlantListParams = {}) =>
           items: mockPlants,
           statusCounts: {
             All: mockPlants.length,
-            Online: mockPlants.filter((p) => p.status === "Normal").length,
-            Offline: mockPlants.filter((p) => p.status === "Offline").length,
-            Abnormal: mockPlants.filter((p) => p.status === "Abnormal").length,
-            Standby: mockPlants.filter((p) => p.status === "Standby").length,
+            Online: mockPlants.filter((p) => p.plantStatus.status === "Normal").length,
+            Offline: mockPlants.filter((p) => p.plantStatus.status === "Offline").length,
+            Abnormal: mockPlants.filter((p) => p.plantStatus.status === "Abnormal").length,
+            Standby: mockPlants.filter((p) => p.plantStatus.status === "Standby").length,
           },
           pagination: {
             page: params.page ?? 1,

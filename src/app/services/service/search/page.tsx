@@ -145,13 +145,13 @@ sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">Inverter Status</td>
+                    <td className="bg-[#f5f5f5] px-5 py-3">Status</td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-3">{device.status}</td>
 
                     <td className="bg-[#f5f5f5] px-5 py-3">Account</td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-3">{device.account}</td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
@@ -161,7 +161,7 @@ sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
 
                     <td className="bg-[#f5f5f5] px-5 py-3">Power</td>
 
-                    <td className="px-4 py-3">{device.currentPower ?? 0} W</td>
+                    <td className="px-4 py-3">{device.currentPower ?? 0} kW</td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
@@ -229,75 +229,78 @@ sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
         {mode === "user" && (
           <>
             {/* User Info */}
-            <h3 className="text-[18px] font-semibold text-[#222] mb-4">
-              User Info
-            </h3>
-
             {user && (
-              <table className="w-full border border-[#ededed] border-collapse text-[15px]">
-                <tbody>
-                  <tr className="border-b border-[#ededed]">
-                    <td className="bg-[#f7f7f7] w-[30%] px-5 py-4 text-[#555]">
-                      Monitor User Name
-                    </td>
+              <>
+                <h3 className="text-[18px] font-semibold text-[#222] mb-4">
+                  User Info
+                </h3>
 
-                    <td colSpan={3} className="px-5 py-4">
-                      <Link
-                        href={`/monitor/plants?userid=${user.id}&fromService=true`}
-                        className="text-[#1890ff] hover:underline"
-                      >
-                        {user.account}
-                      </Link>
-                    </td>
-                  </tr>
 
-                  <tr className="border-b border-[#ededed]">
-                    <td className="bg-[#f7f7f7] px-5 py-4">Operation</td>
+                <table className="w-full border border-[#ededed] border-collapse text-[15px]">
+                  <tbody>
+                    <tr className="border-b border-[#ededed]">
+                      <td className="bg-[#f7f7f7] w-[30%] px-5 py-4 text-[#555]">
+                        Monitor User Name
+                      </td>
 
-                    <td colSpan={3} className="px-5 py-4">
-                      <button className="text-[#555] hover:text-[#1890ff]">
-                        Activate User
-                      </button>
+                      <td colSpan={3} className="px-5 py-4">
+                        <Link
+                          href={`/monitor/plants?userid=${user.id}&fromService=true`}
+                          className="text-[#1890ff] hover:underline"
+                        >
+                          {user.account}
+                        </Link>
+                      </td>
+                    </tr>
 
-                      <button className="ml-5 text-[#555] hover:text-red-500">
-                        Delete User
-                      </button>
-                    </td>
-                  </tr>
+                    <tr className="border-b border-[#ededed]">
+                      <td className="bg-[#f7f7f7] px-5 py-4">Operation</td>
 
-                  <tr className="border-b border-[#ededed]">
-                    <td className="bg-[#f7f7f7] px-5 py-4">E-mail</td>
+                      <td colSpan={3} className="px-5 py-4">
+                        <button className="text-[#555] hover:text-[#1890ff]">
+                          Activate User
+                        </button>
 
-                    <td className="px-5 py-4">{user.email ?? "-"}</td>
+                        <button className="ml-5 text-[#555] hover:text-red-500">
+                          Delete User
+                        </button>
+                      </td>
+                    </tr>
 
-                    <td className="bg-[#f7f7f7] w-[140px] px-5 py-4">Phone</td>
+                    <tr className="border-b border-[#ededed]">
+                      <td className="bg-[#f7f7f7] px-5 py-4">E-mail</td>
 
-                    <td className="px-5 py-4">{user.phone ?? "-"}</td>
-                  </tr>
+                      <td className="px-5 py-4">{user.email ?? "-"}</td>
 
-                  <tr className="border-b border-[#ededed]">
-                    <td className="bg-[#f7f7f7] px-5 py-4">
-                      Registration Time
-                    </td>
+                      <td className="bg-[#f7f7f7] w-[140px] px-5 py-4">Phone</td>
 
-                    <td className="px-5 py-4">
-                      {new Date(user.createdAt).toLocaleString()}
-                    </td>
+                      <td className="px-5 py-4">{user.phone ?? "-"}</td>
+                    </tr>
 
-                    <td className="bg-[#f7f7f7] px-5 py-4">Price</td>
+                    <tr className="border-b border-[#ededed]">
+                      <td className="bg-[#f7f7f7] px-5 py-4">
+                        Registration Time
+                      </td>
 
-                    <td className="px-5 py-4">0.0000</td>
-                  </tr>
+                      <td className="px-5 py-4">
+                        {new Date(user.createdAt).toLocaleString()}
+                      </td>
 
-                  <tr>
-                    <td className="bg-[#f7f7f7] px-5 py-4">Activation</td>
+                      <td className="bg-[#f7f7f7] px-5 py-4">Price</td>
 
-                    <td colSpan={3} className="px-5 py-4">
-                      {user.status === "active" ? "Y" : "N"}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                      <td className="px-5 py-4">0.0000</td>
+                    </tr>
+
+                    <tr>
+                      <td className="bg-[#f7f7f7] px-5 py-4">Activation</td>
+
+                      <td colSpan={3} className="px-5 py-4">
+                        {user.status === "active" ? "Y" : "N"}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </>
             )}
           </>
         )}

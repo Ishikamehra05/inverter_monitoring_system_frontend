@@ -68,12 +68,16 @@ export interface SearchDeviceResponse {
   totalEnergy: number | null;
   totalHours: number | null;
   currentPower: number | null;
+
+  status: string;
+  userId: string | null;
+  account: string | null;
+
   createdAt: string;
   updatedAt: string;
 }
-export type CreateSubAccountRequest = z.infer<
-  typeof createSubAccountRequestSchema
->;
+
+export type CreateSubAccountRequest = z.infer<typeof createSubAccountRequestSchema>;
 export type SubAccountResponse = z.infer<typeof subAccountResponseSchema>;
 export type EditSubAccountRequest = z.infer<typeof editSubAccountRequestSchema>;
 export type SearchUserRequest = z.infer<typeof searchUserRequestSchema>;

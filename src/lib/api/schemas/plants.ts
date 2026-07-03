@@ -28,7 +28,7 @@ export const plantSchema = z.object({
   installed: z.string(),
   updated: z.string(),
 
-  status: plantCurrentStatusSchema,
+  plantStatus: plantCurrentStatusSchema,
 });
 
 export const plantListResponseSchema = z.object({
