@@ -33,8 +33,8 @@ export const serviceApi = {
       ApiEnvelope<{
         items: MonitorUser[];
         statusCounts: {
-          normal: number;
-          fault: number;
+          online: number;
+          abnormal: number;
           standby: number;
           offline: number;
         };

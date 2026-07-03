@@ -9,8 +9,8 @@ export const monitorUserSchema = z.object({
   today: metricSchema,
   total: metricSchema,
   status: z.object({
-    normal: z.number(),
-    fault: z.number(),
+    online: z.number(),
+    abnormal: z.number(),
     standby: z.number(),
     offline: z.number(),
   }),
@@ -31,8 +31,8 @@ export const monitorFiltersSchema = z.object({
 export const monitorUsersResponseSchema = z.object({
   items: z.array(monitorUserSchema),
   statusCounts: z.object({
-    normal: z.number(),
-    fault: z.number(),
+    online: z.number(),
+    abnormal: z.number(),
     standby: z.number(),
     offline: z.number(),
   }),

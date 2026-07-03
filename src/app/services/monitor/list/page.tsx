@@ -20,8 +20,8 @@ type MonitorUserRow = {
   today: number;
   total: number;
   status: {
-    normal: number;
-    fault: number;
+    online: number;
+    abnormal: number;
     standby: number;
     offline: number;
   };
@@ -142,19 +142,19 @@ export default function MonitorUserListPage() {
             </FilterBtn>
 
             <FilterWithCount
-              label="Normal"
+              label="Online"
               count={0}
               color="green"
-              active={statusFilter === "normal"}
-              onClick={() => setStatusFilter("normal")}
+              active={statusFilter === "online"}
+              onClick={() => setStatusFilter("online")}
             />
 
             <FilterWithCount
-              label="Fault"
+              label="Abnormal"
               count={0}
               color="red"
-              active={statusFilter === "fault"}
-              onClick={() => setStatusFilter("fault")}
+              active={statusFilter === "abnormal"}
+              onClick={() => setStatusFilter("abnormal")}
             />
 
             <FilterWithCount
@@ -274,8 +274,8 @@ export default function MonitorUserListPage() {
                   {/* DEVICE STATUS */}
                   <td className="px-4 py-3 border-b border-[#f0f0f0]">
                     <div className="flex items-center justify-start gap-2">
-                      <StatusBadge type="normal" count={u.status.normal} />
-                      <StatusBadge type="fault" count={u.status.fault} />
+                      <StatusBadge type="online" count={u.status.online} />
+                      <StatusBadge type="abnormal" count={u.status.abnormal} />
                       <StatusBadge type="standby" count={u.status.standby} />
                       <StatusBadge type="offline" count={u.status.offline} />
                     </div>
@@ -489,17 +489,17 @@ function AntBlueBtn({ label, onClick }: any) {
 
 function StatusBadge({ type, count }: any) {
   const config: any = {
-    normal: {
+    online: {
       text: "text-[#52c41a]",
       bg: "bg-[#f6ffed]",
       border: "border-[#b7eb8f]",
-      label: "Normal",
+      label: "online",
     },
-    fault: {
+    abnormal: {
       text: "text-[#ff4d4f]",
       bg: "bg-[#fff2f0]",
       border: "border-[#ffccc7]",
-      label: "Fault",
+      label: "abnormal",
     },
     standby: {
       text: "text-[#faad14]",
