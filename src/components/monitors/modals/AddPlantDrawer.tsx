@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useCreatePlant, useUpdatePlant } from "@/hooks/api/usePlants";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 type Plant = {
   id: string;
@@ -28,13 +29,12 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
   const updatePlant = useUpdatePlant();
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("userid");
-  const serviceParams =
-    selectedEndUserId
-      ? {
+  const serviceParams = selectedEndUserId
+    ? {
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : undefined;
+    : undefined;
   const initialForm = {
     plantName: "",
     installedDate: "",
@@ -71,8 +71,44 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
   // };
 
   const handleSubmit = async () => {
+    // Validation
+    if (!form.plantName.trim()) {
+      toast.error("Plant name is required.");
+      return;
+    }
+
+    if (!form.installedDate) {
+      toast.error("Installation date is required.");
+      return;
+    }
+
+    if (!form.plantType) {
+      toast.error("Please select a plant type.");
+      return;
+    }
+
+    if (!form.kwp || Number(form.kwp) <= 0) {
+      toast.error("Please enter a valid KWP value.");
+      return;
+    }
+
+    if (!form.price || Number(form.price) <= 0) {
+      toast.error("Please enter a valid electricity price.");
+      return;
+    }
+
+    if (form.latitude && isNaN(Number(form.latitude))) {
+      toast.error("Latitude must be a valid number.");
+      return;
+    }
+
+    if (form.longitude && isNaN(Number(form.longitude))) {
+      toast.error("Longitude must be a valid number.");
+      return;
+    }
+
     const payload = {
-      plantName: form.plantName,
+      plantName: form.plantName.trim(),
       installedDate: form.installedDate,
       kwp: Number(form.kwp),
       price: Number(form.price),
@@ -80,24 +116,31 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
       plantType: form.plantType,
       longitude: form.longitude || undefined,
       latitude: form.latitude || undefined,
-      address: form.address || undefined,
+      address: form.address.trim() || undefined,
       selectedEndUserId: selectedEndUserId || undefined,
     };
 
-    if (plant?.id) {
-      await updatePlant.mutateAsync({
-        plantId: plant.id,
-        payload,
-        serviceParams,
-      });
-    } else {
-      await createPlant.mutateAsync(payload);
+    try {
+      if (plant?.id) {
+        await updatePlant.mutateAsync({
+          plantId: plant.id,
+          payload,
+          serviceParams,
+        });
+
+        toast.success("Plant updated successfully.");
+      } else {
+        await createPlant.mutateAsync(payload);
+
+        toast.success("Plant created successfully.");
+      }
+
+      setForm(initialForm);
+      onClose();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save plant. Please try again.");
     }
-
-    setForm(initialForm);
-    onClose();
   };
-
 
   const setField = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -149,7 +192,11 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
                   disabled={createPlant.isPending}
                   className="flex-1 bg-blue-500 text-white py-1 rounded disabled:opacity-50"
                 >
-                  {createPlant.isPending || updatePlant.isPending ? "Saving..." : plant ? "Update" : "Ok"}
+                  {createPlant.isPending || updatePlant.isPending
+                    ? "Saving..."
+                    : plant
+                      ? "Update"
+                      : "Ok"}
                   {/* {createPlant.isPending ? "Saving..." : "Ok"} */}
                 </button>
 

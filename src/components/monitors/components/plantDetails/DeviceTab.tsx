@@ -6,7 +6,12 @@ import EditInverterModal from "@/components/monitors/modals/EditInverterModal";
 import DeleteInverterModal from "@/components/monitors/modals/DeleteInverterModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { navigateMonitor } from "@/utils/monitorNavigation";
-import { useAddInverter, useEditDevice, useDeleteDevice } from "@/hooks/api/useDevices";
+import {
+  useAddInverter,
+  useEditDevice,
+  useDeleteDevice,
+} from "@/hooks/api/useDevices";
+import { toast } from "sonner";
 // ---------- Types ----------
 export type Device = {
   id: string;
@@ -55,19 +60,16 @@ const SortIcon = ({ column, activeKey, order }: SortIconProps) => {
   return (
     <span className="ml-1">
       <IoIosArrowUp
-        className={`h-3 w-3 transition-transform ${order === "desc" ? "rotate-180" : ""
-          }`}
+        className={`h-3 w-3 transition-transform ${
+          order === "desc" ? "rotate-180" : ""
+        }`}
       />
     </span>
   );
 };
 
 // ---------- Device Table ----------
-const DeviceTable = ({
-  devices,
-  onEdit,
-  onDelete,
-}: DeviceTableProps) => {
+const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
@@ -98,31 +100,19 @@ const DeviceTable = ({
 
   const currentPlantId = searchParams.get("plantId");
 
-  const handleDeviceClick = (
-    deviceId: number | string
-  ) => {
+  const handleDeviceClick = (deviceId: number | string) => {
     const numericDeviceId =
-      typeof deviceId === "string"
-        ? deviceId.replace("device-", "")
-        : deviceId;
+      typeof deviceId === "string" ? deviceId.replace("device-", "") : deviceId;
 
-    const targetEndUserId =
-      searchParams.get("targetEndUserId");
+    const targetEndUserId = searchParams.get("targetEndUserId");
 
-    let url =
-      `/monitor/plants/plant-detail/device-detail?plantId=${currentPlantId}&deviceId=${numericDeviceId}`;
+    let url = `/monitor/plants/plant-detail/device-detail?plantId=${currentPlantId}&deviceId=${numericDeviceId}`;
 
     if (targetEndUserId) {
-      url +=
-        `&targetEndUserId=${targetEndUserId}` +
-        `&fromService=true`;
+      url += `&targetEndUserId=${targetEndUserId}` + `&fromService=true`;
     }
 
-    navigateMonitor(
-      router,
-      searchParams,
-      url
-    );
+    navigateMonitor(router, searchParams, url);
   };
   return (
     <div className="mt-4 rounded-lg border overflow-hidden">
@@ -238,8 +228,9 @@ const DeviceTable = ({
               >
                 <td className="px-3 py-4">
                   <span
-                    className={`inline-block h-2 w-2 rounded-full ${device.online ? "bg-green-500" : "bg-red-500"
-                      }`}
+                    className={`inline-block h-2 w-2 rounded-full ${
+                      device.online ? "bg-green-500" : "bg-red-500"
+                    }`}
                   />
                 </td>
 
@@ -289,13 +280,12 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
 
-  const serviceParams =
-    selectedEndUserId
-      ? {
+  const serviceParams = selectedEndUserId
+    ? {
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : {};
+    : {};
   const addInverter = useAddInverter(plantId, serviceParams);
   const editDevice = useEditDevice(plantId, serviceParams);
   const deleteDevice = useDeleteDevice(plantId, serviceParams);
@@ -309,26 +299,43 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
   const paginatedDevices = devices.slice(startIndex, endIndex);
 
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | null>(null);
+  const [messageType, setMessageType] = useState<"success" | "error" | null>(
+    null,
+  );
 
   const handleAddInverter = async (serialNumber: string) => {
-    try {
-      await addInverter.mutateAsync(serialNumber);
+    // Validation
+    if (!serialNumber.trim()) {
+      toast.error("Serial number is required.");
+      return;
+    }
 
-      // setMessage("Inverter added successfully.");
+    if (serialNumber.trim().length < 5) {
+      toast.error("Please enter a valid serial number.");
+      return;
+    }
+
+    try {
+      await addInverter.mutateAsync(serialNumber.trim());
+
+      toast.success("Inverter added successfully.");
+
       setMessageType("success");
 
       setTimeout(() => {
         setOpen(false);
         setMessage("");
         setMessageType(null);
-      }, 1500);
+      }, 1000);
     } catch (error: any) {
-      setMessage(
+      const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
-        "Failed to add inverter."
-      );
+        "Failed to add inverter.";
+
+      toast.error(errorMessage);
+
+      setMessage(errorMessage);
       setMessageType("error");
     }
   };
@@ -337,29 +344,43 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
 
-  const handleEditDevice = async (
-    deviceId: string,
-    name: string,
-  ) => {
+  const handleEditDevice = async (deviceId: string, name: string) => {
+    // Validation
+    if (!name.trim()) {
+      toast.error("Device name is required.");
+      return;
+    }
+
+    if (name.trim().length < 3) {
+      toast.error("Device name must be at least 3 characters.");
+      return;
+    }
+
     try {
       await editDevice.mutateAsync({
         deviceId,
-        name,
+        name: name.trim(),
       });
+
+      toast.success("Device updated successfully.");
 
       setMessage("Device updated successfully.");
       setMessageType("success");
     } catch (error: any) {
-      setMessage(
+      const errorMessage =
         error?.response?.data?.message ||
-        "Failed to update device."
-      );
+        error?.message ||
+        "Failed to update device.";
+
+      toast.error(errorMessage);
+
+      setMessage(errorMessage);
       setMessageType("error");
     }
   };
 
   const openEditModal = (deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
+    const device = devices.find((d) => d.id === deviceId);
 
     if (!device) return;
 
@@ -367,26 +388,30 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
     setEditOpen(true);
   };
 
-  const handleDeleteDevice = async (
-    deviceId: string,
-  ) => {
+  const handleDeleteDevice = async (deviceId: string) => {
+    if (!deviceId) {
+      toast.error("No inverter selected.");
+      return;
+    }
 
     try {
       await deleteDevice.mutateAsync(deviceId);
 
-      setMessage("Device deleted successfully.");
-      setMessageType("success");
+      toast.success("Inverter deleted successfully.");
+
+      setDeleteOpen(false);
+      setSelectedDevice(null);
     } catch (error: any) {
-      setMessage(
+      toast.error(
         error?.response?.data?.message ||
-        "Failed to delete device."
+          error?.message ||
+          "Failed to delete inverter.",
       );
-      setMessageType("error");
     }
   };
 
   const openDeleteModal = (deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
+    const device = devices.find((d) => d.id === deviceId);
 
     if (!device) return;
 
@@ -424,6 +449,7 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
         />
       </div>
       <AddInverterModal
+        key={open ? "open" : "closed"}
         open={open}
         onClose={() => setOpen(false)}
         onSubmit={handleAddInverter}
@@ -442,10 +468,7 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
         onSubmit={async (name) => {
           if (!selectedDevice) return;
 
-          await handleEditDevice(
-            selectedDevice.id,
-            name
-          );
+          await handleEditDevice(selectedDevice.id, name);
 
           setEditOpen(false);
         }}
@@ -454,19 +477,12 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
       <DeleteInverterModal
         open={deleteOpen}
         device={selectedDevice}
+        loading={deleteDevice.isPending}
         onClose={() => {
           setDeleteOpen(false);
           setSelectedDevice(null);
         }}
-        onConfirm={async () => {
-          if (!selectedDevice) return;
-
-          await handleDeleteDevice(
-            selectedDevice.id
-          );
-
-          setDeleteOpen(false);
-        }}
+        onConfirm={() => handleDeleteDevice(selectedDevice!.id)}
       />
     </>
   );
