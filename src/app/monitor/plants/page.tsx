@@ -14,6 +14,7 @@ import {
   useDeletePlant,
   usePlantListExport,
 } from "@/hooks/api/usePlants";
+import { toast } from "sonner";
 /* ---------- Types ---------- */
 type Plant = {
   id: string;
@@ -757,12 +758,14 @@ export default function PlantPage() {
                     },
                     {
                       onSuccess: () => {
+                        toast.success("Plant deleted successfully.");
                         plantsQuery.refetch();
                         setDeletePlantId(null);
                         setShowDeleteModal(false);
                       },
 
                       onError: (err) => {
+                        toast.error(err?.message || "Failed to delete plant.");
                         console.error(err);
                       },
                     },

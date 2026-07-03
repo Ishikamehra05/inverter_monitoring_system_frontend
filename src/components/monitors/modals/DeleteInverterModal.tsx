@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -10,6 +11,7 @@ type Props = {
   } | null;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  loading?: boolean;
 };
 
 const DeleteInverterModal = ({
@@ -17,9 +19,29 @@ const DeleteInverterModal = ({
   device,
   onClose,
   onConfirm,
+  loading = false,
 }: Props) => {
   if (!open || !device) return null;
+  const handleDelete = async () => {
+    if (!device) {
+      toast.error("No inverter selected.");
+      return;
+    }
 
+    try {
+      await onConfirm();
+
+      toast.success("Inverter deleted successfully.");
+
+      onClose();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to delete inverter.",
+      );
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md bg-white rounded-xl p-6">
@@ -41,16 +63,18 @@ const DeleteInverterModal = ({
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
-            className="border px-4 py-2 rounded text-black"
+            disabled={loading}
+            className="border px-4 py-2 rounded text-black disabled:opacity-50"
           >
             Cancel
           </button>
 
           <button
-            onClick={onConfirm}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+            onClick={handleDelete}
+            disabled={loading}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded disabled:opacity-50"
           >
-            Delete
+            {loading ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>
