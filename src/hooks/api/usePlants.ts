@@ -3,12 +3,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isBackendUnavailable } from "@/lib/api/errors";
 import { mockPlants, mockPlantSummary } from "@/lib/api/mockData";
-import { plantsApi, type PlantListParams, } from "@/lib/api/plants";
-import type { CreatePlantRequest, PlantLogsParams, PlantLogsExportParams, UserLogsParams } from "@/lib/api/schemas/plants";
+import { plantsApi, type PlantListParams } from "@/lib/api/plants";
+import type {
+  CreatePlantRequest,
+  PlantLogsParams,
+  PlantLogsExportParams,
+  UserLogsParams,
+} from "@/lib/api/schemas/plants";
 
 export const plantKeys = {
   all: ["plants"] as const,
-  list: (params: PlantListParams) => [...plantKeys.all, "list", params] as const,
+  list: (params: PlantListParams) =>
+    [...plantKeys.all, "list", params] as const,
   summary: (params: Record<string, unknown>) =>
     [...plantKeys.all, "summary", params] as const,
 };
@@ -16,8 +22,7 @@ export const plantKeys = {
 export const userLogKeys = {
   all: ["user-logs"] as const,
 
-  list: (params: UserLogsParams) =>
-    [...userLogKeys.all, params] as const,
+  list: (params: UserLogsParams) => [...userLogKeys.all, params] as const,
 };
 
 export const usePlants = (params: PlantListParams = {}) =>
@@ -30,6 +35,13 @@ export const usePlants = (params: PlantListParams = {}) =>
         if (!isBackendUnavailable(error)) throw error;
         return {
           items: mockPlants,
+          statusCounts: {
+            All: mockPlants.length,
+            Online: mockPlants.filter((p) => p.status === "Normal").length,
+            Offline: mockPlants.filter((p) => p.status === "Offline").length,
+            Abnormal: mockPlants.filter((p) => p.status === "Abnormal").length,
+            Standby: mockPlants.filter((p) => p.status === "Standby").length,
+          },
           pagination: {
             page: params.page ?? 1,
             pageSize: params.pageSize ?? 10,
@@ -46,7 +58,7 @@ export const usePlantSummary = (
     ownerUserId?: string;
     fromService?: boolean;
     selectedEndUserId?: string;
-  } = {}
+  } = {},
 ) =>
   useQuery({
     queryKey: plantKeys.summary(params),
@@ -141,10 +153,7 @@ export const useDeletePlant = () => {
       };
     }) => {
       try {
-        return await plantsApi.remove(
-          plantId,
-          serviceParams
-        );
+        return await plantsApi.remove(plantId, serviceParams);
       } catch (error) {
         if (!isBackendUnavailable(error)) throw error;
 
@@ -200,11 +209,7 @@ export const useUpdatePlant = () => {
         targetEndUserId?: string;
       };
     }) => {
-      return plantsApi.update(
-        plantId,
-        payload,
-        serviceParams
-      );
+      return plantsApi.update(plantId, payload, serviceParams);
     },
 
     onSuccess: () => {
@@ -216,15 +221,11 @@ export const useUpdatePlant = () => {
 };
 export const usePlantListExport = () =>
   useMutation({
-    mutationFn: async (
-      serviceParams?: {
-        fromService?: boolean;
-        targetEndUserId?: string;
-      }
-    ) => {
-      return plantsApi.plantListExport(
-        serviceParams
-      );
+    mutationFn: async (serviceParams?: {
+      fromService?: boolean;
+      targetEndUserId?: string;
+    }) => {
+      return plantsApi.plantListExport(serviceParams);
     },
   });
 
@@ -245,22 +246,16 @@ export const plantLogKeys = {
     [...plantLogKeys.all, plantId, params] as const,
 };
 
-export const usePlantLogs = (
-  plantId: string,
-  params: PlantLogsParams
-) =>
+export const usePlantLogs = (plantId: string, params: PlantLogsParams) =>
   useQuery({
     queryKey: plantLogKeys.list(plantId, params),
     queryFn: () => plantsApi.plantLogs(plantId, params),
     enabled: !!plantId,
   });
 
-export const useUserLogs = (
-  params: UserLogsParams
-) =>
+export const useUserLogs = (params: UserLogsParams) =>
   useQuery({
     queryKey: userLogKeys.list(params),
 
-    queryFn: () =>
-      plantsApi.userLogs(params),
+    queryFn: () => plantsApi.userLogs(params),
   });

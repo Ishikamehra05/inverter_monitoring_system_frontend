@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { metricSchema, paginationSchema } from "./common";
 
-export const plantStatusSchema = z.enum([
-  "Offline",
-  "Normal",
-  "Abnormal",
-  "Standby",
-]);
+const plantCurrentStatusSchema = z.object({
+  status: z.enum(["Offline", "Normal", "Abnormal", "Standby"]),
+  totalDevices: z.number(),
+  normalCount: z.number(),
+  abnormalCount: z.number(),
+  standbyCount: z.number(),
+  offlineCount: z.number(),
+  updatedAt: z.string(),
+});
 
 export const plantSchema = z.object({
   id: z.string(),
@@ -24,12 +27,19 @@ export const plantSchema = z.object({
   effect: z.string(),
   installed: z.string(),
   updated: z.string(),
-  status: plantStatusSchema,
-  // statusCount: z.number().optional(),
+
+  status: plantCurrentStatusSchema,
 });
 
 export const plantListResponseSchema = z.object({
   items: z.array(plantSchema),
+  statusCounts: z.object({
+    All: z.number(),
+    Online: z.number(),
+    Offline: z.number(),
+    Abnormal: z.number(),
+    Standby: z.number(),
+  }),
   pagination: paginationSchema,
 });
 

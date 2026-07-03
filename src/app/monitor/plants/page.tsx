@@ -8,7 +8,12 @@ import { FiX } from "react-icons/fi";
 import AddPlantDrawer from "@/components/monitors/modals/AddPlantDrawer";
 import { useRouter, useSearchParams } from "next/navigation";
 import { navigateMonitor } from "@/utils/monitorNavigation";
-import { usePlantSummary, usePlants, useDeletePlant, usePlantListExport } from "@/hooks/api/usePlants";
+import {
+  usePlantSummary,
+  usePlants,
+  useDeletePlant,
+  usePlantListExport,
+} from "@/hooks/api/usePlants";
 /* ---------- Types ---------- */
 type Plant = {
   id: string;
@@ -17,19 +22,25 @@ type Plant = {
   eToday: string;
   eTotal: string;
   power: string;
-  effect: string;
+  effect: {
+    value: string;
+  };
   installed: string;
   updated: string;
-  status: string;
   kwp: string;
   price: string;
   address: string;
   longitude: string;
   latitude: string;
+
+  status: "Offline" | "Normal" | "Abnormal" | "Standby";
+
+  totalDevices: number;
+  normalCount: number;
+  abnormalCount: number;
+  standbyCount: number;
+  offlineCount: number;
 };
-
-
-
 
 /* ---------- Stat Card ---------- */
 const StatCard = ({
@@ -71,22 +82,29 @@ const Filters = ({
   setActive: (v: string) => void;
   counts: Record<string, number>;
 }) => {
-  const names = ["All", "Normal", "Abnormal", "Standby", "Offline"];
+  const filters = [
+    { label: "All", value: "All" },
+    { label: "Normal", value: "Normal" },
+    { label: "Abnormal", value: "Abnormal" },
+    { label: "Standby", value: "Standby" },
+    { label: "Offline", value: "Offline" },
+  ];
 
   return (
     <div className="flex gap-8 overflow-x-auto">
-      {names.map((n) => (
+      {filters.map((filter) => (
         <button
-          key={n}
-          onClick={() => setActive(n)}
-          className={`text-sm flex items-center gap-1 pb-1 cursor-pointer ${active === n
-            ? "text-(--primary) border-b-2 font-semibold border-(--primary)"
-            : "text-(--muted-fg)"
-            }`}
+          key={filter.value}
+          onClick={() => setActive(filter.value)}
+          className={`text-sm flex items-center gap-1 pb-1 cursor-pointer ${
+            active === filter.value
+              ? "text-(--primary) border-b-2 font-semibold border-(--primary)"
+              : "text-(--muted-fg)"
+          }`}
         >
-          {n}
+          {filter.label}
           <span className="bg-(--primary) text-(--white) text-xs px-2 rounded-full">
-            {counts[n]}
+            {counts[filter.label]}
           </span>
         </button>
       ))}
@@ -208,21 +226,25 @@ const PlantTable = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const handlePlantClick = (plantId: string) => {
+  const handlePlantClick = (plantId: string, status: Plant["status"]) => {
     const userId = searchParams.get("userid");
 
-    let url =
-      `/monitor/plants/plant-detail?plantId=${plantId}`;
+    const params = new URLSearchParams({
+      plantId,
+      status,
+    });
 
     if (userId) {
-      url +=
-        `&targetEndUserId=${userId}` +
-        `&fromService=true`;
+      params.set("targetEndUserId", userId);
+      params.set("fromService", "true");
     }
 
-    navigateMonitor(router, searchParams, url);
+    navigateMonitor(
+      router,
+      searchParams,
+      `/monitor/plants/plant-detail?${params.toString()}`,
+    );
   };
-
 
   return (
     <div className="overflow-x-auto">
@@ -306,12 +328,12 @@ const PlantTable = ({
             <tr key={p.name} className="border-t whitespace-nowrap">
               <td className="p-3">
                 <span className="bg-gray-300 text-white text-xs px-2 py-1 rounded">
-                  {p.status}(1)
+                  {p.status} ({p.totalDevices})
                 </span>
               </td>
               <td
                 className="p-3 text-blue-600 cursor-pointer"
-                onClick={() => handlePlantClick(p.id)}
+                onClick={() => handlePlantClick(p.id, p.status)}
               >
                 {p.name}
               </td>
@@ -319,19 +341,12 @@ const PlantTable = ({
               <td className="p-3 text-black">{p.eToday}</td>
               <td className="p-3 text-black">{p.eTotal}</td>
               <td className="p-3 text-black">{p.power}</td>
-              <td className="p-3 text-black">{p.effect}</td>
+              <td className="p-3 text-black">{p.effect.value}</td>
               <td className="p-3 text-black">{p.installed}</td>
               <td className="p-3 text-black">{p.updated}</td>
               <td className="p-3 text-blue-600 flex gap-3">
-                <button
-                  onClick={() => onEdit(p)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="text-red-500"
-                  onClick={() => onDelete(p.id)}
-                >
+                <button onClick={() => onEdit(p)}>Edit</button>
+                <button className="text-red-500" onClick={() => onDelete(p.id)}>
                   Delete
                 </button>
                 {/* <button className="text-red-500">Delete</button> */}
@@ -343,7 +358,6 @@ const PlantTable = ({
     </div>
   );
 };
-
 
 /* ---------- Main Page ---------- */
 export default function PlantPage() {
@@ -357,17 +371,25 @@ export default function PlantPage() {
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("userid") ?? undefined;
-  const serviceParams =
-    selectedEndUserId
-      ? {
+  const serviceParams = selectedEndUserId
+    ? {
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : undefined;
+    : undefined;
+
+  const statusQueryMap: Record<string, string | undefined> = {
+    All: undefined,
+    Normal: "Online",
+    Abnormal: "Abnormal",
+    Standby: "Standby",
+    Offline: "Offline",
+  };
+
   const plantsQuery = usePlants({
     page: currentPage,
     pageSize,
-    status: active === "All" ? undefined : active,
+    status: statusQueryMap[active],
     plantTypes: plantTypeFilter,
     search,
     sortBy: sortField ?? undefined,
@@ -377,75 +399,105 @@ export default function PlantPage() {
   const summaryQuery = usePlantSummary(
     selectedEndUserId
       ? {
-        fromService: true,
-        selectedEndUserId,
-      }
-      : {}
+          fromService: true,
+          selectedEndUserId,
+        }
+      : {},
   );
   const exportPlants = usePlantListExport();
-
+  const formatEffectValue = (eff: any) => {
+    if (eff === null || eff === undefined) return "";
+    if (typeof eff === "string" || typeof eff === "number") return String(eff);
+    if (typeof eff === "object") {
+      if ("value" in eff) {
+        return `${eff.value}${eff.unit ? ` ${eff.unit}` : ""}`;
+      }
+      return JSON.stringify(eff);
+    }
+    return String(eff);
+  };
   const apiPlantData =
     plantsQuery.data?.items?.map((p) => ({
       id: p.id,
       name: p.name,
       type: p.type,
-      kwp: String(p.kwp ?? ""),
-      price: String(p.price ?? ""),
-      address: p.address ?? "",
-      longitude: p.longitude ?? "",
-      latitude: p.latitude ?? "",
+
+      kwp: String(p.kwp),
+      price: String(p.price),
+
+      address: p.address,
+      longitude: p.longitude,
+      latitude: p.latitude,
+
       eToday: `${p.eToday.value} ${p.eToday.unit}`,
       eTotal: `${p.eTotal.value} ${p.eTotal.unit}`,
       power: `${p.power.value} ${p.power.unit}`,
-      effect: "-",
+
+      effect: {
+        value: formatEffectValue(p.effect),
+      },
       installed: p.installed,
       updated: p.updated,
-      status: "Offline",
+
+      // Flatten the nested object for the UI (backend returns `plantStatus` object)
+      status: p.plantStatus?.status ?? "Offline",
+      totalDevices: p.plantStatus?.totalDevices ?? 0,
+      normalCount: p.plantStatus?.normalCount ?? 0,
+      abnormalCount: p.plantStatus?.abnormalCount ?? 0,
+      standbyCount: p.plantStatus?.standbyCount ?? 0,
+      offlineCount: p.plantStatus?.offlineCount ?? 0,
     })) ?? [];
 
-  const [showDeleteModal, setShowDeleteModal] =
-    useState(false);
+  const counts = {
+    All:
+      plantsQuery.data?.statusCounts?.All ??
+      summaryQuery.data?.statusCounts?.All ??
+      apiPlantData.length,
+    Normal:
+      plantsQuery.data?.statusCounts?.Online ??
+      summaryQuery.data?.statusCounts?.Normal ??
+      apiPlantData.filter((p) => p.status === "Normal").length,
+    Abnormal:
+      plantsQuery.data?.statusCounts?.Abnormal ??
+      summaryQuery.data?.statusCounts?.Abnormal ??
+      apiPlantData.filter((p) => p.status === "Abnormal").length,
+    Standby:
+      plantsQuery.data?.statusCounts?.Standby ??
+      summaryQuery.data?.statusCounts?.Standby ??
+      apiPlantData.filter((p) => p.status === "Standby").length,
+    Offline:
+      plantsQuery.data?.statusCounts?.Offline ??
+      summaryQuery.data?.statusCounts?.Offline ??
+      apiPlantData.filter((p) => p.status === "Offline").length,
+  };
 
-  const [deletePlantId, setDeletePlantId] =
-    useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [deletePlantId, setDeletePlantId] = useState<string | null>(null);
 
   const deletePlantMutation = useDeletePlant();
 
-  const [editPlant, setEditPlant] =
-    useState<Plant | null>(null);
+  const [editPlant, setEditPlant] = useState<Plant | null>(null);
 
-  const handleExportPlants =
-    async () => {
-      try {
-        const result =
-          await exportPlants.mutateAsync(
-            serviceParams
-          );
+  const handleExportPlants = async () => {
+    try {
+      const result = await exportPlants.mutateAsync(serviceParams);
 
-        const apiBase =
-          process.env
-            .NEXT_PUBLIC_API_URL ?? "";
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "";
 
-        window.location.href =
-          `${apiBase}${result.downloadUrl}`;
-      } catch (error) {
-        console.error(
-          "Export failed",
-          error
-        );
-      }
-    };
+      window.location.href = `${apiBase}${result.downloadUrl}`;
+    } catch (error) {
+      console.error("Export failed", error);
+    }
+  };
 
   const filtered = apiPlantData
     .filter((p) => {
-      const matchStatus = true;
-      const matchSearch = p.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
+      const matchStatus = active === "All" || p.status === active;
+      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
 
       const matchType =
-        plantTypeFilter.length === 0 ||
-        plantTypeFilter.includes(p.type);
+        plantTypeFilter.length === 0 || plantTypeFilter.includes(p.type);
 
       return matchStatus && matchSearch && matchType;
     })
@@ -523,12 +575,14 @@ export default function PlantPage() {
             title="E-Total"
             value={`${summaryQuery.data?.eTotal.value ?? 25} ${summaryQuery.data?.eTotal.unit ?? "kWh"}`}
             icon={
-              <Image
-                src="/images/dashboard/stat-img-3.png"
-                alt="stat icon"
-                fill
-                className="opacity-70"
-              />
+              <div className="relative w-20 h-20">
+                <Image
+                  src="/images/dashboard/stat-img-3.png"
+                  alt="stat icon"
+                  fill
+                  className="opacity-70"
+                />
+              </div>
             }
           />
           <StatCard
@@ -547,12 +601,14 @@ export default function PlantPage() {
             title="Capacity"
             value={`${summaryQuery.data?.capacity.value ?? 0} ${summaryQuery.data?.capacity.unit ?? "kW"}`}
             icon={
-              <Image
-                src="/images/dashboard/stat-img-5.png"
-                alt="stat icon"
-                fill
-                className="opacity-70"
-              />
+              <div className="relative w-16 h-16">
+                <Image
+                  src="/images/dashboard/stat-img-5.png"
+                  alt="stat icon"
+                  fill
+                  className="opacity-70"
+                />
+              </div>
             }
           />
         </div>
@@ -561,7 +617,7 @@ export default function PlantPage() {
         <div className="bg-(--theme-bg) rounded-xl p-4 shadow-sm space-y-4">
           {/* TOP BAR */}
           <div className="flex flex-col lg:items-center lg:flex-row lg:justify-between gap-4">
-            {/* <Filters active={active} setActive={setActive} counts={counts} /> */}
+            <Filters active={active} setActive={setActive} counts={counts} />
 
             <div className="flex items-center justify-between gap-2 w-full sm:w-auto">
               <div className="w-full sm:w-105">
@@ -609,16 +665,10 @@ export default function PlantPage() {
                 </button>
                 <button
                   className="border rounded p-3 sm:px-3 sm:py-1.5 cursor-pointer transition-all duration-200 bg-blue-500 text-white hover:bg-blue-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-                  onClick={
-                    handleExportPlants
-                  }
-                  disabled={
-                    exportPlants.isPending
-                  }
+                  onClick={handleExportPlants}
+                  disabled={exportPlants.isPending}
                 >
-                  {exportPlants.isPending
-                    ? "Exporting..."
-                    : "Download"}
+                  {exportPlants.isPending ? "Exporting..." : "Download"}
                 </button>
               </div>
             </div>
@@ -626,7 +676,9 @@ export default function PlantPage() {
 
           {/* TABLE */}
           {plantsQuery.isLoading ? (
-            <div className="text-center text-gray-400 py-6">Loading plants...</div>
+            <div className="text-center text-gray-400 py-6">
+              Loading plants...
+            </div>
           ) : plantsQuery.isError ? (
             <div className="text-center text-red-500 py-6">
               Unable to load plants. Showing development fallback if available.
@@ -665,9 +717,7 @@ export default function PlantPage() {
           {/* FOOTER */}
           <Pagination
             // totalItems={filtered.length}
-            totalItems={
-              plantsQuery.data?.pagination?.totalItems ?? 0
-            }
+            totalItems={plantsQuery.data?.pagination?.totalItems ?? 0}
             pageSize={pageSize}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
@@ -678,9 +728,7 @@ export default function PlantPage() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96">
-            <h2 className="font-semibold text-lg text-black">
-              Delete Plant
-            </h2>
+            <h2 className="font-semibold text-lg text-black">Delete Plant</h2>
 
             <p className="mt-2 text-gray-500">
               Are you sure you want to delete?
@@ -717,7 +765,7 @@ export default function PlantPage() {
                       onError: (err) => {
                         console.error(err);
                       },
-                    }
+                    },
                   );
                 }}
               >

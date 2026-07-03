@@ -15,7 +15,7 @@ export default function PlantDetailsPage() {
   const plantId = searchParams.get("plantId");
   const targetEndUserId = searchParams.get("targetEndUserId");
   const fromService = searchParams.get("fromService");
-
+  const status = searchParams.get("status");
   if (!plantId) {
     return <div>Plant ID not found</div>;
   }
@@ -63,7 +63,7 @@ export default function PlantDetailsPage() {
         <PlantOverview
           name={overview.plant.name}
           type={overview.plant.type}
-          // status={overview.plant.status}
+          status={status ?? overview.plant.status}
           currentPower={overview.metrics.currentPower.value}
           todayEnergy={overview.metrics.eToday.value}
           totalEnergy={overview.metrics.eTotal.value}
