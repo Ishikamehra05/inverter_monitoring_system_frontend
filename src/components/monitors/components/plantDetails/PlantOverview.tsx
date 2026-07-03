@@ -1,11 +1,11 @@
-"use client"
+"use client";
 import { IoIosArrowDropleftCircle } from "react-icons/io";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type PlantOverviewProps = {
   name: string;
   type: string;
-  // status: string;
+  status: string;
   currentPower: number;
   todayEnergy: number;
   totalEnergy: number;
@@ -19,7 +19,7 @@ type PlantOverviewProps = {
 const PlantOverview = ({
   name,
   type,
-  // status,
+  status,
   currentPower,
   todayEnergy,
   totalEnergy,
@@ -29,13 +29,12 @@ const PlantOverview = ({
   installDate,
   className = "",
 }: PlantOverviewProps) => {
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const handleBack = () => {
-    const userId = searchParams.get("targetEndUserId")
-      ?? searchParams.get("userid");
+    const userId =
+      searchParams.get("targetEndUserId") ?? searchParams.get("userid");
 
     if (userId) {
       router.replace(`/monitor/plants?userid=${userId}&fromService=true`);
@@ -48,9 +47,7 @@ const PlantOverview = ({
     <div className={`bg-white p-2 md:p-6 rounded-lg ${className}`}>
       {/* Header */}
       <div className="flex items-center gap-2 md:gap-3">
-        <button
-          onClick={handleBack}
-          className="text-black cursor-pointer">
+        <button onClick={handleBack} className="text-black cursor-pointer">
           <IoIosArrowDropleftCircle size={30} />
         </button>
 
@@ -62,13 +59,13 @@ const PlantOverview = ({
         </span>
 
         {/* Mode badge */}
-        {/* <span
+        <span
           className={`px-2 py-0.5 text-xs sm:text-sm font-semibold rounded text-white ${
-            status === "Normal" ? "bg-green-500" : "bg-gray-400"
+            status === "Online" ? "bg-green-500" : "bg-gray-400"
           }`}
         >
           {status}
-        </span> */}
+        </span>
       </div>
 
       {/* Stats */}

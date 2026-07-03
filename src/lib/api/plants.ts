@@ -42,7 +42,6 @@
 //       `/monitor/plants/summary${withQuery(params)}`
 //     ).then((res) => res.data),
 
-
 //   create: (payload: CreatePlantRequest) =>
 //     apiClient<ApiEnvelope<{ id: string }>>("/monitor/plants/create", {
 //       method: "POST",
@@ -97,8 +96,15 @@
 
 import { apiClient, withQuery } from "./apiClient";
 import type {
-  CreatePlantRequest, Plant, PlantSummary, PlantListExportResponse, PlantLogsExportParams,
-  PlantLogsParams, PlantLogsResponse, UserLogsParams, UserLogsResponse
+  CreatePlantRequest,
+  Plant,
+  PlantSummary,
+  PlantListExportResponse,
+  PlantLogsExportParams,
+  PlantLogsParams,
+  PlantLogsResponse,
+  UserLogsParams,
+  UserLogsResponse,
 } from "./schemas/plants";
 
 type ApiEnvelope<T> = {
@@ -129,6 +135,13 @@ export const plantsApi = {
     apiClient<
       ApiEnvelope<{
         items: Plant[];
+        statusCounts: {
+          All: number;
+          Online: number;
+          Offline: number;
+          Abnormal: number;
+          Standby: number;
+        };
         pagination: {
           page: number;
           pageSize: number;
@@ -136,20 +149,18 @@ export const plantsApi = {
           totalPages: number;
         };
       }>
-    >(`/monitor/plants/list${withQuery(params)}`)
-      .then((res) => res.data),
+    >(`/monitor/plants/list${withQuery(params)}`).then((res) => res.data),
 
   summary: (
     params: {
       ownerUserId?: string;
       fromService?: boolean;
       targetEndUserId?: string;
-    } = {}
+    } = {},
   ) =>
     apiClient<ApiEnvelope<PlantSummary>>(
-      `/monitor/plants/summary${withQuery(params)}`
+      `/monitor/plants/summary${withQuery(params)}`,
     ).then((res) => res.data),
-
 
   create: (payload: CreatePlantRequest) =>
     apiClient<ApiEnvelope<{ id: string }>>("/monitor/plants/create", {
@@ -160,26 +171,23 @@ export const plantsApi = {
   update: (
     plantId: string,
     payload: Partial<CreatePlantRequest>,
-    params: ServiceScopeParams = {}
+    params: ServiceScopeParams = {},
   ) =>
     apiClient<ApiEnvelope<null>>(
       `/monitor/plants/${plantId}/edit${withQuery(params)}`,
       {
         method: "POST",
         body: payload,
-      }
+      },
     ),
 
-  remove: (
-    plantId: string,
-    params: ServiceScopeParams = {}
-  ) =>
+  remove: (plantId: string, params: ServiceScopeParams = {}) =>
     apiClient<ApiEnvelope<null>>(
       `/monitor/plants/${plantId}/delete${withQuery(params)}`,
       {
         method: "POST",
         body: {},
-      }
+      },
     ),
 
   serviceUserPlants: (monitorUserId: string) =>
@@ -187,33 +195,23 @@ export const plantsApi = {
       `/service/monitor-users/${monitorUserId}/plants`,
     ).then((res) => res.data),
 
-  plantListExport: (
-    params: ServiceScopeParams = {}
-  ) =>
+  plantListExport: (params: ServiceScopeParams = {}) =>
     apiClient<ApiEnvelope<PlantListExportResponse>>(
-      `/monitor/plants/list/export${withQuery(params)}`
+      `/monitor/plants/list/export${withQuery(params)}`,
     ).then((res) => res.data),
 
-  plantLogsExport: (
-    plantId: string,
-    params: PlantLogsExportParams
-  ) =>
+  plantLogsExport: (plantId: string, params: PlantLogsExportParams) =>
     apiClient<string>(
-      `/monitor/plants/${plantId}/logs/export${withQuery(params)}`
+      `/monitor/plants/${plantId}/logs/export${withQuery(params)}`,
     ),
 
-  plantLogs: (
-    plantId: string,
-    params: PlantLogsParams = {}
-  ) =>
+  plantLogs: (plantId: string, params: PlantLogsParams = {}) =>
     apiClient<ApiEnvelope<PlantLogsResponse>>(
-      `/monitor/plants/${plantId}/logs${withQuery(params)}`
+      `/monitor/plants/${plantId}/logs${withQuery(params)}`,
     ).then((res) => res.data),
 
-  userLogs: (
-    params: UserLogsParams = {}
-  ) =>
+  userLogs: (params: UserLogsParams = {}) =>
     apiClient<ApiEnvelope<UserLogsResponse>>(
-      `/monitor/logs${withQuery(params)}`
+      `/monitor/logs${withQuery(params)}`,
     ).then((res) => res.data),
 };
