@@ -8,7 +8,10 @@ import CreateUserModal from "@/components/services/modals/CreateUserModal";
 import AssignUserModal from "@/components/services/modals/AssignUserModal";
 import RelateUserModal from "@/components/services/modals/RelateUserModal";
 import Link from "next/link";
-import { useMonitorUsers } from "@/hooks/api/useService";
+import {
+  useMonitorUsers,
+  useMonitorUserStatusCounts,
+} from "@/hooks/api/useService";
 import { MonitorFilters } from "@/lib/api/schemas/service";
 const PAGE_SIZE = 10;
 
@@ -55,6 +58,14 @@ export default function MonitorUserListPage() {
     ...queryFilters,
   });
 
+  const monitorUserStatusCountsQuery = useMonitorUserStatusCounts();
+  const statusCounts = monitorUserStatusCountsQuery.data?.data.statusCounts ?? {
+    all: 0,
+    normal: 0,
+    abnormal: 0,
+    standby: 0,
+    offline: 0,
+  };
   useEffect(() => {
     if (monitorUsersQuery.data?.filters) {
       setFilterForm(monitorUsersQuery.data.filters);
@@ -136,41 +147,66 @@ export default function MonitorUserListPage() {
           <div className="flex flex-wrap items-center gap-6 text-[14px] text-[#595959]">
             <FilterBtn
               active={statusFilter === "all"}
-              onClick={() => setStatusFilter("all")}
+              onClick={() => {
+                setPage(1);
+                const filters = { ...filterForm, status: "all" };
+                setFilterForm(filters);
+                setQueryFilters(filters);
+              }}
             >
-              All ({totalItems})
+              All ({statusCounts.all})
             </FilterBtn>
 
             <FilterWithCount
               label="Online"
-              count={0}
+              count={statusCounts.normal}
               color="green"
               active={statusFilter === "online"}
-              onClick={() => setStatusFilter("online")}
+              onClick={() => {
+                setPage(1);
+                const filters = { ...filterForm, status: "online" };
+                setFilterForm(filters);
+                setQueryFilters(filters);
+              }}
             />
 
             <FilterWithCount
-              label="Abnormal"
-              count={0}
+              label="Fault"
+              count={statusCounts.abnormal}
               color="red"
               active={statusFilter === "abnormal"}
-              onClick={() => setStatusFilter("abnormal")}
+              onClick={() => {
+                setPage(1);
+                const filters = { ...filterForm, status: "abnormal" };
+                setFilterForm(filters);
+                setQueryFilters(filters);
+              }}
             />
 
             <FilterWithCount
               label="Standby"
-              count={0}
+              count={statusCounts.standby}
               color="yellow"
               active={statusFilter === "standby"}
-              onClick={() => setStatusFilter("standby")}
+              onClick={() => {
+                setPage(1);
+                const filters = { ...filterForm, status: "standby" };
+                setFilterForm(filters);
+                setQueryFilters(filters);
+              }}
             />
 
             <FilterWithCount
               label="Offline"
-              count={0}
+              count={statusCounts.offline}
               color="gray"
               active={statusFilter === "offline"}
-              onClick={() => setStatusFilter("offline")}
+              onClick={() => {
+                setPage(1);
+                const filters = { ...filterForm, status: "offline" };
+                setFilterForm(filters);
+                setQueryFilters(filters);
+              }}
             />
           </div>
         </div>
@@ -492,45 +528,65 @@ function StatusBadge({ type, count }: any) {
     online: {
       text: "text-[#52c41a]",
       bg: "bg-[#f6ffed]",
-      border: "border-[#b7eb8f]",
-      label: "online",
+      border: "border-[#95de64]",
+      label: "Online",
+      tooltip: {
+        bg: "bg-[#52c41a]",
+        arrow: "bg-[#52c41a]",
+      },
     },
     abnormal: {
       text: "text-[#ff4d4f]",
       bg: "bg-[#fff2f0]",
-      border: "border-[#ffccc7]",
-      label: "abnormal",
+      border: "border-[#ff7875]",
+      label: "Fault",
+      tooltip: {
+        bg: "bg-[#ff4d4f]",
+        arrow: "bg-[#ff4d4f]",
+      },
     },
     standby: {
       text: "text-[#faad14]",
       bg: "bg-[#fffbe6]",
-      border: "border-[#ffe58f]",
+      border: "border-[#ffd666]",
       label: "Standby",
+      tooltip: {
+        bg: "bg-[#faad14]",
+        arrow: "bg-[#faad14]",
+      },
     },
     offline: {
-      text: "text-[rgba(0,0,0,0.85)]",
+      text: "text-[#595959]",
       bg: "bg-[#fafafa]",
       border: "border-[#d9d9d9]",
       label: "Offline",
+      tooltip: {
+        bg: "bg-[#8c8c8c]",
+        arrow: "bg-[#8c8c8c]",
+      },
     },
   };
 
   const c = config[type];
 
   return (
-    <div className="relative group inline-block mr-2">
-      {/* MAIN TAG */}
+    <div className="relative group inline-block">
+      {/* Badge */}
       <span
         className={`
-          inline-block
+          inline-flex
+          items-center
+          justify-center
           w-[70px]
-          text-center
-          text-[12px]
-          leading-[20px]
-          px-[7px]
+          h-[26px]
+          rounded-md
           border
-          rounded-[2px]
-          transition-all duration-300
+          text-xs
+          font-semibold
+          shadow-sm
+          transition-all
+          duration-300
+          hover:scale-105
           ${c.text}
           ${c.bg}
           ${c.border}
@@ -539,37 +595,47 @@ function StatusBadge({ type, count }: any) {
         {count}
       </span>
 
-      {/* TOOLTIP */}
+      {/* Tooltip */}
       <div
-        className="
+        className={`
           absolute
-          -top-9
           left-1/2
           -translate-x-1/2
-          bg-[#595959]
+          -top-12
+          px-3
+          py-2
+          rounded-lg
           text-white
-          text-[12px]
-          px-2 py-1
-          rounded
-          opacity-0
-          group-hover:opacity-100
-          transition
+          text-xs
+          font-medium
+          shadow-xl
           whitespace-nowrap
+          opacity-0
+          scale-95
+          group-hover:opacity-100
+          group-hover:scale-100
+          group-hover:-translate-y-1
+          transition-all
+          duration-300
+          pointer-events-none
           z-50
-        "
+          ${c.tooltip.bg}
+        `}
       >
         {c.label}
 
+        {/* Arrow */}
         <div
-          className="
+          className={`
             absolute
-            bottom-[-4px]
             left-1/2
             -translate-x-1/2
-            w-2 h-2
-            bg-[#595959]
+            bottom-[-5px]
+            w-3
+            h-3
             rotate-45
-          "
+            ${c.tooltip.arrow}
+          `}
         />
       </div>
     </div>

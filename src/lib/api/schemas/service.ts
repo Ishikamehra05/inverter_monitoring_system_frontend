@@ -73,6 +73,25 @@ export interface RelateUserResponse {
     serialNumber: string;
   };
 }
+export interface MonitorUserStatusCountsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    loginUser: {
+      id: string;
+      account: string;
+      role: string;
+    };
+    statusCounts: {
+      all: number;
+      normal: number;
+      abnormal: number;
+      standby: number;
+      offline: number;
+    };
+    updatedAt: string;
+  };
+}
 export const profileSchema = z.object({
   account: z.string(),
   email: z.string(),

@@ -14,6 +14,7 @@ import type {
   RelateUserRequest,
   UpdateProfileRequest,
   UpdateProfileResponse,
+  MonitorUserStatusCountsResponse,
 } from "./schemas/service";
 
 type ApiEnvelope<T> = {
@@ -69,6 +70,13 @@ export const serviceApi = {
       body: payload,
     }),
 
+  getMonitorUserStatusCounts: (params: ServiceScopeParams = {}) =>
+    apiClient<MonitorUserStatusCountsResponse>(
+      `/service/monitor-users/status-counts${withQuery(params)}`,
+      {
+        method: "GET",
+      },
+    ),
   updateUserProfile: (
     body: UpdateProfileRequest,
     params: ServiceScopeParams = {},

@@ -8,7 +8,7 @@ import {
   mockProfile,
   mockTasks,
 } from "@/lib/api/mockData";
-import { serviceApi } from "@/lib/api/service";
+import { serviceApi, ServiceScopeParams } from "@/lib/api/service";
 import {
   RelateUserRequest,
   UpdateProfileRequest,
@@ -62,6 +62,13 @@ export const useMonitorUsers = (params: Record<string, unknown> = {}) =>
       }
     },
   });
+
+export function useMonitorUserStatusCounts(params: ServiceScopeParams = {}) {
+  return useQuery({
+    queryKey: ["monitor-user-status-counts", params],
+    queryFn: () => serviceApi.getMonitorUserStatusCounts(params),
+  });
+}
 
 export const useMonitorUsersExport = () =>
   useMutation({
