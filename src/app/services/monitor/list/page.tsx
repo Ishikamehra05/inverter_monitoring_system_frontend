@@ -61,7 +61,7 @@ export default function MonitorUserListPage() {
   const monitorUserStatusCountsQuery = useMonitorUserStatusCounts();
   const statusCounts = monitorUserStatusCountsQuery.data?.data.statusCounts ?? {
     all: 0,
-    normal: 0,
+    online: 0,
     abnormal: 0,
     standby: 0,
     offline: 0,
@@ -159,7 +159,7 @@ export default function MonitorUserListPage() {
 
             <FilterWithCount
               label="Online"
-              count={statusCounts.normal}
+              count={statusCounts.online}
               color="green"
               active={statusFilter === "online"}
               onClick={() => {

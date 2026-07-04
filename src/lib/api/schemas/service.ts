@@ -84,7 +84,7 @@ export interface MonitorUserStatusCountsResponse {
     };
     statusCounts: {
       all: number;
-      normal: number;
+      online: number;
       abnormal: number;
       standby: number;
       offline: number;
