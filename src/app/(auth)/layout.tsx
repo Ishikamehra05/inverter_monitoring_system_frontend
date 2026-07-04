@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import LanguageDropdown from "@/components/ui/LanguageDropdown";
 import { getAuthSession } from "@/lib/auth/session";
 import { useRouter } from "next/navigation";
-
+import "leaflet/dist/leaflet.css";
 export default function AuthLayout({
   children,
 }: {
