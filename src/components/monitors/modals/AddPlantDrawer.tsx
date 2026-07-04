@@ -179,8 +179,10 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
 
       const data = await response.json();
 
-      if (data?.display_name) {
-        setField("address", data.display_name);
+      const cityName = data?.address?.city || data?.address?.town || data?.address?.village || data?.address?.suburb || data?.address?.county || "";
+
+      if (cityName) {
+        setField("address", cityName);
       }
     } catch (error) {
       console.error(error);
