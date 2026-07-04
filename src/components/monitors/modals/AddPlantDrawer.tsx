@@ -166,6 +166,54 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
     });
   }, [plant]);
 
+  const getAddress = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (data?.display_name) {
+        setField("address", data.display_name);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to fetch address.");
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        setField("latitude", latitude.toString());
+        setField("longitude", longitude.toString());
+
+        await getAddress(latitude, longitude);
+        toast.success("Location detected successfully.");
+      },
+      () => {
+        toast.error("Unable to fetch your location.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      },
+    );
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -323,15 +371,7 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                      setField("latitude", position.coords.latitude.toString());
-                      setField(
-                        "longitude",
-                        position.coords.longitude.toString(),
-                      );
-                    });
-                  }}
+                  onClick={() => void getCurrentLocation()}
                   className="px-3 py-2 rounded bg-blue-500 text-white text-sm hover:bg-blue-800 transition"
                 >
                   Use Current Location
@@ -340,9 +380,11 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
                 <LocationPicker
                   latitude={Number(form.latitude) || 0}
                   longitude={Number(form.longitude) || 0}
-                  onChange={(lat, lng) => {
+                  onChange={async (lat, lng) => {
                     setField("latitude", lat.toString());
                     setField("longitude", lng.toString());
+
+                    await getAddress(lat, lng);
                   }}
                 />
               </div>
