@@ -46,10 +46,17 @@ export default function LocationPicker({
   longitude,
   onChange,
 }: Props) {
+
+  const INDIA_CENTER: [number, number] = [20.5937, 78.9629];
+
   const [position, setPosition] = useState<[number, number]>([
-    latitude,
-    longitude,
+    latitude || INDIA_CENTER[0],
+    longitude || INDIA_CENTER[1],
   ]);
+  // const [position, setPosition] = useState<[number, number]>([
+  //   latitude,
+  //   longitude,
+  // ]);
 
   const handlePositionChange = (lat: number, lng: number) => {
     const nextPosition: [number, number] = [lat, lng];
@@ -58,13 +65,17 @@ export default function LocationPicker({
   };
 
   useEffect(() => {
-    const newPosition: [number, number] = [latitude, longitude];
-    setPosition((currentPosition) => {
+    const newPosition: [number, number] =
+      latitude && longitude
+        ? [latitude, longitude]
+        : INDIA_CENTER;
+
+    setPosition((current) => {
       if (
-        currentPosition[0] === newPosition[0] &&
-        currentPosition[1] === newPosition[1]
+        current[0] === newPosition[0] &&
+        current[1] === newPosition[1]
       ) {
-        return currentPosition;
+        return current;
       }
 
       return newPosition;
@@ -96,8 +107,9 @@ export default function LocationPicker({
   return (
     <div className="rounded-lg overflow-hidden border">
       <MapContainer
+        attributionControl={false}
         center={position}
-        zoom={15}
+        zoom={5}
         style={{
           height: "200px",
           width: "100%",
@@ -106,7 +118,7 @@ export default function LocationPicker({
         <ResizeMap />
         <ChangeView center={position} />
         <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
+          // attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Marker
