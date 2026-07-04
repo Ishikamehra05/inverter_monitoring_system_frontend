@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useCreatePlant, useUpdatePlant } from "@/hooks/api/usePlants";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 
 type Plant = {
   id: string;
@@ -26,6 +27,7 @@ interface Props {
 
 export default function AddPlantDrawer({ open, onClose, plant }: Props) {
   const createPlant = useCreatePlant();
+  const [mapOpen, setMapOpen] = useState(false);
   const updatePlant = useUpdatePlant();
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("userid");
@@ -48,6 +50,9 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
 
   const [form, setForm] = useState(initialForm);
 
+  const LocationPicker = dynamic(() => import("./LocationPickerModal"), {
+    ssr: false,
+  });
   // const handleSubmit = async () => {
   //   try {
   //     await createPlant.mutateAsync({
@@ -288,26 +293,58 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
               </div>
 
               {/* Longitude Latitude */}
-              <div>
+
+              <div className="space-y-3">
                 <label className="text-sm font-medium">
-                  Longitude and Latitude :
+                  Longitude & Latitude :
                 </label>
-                <div className="flex gap-2 mt-1">
+
+                <div className="grid grid-cols-2 gap-3">
                   <input
-                    type="text"
-                    value={form.longitude}
-                    onChange={(e) => setField("longitude", e.target.value)}
-                    placeholder="Longitude"
-                    className="w-1/2 border border-(--border) rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
+                    type="number"
+                    step="any"
+                    disabled
                     value={form.latitude}
-                    onChange={(e) => setField("latitude", e.target.value)}
                     placeholder="Latitude"
-                    className="w-1/2 border border-(--border) rounded px-3 py-2"
+                    onChange={(e) => setField("latitude", e.target.value)}
+                    className="border border-(--border) rounded px-3 py-2 bg-gray-50"
+                  />
+
+                  <input
+                    type="number"
+                    step="any"
+                    disabled
+                    value={form.longitude}
+                    placeholder="Longitude"
+                    onChange={(e) => setField("longitude", e.target.value)}
+                    className="border border-(--border) rounded px-3 py-2 bg-gray-50"
                   />
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                      setField("latitude", position.coords.latitude.toString());
+                      setField(
+                        "longitude",
+                        position.coords.longitude.toString(),
+                      );
+                    });
+                  }}
+                  className="px-3 py-2 rounded bg-blue-500 text-white text-sm hover:bg-blue-800 transition"
+                >
+                  Use Current Location
+                </button>
+
+                <LocationPicker
+                  latitude={Number(form.latitude) || 0}
+                  longitude={Number(form.longitude) || 0}
+                  onChange={(lat, lng) => {
+                    setField("latitude", lat.toString());
+                    setField("longitude", lng.toString());
+                  }}
+                />
               </div>
 
               {/* Address */}

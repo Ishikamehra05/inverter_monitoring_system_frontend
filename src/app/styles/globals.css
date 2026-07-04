@@ -152,32 +152,34 @@
   --z-tooltip: 1200;
 }
 
- .input-dark {
-    background: #020817;
-    border: 1px solid #1f2937;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
-    color: white;
-  }
+.input-dark {
+  background: #020817;
+  border: 1px solid #1f2937;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  color: white;
+}
 
-  .input-dark:focus {
-    outline: none;
-    border-color: #3b82f6;
-  }
+.input-dark:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
 
-  .btn-primary {
-    background: #2563eb;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    color: white;
-  }
-
-  .btn-secondary {
-    background: #111827;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    color: white;
-  }
+.btn-primary {
+  background: #2563eb;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  color: white;
+}
+.leaflet-control-attribution {
+  display: none !important;
+}
+.btn-secondary {
+  background: #111827;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  color: white;
+}
 /* ====================================================
    DARK MODE – OVERRIDES
    Trigger via: <html class="dark"> or [data-theme="dark"]
