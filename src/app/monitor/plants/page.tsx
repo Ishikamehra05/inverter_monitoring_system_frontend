@@ -85,7 +85,7 @@ const Filters = ({
 }) => {
   const filters = [
     { label: "All", value: "All" },
-    { label: "Normal", value: "Normal" },
+    { label: "Online", value: "Online" },
     { label: "Abnormal", value: "Abnormal" },
     { label: "Standby", value: "Standby" },
     { label: "Offline", value: "Offline" },
@@ -381,7 +381,7 @@ export default function PlantPage() {
 
   const statusQueryMap: Record<string, string | undefined> = {
     All: undefined,
-    Normal: "Online",
+    Online: "Online",
     Abnormal: "Abnormal",
     Standby: "Standby",
     Offline: "Offline",
