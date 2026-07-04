@@ -171,7 +171,7 @@ export default function MonitorUserListPage() {
             />
 
             <FilterWithCount
-              label="Fault"
+              label="Abnormal"
               count={statusCounts.abnormal}
               color="red"
               active={statusFilter === "abnormal"}
@@ -539,7 +539,7 @@ function StatusBadge({ type, count }: any) {
       text: "text-[#ff4d4f]",
       bg: "bg-[#fff2f0]",
       border: "border-[#ff7875]",
-      label: "Fault",
+      label: "Abnormal",
       tooltip: {
         bg: "bg-[#ff4d4f]",
         arrow: "bg-[#ff4d4f]",

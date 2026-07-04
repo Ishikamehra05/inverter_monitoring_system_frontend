@@ -37,7 +37,15 @@ export const mockPlants: Plant[] = [
   effect: "0",
   installed: "2025-08-13",
   updated: "2025-08-25 15:39:21",
+  plantStatus: {
   status: "Offline",
+  totalDevices: 1,
+  normalCount: 0,
+  abnormalCount: 0,
+  standbyCount: 0,
+  offlineCount: 1,
+  updatedAt: "2025-08-25 15:39:21",
+},
 },
   {
   id: "plant_service",
@@ -57,53 +65,16 @@ export const mockPlants: Plant[] = [
   effect: "0",
   installed: "2025-08-13",
   updated: "2025-08-25 15:39:21",
+  plantStatus: {
   status: "Offline",
+  totalDevices: 1,
+  normalCount: 0,
+  abnormalCount: 0,
+  standbyCount: 0,
+  offlineCount: 1,
+  updatedAt: "2025-08-25 15:39:21",
 },
-  {
-  id: "plant_service",
-  name: "Service",
-  type: "Grid",
-
-  price: 0,
-  priceUnit: "INR",
-  kwp: 0,
-  address: "Gandhinagar",
-  latitude: "23.2156",
-  longitude: "72.6369",
-
-  eToday: { value: 0, unit: "Wh" },
-  eTotal: { value: 25, unit: "kWh" },
-  power: { value: 0, unit: "W" },
-  effect: "0",
-  installed: "2025-08-13",
-  updated: "2025-08-25 15:39:21",
-  status: "Offline",
 },
-];
-
-export const mockDevices: ApiDevice[] = [
-  {
-    id: 1,
-    name: "PSIT-125K-SM18 1252432-09680003",
-    type: "PSIT-125K-SM18",
-    sn: "1252432-09680003",
-    power: { value: 48.28, unit: "kW" },
-    today: { value: 61, unit: "kWh" },
-    total: { value: 235.87, unit: "MWh" },
-    hours: { value: 5.01, unit: "h" },
-    online: true,
-  },
-  {
-    id: 2,
-    name: "PSIT-125K-SM18 1252433-09630027",
-    type: "PSIT-125K-SM18",
-    sn: "1252433-09630027",
-    power: { value: 45.75, unit: "kW" },
-    today: { value: 56, unit: "kWh" },
-    total: { value: 224.75, unit: "MWh" },
-    hours: { value: 5.01, unit: "h" },
-    online: true,
-  },
 ];
 
 export const mockPlantInformation: PlantInformation = {
@@ -123,7 +94,7 @@ export const mockPlantInformation: PlantInformation = {
 
 
 export const mockProfile: Profile = {
-  userName: "polycab.admin",
+  account: "polycab.admin",
   email: "Bipin.Sonsale@Polycab.com",
   phone: "",
   address: "",
@@ -139,8 +110,8 @@ export const mockMonitorUsers: MonitorUser[] = Array.from({ length: 10 }).map(
     today: { value: 0, unit: "kWh" },
     total: { value: 25, unit: "kWh" },
     status: {
-      normal: i % 2,
-      fault: 0,
+      online: i % 2,
+      abnormal: 0,
       standby: i % 3 === 0 ? 1 : 0,
       offline: 1,
     },

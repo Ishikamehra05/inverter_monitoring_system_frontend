@@ -34,7 +34,7 @@ type Plant = {
   longitude: string;
   latitude: string;
 
-  status: "Offline" | "Normal" | "Abnormal" | "Standby";
+  status: "Offline" | "Online" | "Abnormal" | "Standby";
 
   totalDevices: number;
   normalCount: number;
@@ -454,10 +454,10 @@ export default function PlantPage() {
       plantsQuery.data?.statusCounts?.All ??
       summaryQuery.data?.statusCounts?.All ??
       apiPlantData.length,
-    Normal:
+    Online:
       plantsQuery.data?.statusCounts?.Online ??
       summaryQuery.data?.statusCounts?.Normal ??
-      apiPlantData.filter((p) => p.status === "Normal").length,
+      apiPlantData.filter((p) => p.status === "Online").length,
     Abnormal:
       plantsQuery.data?.statusCounts?.Abnormal ??
       summaryQuery.data?.statusCounts?.Abnormal ??

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { metricSchema, paginationSchema } from "./common";
 
 const plantCurrentStatusSchema = z.object({
-  status: z.enum(["Offline", "Normal", "Abnormal", "Standby"]),
+  status: z.enum(["Offline", "Online", "Abnormal", "Standby"]),
   totalDevices: z.number(),
   normalCount: z.number(),
   abnormalCount: z.number(),

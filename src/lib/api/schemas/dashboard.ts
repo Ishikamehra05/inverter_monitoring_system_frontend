@@ -73,6 +73,7 @@ export const plantOverviewSchema = z.object({
     kwp: z.number(),
 
     installationDate: z.string(),
+    status: z.string(),
 
     income: z.object({
       value: z.number(),
