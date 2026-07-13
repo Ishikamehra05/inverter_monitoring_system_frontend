@@ -125,10 +125,6 @@ export default function LocationPicker({
           position={position}
           draggable={true}
           eventHandlers={{
-            drag: (e) => {
-              const { lat, lng } = e.target.getLatLng();
-              handlePositionChange(lat, lng);
-            },
             dragend: (e) => {
               const { lat, lng } = e.target.getLatLng();
               handlePositionChange(lat, lng);
