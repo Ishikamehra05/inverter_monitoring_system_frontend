@@ -63,7 +63,7 @@ export default function PlantDetailsPage() {
         <PlantOverview
           name={overview.plant.name}
           type={overview.plant.type}
-          status={status ?? overview.plant.status}
+          status={overview.plant.currentStatus?.status ?? "-"}
           currentPower={overview.metrics.currentPower.value}
           todayEnergy={overview.metrics.eToday.value}
           totalEnergy={overview.metrics.eTotal.value}

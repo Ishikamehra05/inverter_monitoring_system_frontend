@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { Pagination } from "../../pagination";
 import { IoIosAdd, IoIosArrowUp } from "react-icons/io";
@@ -10,6 +11,7 @@ import {
   useAddInverter,
   useEditDevice,
   useDeleteDevice,
+  usePlantDevices,
 } from "@/hooks/api/useDevices";
 import { toast } from "sonner";
 // ---------- Types ----------
@@ -39,7 +41,6 @@ type SortIconProps = {
 
 type DeviceTabProps = {
   plantId: string;
-  devices: Device[];
 };
 
 type DeviceTableProps = {
@@ -276,7 +277,7 @@ const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
 };
 
 // ---------- Device Tab ----------
-const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
+const DeviceTab = ({ plantId }: DeviceTabProps) => {
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
 
@@ -293,10 +294,31 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
   const [pageSize, setPageSize] = useState(10);
   const [open, setOpen] = useState(false);
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+  // ---------- Server-side pagination: fetch with page & pageSize ----------
+  const devicesQuery = usePlantDevices(plantId, {
+    ...serviceParams,
+    page: currentPage,
+    pageSize,
+  });
 
-  const paginatedDevices = devices.slice(startIndex, endIndex);
+  const apiData = devicesQuery.data;
+
+  // Map API items to Device[]
+  const devices: Device[] =
+    apiData?.items?.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      sn: item.sn,
+      power: item.power?.value ?? item.power ?? 0,
+      today: item.today?.value ?? item.today ?? 0,
+      total: item.total?.value ?? item.total ?? 0,
+      hours: item.hours?.value ?? item.hours ?? 0,
+      online: item.online,
+    })) ?? [];
+
+  // Use backend pagination metadata for total count
+  const totalItems = apiData?.pagination?.totalItems ?? 0;
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | null>(
@@ -307,6 +329,11 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
     // Validation
     if (!serialNumber.trim()) {
       toast.error("Serial number is required.");
+      return;
+    }
+
+    if (/[^a-zA-Z0-9\s\-_]/.test(serialNumber)) {
+      toast.error("Serial number cannot contain special characters.");
       return;
     }
 
@@ -348,6 +375,11 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
     // Validation
     if (!name.trim()) {
       toast.error("Device name is required.");
+      return;
+    }
+
+    if (/[^a-zA-Z0-9\s\-_]/.test(name)) {
+      toast.error("Device name cannot contain special characters.");
       return;
     }
 
@@ -435,13 +467,13 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
         </div>
 
         <DeviceTable
-          devices={paginatedDevices}
+          devices={devices}
           onEdit={(deviceId) => openEditModal(deviceId)}
           onDelete={(deviceId) => openDeleteModal(deviceId)}
         />
 
         <Pagination
-          totalItems={devices.length}
+          totalItems={totalItems}
           pageSize={pageSize}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
@@ -488,4 +520,6 @@ const DeviceTab = ({ plantId, devices }: DeviceTabProps) => {
   );
 };
 
+
 export default DeviceTab;
+

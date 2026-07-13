@@ -12,12 +12,13 @@ import {
   BookOpen,
 } from "lucide-react";
 import LanguageDropdown from "@/components/ui/LanguageDropdown";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import LogoutForm from "@/components/auth/LogoutForm";
 import BrandLogo from "@/components/ui/BrandLogo";
 import { navigateMonitor } from "@/utils/monitorNavigation";
 import { useLogout } from "@/hooks/api/useAuth";
 import { getAuthSession } from "@/lib/auth/session";
+import { ArrowLeft } from "lucide-react";
 
 /* ---------- Nav Button ---------- */
 type NavButtonProps = {
@@ -79,7 +80,9 @@ const UserDropdown = ({ hideLogout }: { hideLogout?: boolean }) => {
         <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white">
           <User size={16} />
         </div>
-        <span className="hidden sm:block text-sm text-gray-600">{accountName}</span>
+        <span className="hidden sm:block text-sm text-gray-600">
+          {accountName}
+        </span>
         <ChevronDown size={16} className="hidden sm:block text-gray-500" />
       </button>
 
@@ -132,7 +135,12 @@ const UserDropdown = ({ hideLogout }: { hideLogout?: boolean }) => {
 export default function Header({ hideLogout }: { hideLogout?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState<"Plant" | "Logs">("Plant");
+
+  const fromService = searchParams.get("fromService") === "true";
+
+  const showBackButton = searchParams.get("fromService") === "true";
 
   const handleNavigation = (tab: "Plant" | "Logs") => {
     setActiveTab(tab);
@@ -149,6 +157,14 @@ export default function Header({ hideLogout }: { hideLogout?: boolean }) {
       <div className="h-full flex items-center justify-between">
         {/* LEFT */}
         <div className="flex items-center gap-6 md:gap-12">
+          {showBackButton && (
+            <button
+              onClick={() => router.back()}
+              className="flex items-center justify-center p-2 rounded hover:bg-[rgba(255,255,255,0.1)] text-gray-600 transition"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          )}
           <BrandLogo />
 
           <div className="flex gap-2">

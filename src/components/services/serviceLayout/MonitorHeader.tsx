@@ -4,6 +4,8 @@ import { useMonitorUsersExport } from "@/hooks/api/useService";
 import { MonitorFilters } from "@/lib/api/schemas/service";
 import { Calendar } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import DeviceSelectorPanel from "../DeviceSelectorPanel";
 
 interface Props {
   filters: MonitorFilters;
@@ -19,6 +21,7 @@ export default function MonitorHeader({
 }: Props) {
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("userid") ?? undefined;
+  const [isDevicePanelOpen, setIsDevicePanelOpen] = useState(false);
 
   const serviceParams = selectedEndUserId
     ? {
@@ -85,14 +88,10 @@ export default function MonitorHeader({
           <input
             type="text"
             value={filters.searchSN}
-            onChange={(e) =>
-              setFilters((prev) => ({
-                ...prev,
-                searchSN: e.target.value,
-              }))
-            }
-            placeholder="Please enter"
-            className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff]"
+            readOnly
+            onClick={() => setIsDevicePanelOpen(true)}
+            placeholder="Please enter or select"
+            className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff] cursor-pointer"
           />
         </div>
 
@@ -185,6 +184,20 @@ export default function MonitorHeader({
           {isPending ? "Downloading..." : "Download"}
         </button>
       </div>
+
+      {isDevicePanelOpen && (
+        <DeviceSelectorPanel
+          selectedDevices={filters.searchSN ? [filters.searchSN] : []}
+          onClose={() => setIsDevicePanelOpen(false)}
+          onConfirm={(devices) => {
+            setFilters((prev) => ({
+              ...prev,
+              searchSN: devices.length > 0 ? devices[0] : "",
+            }));
+            setIsDevicePanelOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

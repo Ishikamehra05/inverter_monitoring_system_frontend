@@ -24,8 +24,6 @@ const AddInverterModal = ({
   if (!open) return null;
 
   const handleSubmit = async () => {
-    if (!serial.trim()) return;
-
     await onSubmit(serial.trim());
   };
   const handleClose = () => {

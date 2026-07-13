@@ -82,6 +82,11 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
       return;
     }
 
+    if (/[^a-zA-Z0-9\s\-_]/.test(form.plantName)) {
+      toast.error("Plant name cannot contain special characters.");
+      return;
+    }
+
     if (!form.installedDate) {
       toast.error("Installation date is required.");
       return;
@@ -179,7 +184,13 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
 
       const data = await response.json();
 
-      const cityName = data?.address?.city || data?.address?.town || data?.address?.village || data?.address?.suburb || data?.address?.county || "";
+      const cityName =
+        data?.address?.city ||
+        data?.address?.town ||
+        data?.address?.village ||
+        data?.address?.suburb ||
+        data?.address?.county ||
+        "";
 
       if (cityName) {
         setField("address", cityName);

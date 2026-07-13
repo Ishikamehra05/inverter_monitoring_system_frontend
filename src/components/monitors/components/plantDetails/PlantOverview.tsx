@@ -43,6 +43,26 @@ const PlantOverview = ({
 
     router.replace("/monitor/plants");
   };
+
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "online":
+        return "bg-green-500 text-white";
+
+      case "offline":
+        return "bg-red-500 text-white";
+
+      case "warning":
+        return "bg-yellow-500 text-gray-800";
+
+      case "fault":
+      case "abnormal":
+        return "bg-red-500 text-white";
+
+      default:
+        return "bg-gray-100 border border-gray-400 text-gray-600";
+    }
+  };
   return (
     <div className={`bg-white p-2 md:p-6 rounded-lg ${className}`}>
       {/* Header */}
@@ -60,9 +80,9 @@ const PlantOverview = ({
 
         {/* Mode badge */}
         <span
-          className={`px-2 py-0.5 text-xs sm:text-sm font-semibold rounded text-white ${
-            status === "Online" ? "bg-green-500" : "bg-gray-400"
-          }`}
+          className={`px-2 py-0.5 text-xs sm:text-sm font-semibold rounded-md ${getStatusStyle(
+            status,
+          )}`}
         >
           {status}
         </span>

@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 export const Pagination = ({
   totalItems,
   pageSize,
@@ -13,9 +15,13 @@ export const Pagination = ({
 }) => {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-  const start = totalItems === 0
-    ? 0
-    : (currentPage - 1) * pageSize + 1;
+  // Auto-clamp currentPage when it exceeds totalPages (e.g. after data/pageSize changes)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages, setCurrentPage]);
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
 
   const end = Math.min(currentPage * pageSize, totalItems);
 
@@ -30,23 +36,25 @@ export const Pagination = ({
 
       {/* prev */}
       <button
+        type="button"
         disabled={currentPage === 1}
         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-        className="px-2 disabled:opacity-40"
+        className="px-2 disabled:opacity-40 cursor-pointer"
       >
         ‹
       </button>
 
       {/* page number */}
-      <button className="border border-blue-500 text-blue-600 px-3 py-1 rounded">
-        {currentPage}
-      </button>
+      <span className="border border-blue-500 text-blue-600 px-3 py-1 rounded">
+        {currentPage} / {totalPages}
+      </span>
 
       {/* next */}
       <button
+        type="button"
         disabled={currentPage === totalPages}
         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-        className="px-2 disabled:opacity-40"
+        className="px-2 disabled:opacity-40 cursor-pointer"
       >
         ›
       </button>
