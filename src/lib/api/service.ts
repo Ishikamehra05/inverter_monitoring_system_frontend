@@ -86,6 +86,11 @@ export const serviceApi = {
       body,
     }),
 
+  deleteAccount: (params: ServiceScopeParams = {}) =>
+    apiClient<void>(`/auth/deleteAccount${withQuery(params)}`, {
+      method: "DELETE",
+    }),
+
   firmware: (params: Record<string, unknown> = {}) =>
     apiClient<
       ApiEnvelope<{

@@ -72,6 +72,7 @@ export interface SearchDeviceResponse {
   status: string;
   userId: string | null;
   account: string | null;
+  plantId?: string;
 
   createdAt: string;
   updatedAt: string;

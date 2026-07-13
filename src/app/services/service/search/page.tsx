@@ -5,6 +5,18 @@ import clsx from "clsx";
 import { useSearchDevice, useSearchUser } from "@/hooks/api/useUsers";
 import Link from "next/link";
 import { toast } from "sonner";
+import DevicesTabPanel from "@/components/monitors/components/deviceDetails/DevicesTabPanel";
+import {
+  HiOutlineTrash,
+  HiOutlineSwitchHorizontal,
+  HiOutlineCog,
+  HiOutlineUpload,
+  HiOutlineTerminal,
+  HiOutlineCheckCircle,
+} from "react-icons/hi";
+import { useDeleteDevice } from "@/hooks/api/useDevices";
+import DeleteInverterModal from "@/components/monitors/modals/DeleteInverterModal";
+import { useDeleteAccount } from "@/hooks/api/useService";
 
 type Mode = "sn" | "datalogger" | "user" | "module";
 
@@ -22,6 +34,17 @@ export default function GlobalSearchPage() {
   const user = searchUser.data?.user;
   const searchDevice = useSearchDevice();
   const device = searchDevice.data?.device;
+  const deleteAccountMutation = useDeleteAccount();
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const deleteDeviceServiceParams = {
+    fromService: true,
+    targetEndUserId: device?.userId ?? undefined,
+  };
+  const deleteDevice = useDeleteDevice(
+    device?.plantId ?? "",
+    deleteDeviceServiceParams,
+  );
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const handleSearch = () => {
     const value = keyword.trim();
 
@@ -62,6 +85,40 @@ export default function GlobalSearchPage() {
     setKeyword("");
     searchUser.reset();
     searchDevice.reset();
+  };
+
+  const handleDeleteDevice = async () => {
+    if (!device?.id || !device?.plantId) {
+      toast.error("No device selected.");
+      return;
+    }
+
+    try {
+      await deleteDevice.mutateAsync(device.id);
+
+      toast.success("Device deleted successfully.");
+
+      setDeleteOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete device.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccountMutation.mutateAsync({
+        fromService: true,
+      });
+
+      toast.success("Account deleted successfully.");
+
+      setDeleteAccountOpen(false);
+
+      searchUser.reset();
+      setKeyword("");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to delete account.");
+    }
   };
   return (
     <div className="bg-white border border-[rgba(0,0,0,0.06)] rounded-xs flex flex-col lg:flex-row min-h-105 w-full">
@@ -107,13 +164,13 @@ export default function GlobalSearchPage() {
                 : "Please enter Serial Number"
             }
             className="w-full
-sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
+sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
           />
 
           <button
             onClick={handleSearch}
             disabled={searchUser.isPending || searchDevice.isPending}
-            className="h-10 w-full sm:w-[110px] bg-[#1890ff] text-white text-[13px] tracking-[2px] hover:bg-[#40a9ff]"
+            className="h-10 w-full sm:w-27.5 bg-[#1890ff] text-white text-[13px] tracking-[2px] hover:bg-[#40a9ff]"
           >
             SEARCH
           </button>
@@ -127,102 +184,172 @@ sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               <table className="w-full border border-[#ececec] border-collapse text-[15px]">
                 <tbody>
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] w-[24%] px-5 py-3">
+                    <td className="bg-[#f5f5f5] w-[24%] px-5 py-1">
                       Device SN
                     </td>
 
-                    <td colSpan={3} className="px-4 py-3">
+                    <td colSpan={3} className="px-4 py-1">
                       {device.sno}
                     </td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">Operation</td>
+                    <td className="bg-[#f5f5f5] px-5 py-1 text-sm">
+                      Operation
+                    </td>
 
-                    <td colSpan={3} className="px-4 py-3 text-[#666]">
-                      --
+                    <td colSpan={3} className="px-5 py-2">
+                      <div className="flex flex-wrap items-center gap-3 text-[15x]">
+                        <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm">
+                          <HiOutlineSwitchHorizontal className="h-5 w-5" />
+                          <span>Change Account</span>
+                        </button>
+
+                        <button
+                          onClick={() => setDeleteOpen(true)}
+                          disabled={deleteDevice.isPending}
+                          className="flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50"
+                        >
+                          <HiOutlineTrash className="h-5 w-5" />
+                          <span>
+                            {deleteDevice.isPending
+                              ? "Deleting..."
+                              : "Delete Device"}
+                          </span>
+                        </button>
+
+                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                          <HiOutlineUpload className="h-5 w-5" />
+                          <span>Upgrade Device</span>
+                        </button>
+                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                          <HiOutlineCog className="h-5 w-5" />
+                          <span>Remote Setting</span>
+                        </button>
+                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                          <HiOutlineTerminal className="h-5 w-5" />
+                          <span>Command Operation</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">Status</td>
+                    <td className="bg-[#f5f5f5]  text-sm px-5 py-1">Status</td>
 
-                    <td className="px-4 py-3">{device.status}</td>
+                    <td className="px-4 text-sm py-1">{device.status}</td>
 
-                    <td className="bg-[#f5f5f5] px-5 py-3">Account</td>
+                    <td className="bg-[#f5f5f5] text-sm px-5 py-1">Account</td>
 
-                    <td className="px-4 py-3">{device.account}</td>
+                    <td className="px-4 py-1 text-sm">
+                      <Link
+                        href={`/monitor/plants?userid=${device.id}&fromService=true`}
+                        className="text-[#1890ff] hover:underline"
+                      >
+                        {device.account}
+                      </Link>
+                    </td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">Model</td>
+                    <td className="bg-[#f5f5f5] px-5 py-1" text-sm>
+                      Model
+                    </td>
 
-                    <td className="px-4 py-3">{device.inverterName ?? "--"}</td>
+                    <td className="px-4 py-1 text-sm">
+                      {device.inverterName ?? "--"}
+                    </td>
 
-                    <td className="bg-[#f5f5f5] px-5 py-3">Power</td>
+                    <td className="bg-[#f5f5f5]  text-sm px-5 py-1">Power</td>
 
-                    <td className="px-4 py-3">{device.currentPower ?? 0} kW</td>
+                    <td className="px-4 py-1 text-sm">
+                      {device.currentPower ?? 0} kW
+                    </td>
                   </tr>
 
-                  <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">Update Time</td>
+                  <tr className="border-b text-sm border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-1">Update Time</td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 text-sm py-1">
                       {new Date(device.latestTimestamp).toLocaleString()}
                     </td>
 
-                    <td className="bg-[#f5f5f5] px-5 py-3">E-Today</td>
+                    <td className="bg-[#f5f5f5] text-sm px-5 py-1">E-Today</td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 text-sm py-1">
                       {device.dailyProduction ?? 0} kWh
                     </td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">E-Total</td>
+                    <td className="bg-[#f5f5f5] text-sm px-5 py-1">E-Total</td>
 
-                    <td className="px-4 py-3">{device.totalEnergy ?? 0} kWh</td>
+                    <td className="px-4 text-sm py-1">
+                      {device.totalEnergy ?? 0} kWh
+                    </td>
 
-                    <td className="bg-[#f5f5f5] px-5 py-3">
+                    <td className="bg-[#f5f5f5]  text-sm px-5 py-1">
                       Communication Module SN
                     </td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-1">--</td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">
+                    <td className="bg-[#f5f5f5] px-5 py-1 text-sm ">
                       Communication Module Version
                     </td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-1">--</td>
 
-                    <td className="bg-[#f5f5f5] px-5 py-3">
+                    <td className="bg-[#f5f5f5]  text-sm px-5 py-1">
                       Communication Status
                     </td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-1">--</td>
                   </tr>
 
-                  <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">MDSP</td>
+                  <tr className="border-b text-sm border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5  text-sm py-1">MDSP</td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-1">--</td>
 
-                    <td className="bg-[#f5f5f5] px-5 py-3">SDSP</td>
+                    <td className="bg-[#f5f5f5] text-sm px-5 py-1">SDSP</td>
 
-                    <td className="px-4 py-3">--</td>
+                    <td className="px-4 py-1">--</td>
                   </tr>
 
                   <tr>
-                    <td className="bg-[#f5f5f5] px-5 py-3">CSB</td>
+                    <td className="bg-[#f5f5f5]  text-sm px-5 py-1">CSB</td>
 
-                    <td colSpan={3} className="px-4 py-3">
+                    <td colSpan={3} className="px-4 py-1">
                       --
                     </td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <DeleteInverterModal
+              open={deleteOpen}
+              device={{
+                id: device.id,
+                name: device.sno,
+              }}
+              loading={deleteDevice.isPending}
+              onClose={() => setDeleteOpen(false)}
+              onConfirm={handleDeleteDevice}
+            />
+            <div className="mt-10">
+              <h3 className="text-[18px] font-semibold text-[#333] mb-5">
+                Device Details
+              </h3>
+              <DevicesTabPanel
+                plantId={device.plantId || ""}
+                deviceId={device.id || ""}
+                fromService={true}
+                className="!pt-0 !px-0 border border-[#ececec]"
+              />
             </div>
           </>
         )}
@@ -235,11 +362,10 @@ sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   User Info
                 </h3>
 
-
                 <table className="w-full border border-[#ededed] border-collapse text-[15px]">
                   <tbody>
                     <tr className="border-b border-[#ededed]">
-                      <td className="bg-[#f7f7f7] w-[30%] px-5 py-4 text-[#555]">
+                      <td className="bg-[#f7f7f7] w-[30%] px-5 py-2 text-[#555]">
                         Monitor User Name
                       </td>
 
@@ -254,47 +380,80 @@ sm:w-[360px] h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                     </tr>
 
                     <tr className="border-b border-[#ededed]">
-                      <td className="bg-[#f7f7f7] px-5 py-4">Operation</td>
+                      <td className="bg-[#f7f7f7] px-5 py-2 font-medium">
+                        Operation
+                      </td>
 
-                      <td colSpan={3} className="px-5 py-4">
-                        <button className="text-[#555] hover:text-[#1890ff]">
-                          Activate User
-                        </button>
+                      <td colSpan={3} className="px-5 py-2">
+                        <div className="flex items-center flex-wrap gap-4 text-[15px]">
+                          {/* Activate User */}
+                          <button className="flex items-center gap-1 text-[#555] hover:text-green-600 transition-colors">
+                            <HiOutlineCheckCircle className="h-5 w-5" />
+                            <span>Activate User</span>
+                          </button>
 
-                        <button className="ml-5 text-[#555] hover:text-red-500">
-                          Delete User
-                        </button>
+                          <span className="text-gray-300">|</span>
+
+                          {/* Delete Account */}
+                          <button
+                            onClick={() => setDeleteAccountOpen(true)}
+                            disabled={deleteAccountMutation.isPending}
+                            className="flex items-center gap-1 text-[#555] hover:text-red-500 transition-colors disabled:opacity-50"
+                          >
+                            <HiOutlineTrash className="h-5 w-5" />
+                            <span>
+                              {deleteAccountMutation.isPending
+                                ? "Deleting..."
+                                : "Delete Account"}
+                            </span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
-
+                    <DeleteInverterModal
+                      open={deleteAccountOpen}
+                      device={
+                        user
+                          ? {
+                              id: user.id,
+                              name: user.account,
+                            }
+                          : null
+                      }
+                      loading={deleteAccountMutation.isPending}
+                      onClose={() => setDeleteAccountOpen(false)}
+                      onConfirm={handleDeleteAccount}
+                    />
                     <tr className="border-b border-[#ededed]">
                       <td className="bg-[#f7f7f7] px-5 py-4">E-mail</td>
 
-                      <td className="px-5 py-4">{user.email ?? "-"}</td>
+                      <td className="px-5 py-2">{user.email ?? "-"}</td>
 
-                      <td className="bg-[#f7f7f7] w-[140px] px-5 py-4">Phone</td>
+                      <td className="bg-[#f7f7f7] w-[140px] px-5 py-2">
+                        Phone
+                      </td>
 
-                      <td className="px-5 py-4">{user.phone ?? "-"}</td>
+                      <td className="px-5 py-2">{user.phone ?? "-"}</td>
                     </tr>
 
                     <tr className="border-b border-[#ededed]">
-                      <td className="bg-[#f7f7f7] px-5 py-4">
+                      <td className="bg-[#f7f7f7] px-5 py-2">
                         Registration Time
                       </td>
 
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-2">
                         {new Date(user.createdAt).toLocaleString()}
                       </td>
 
-                      <td className="bg-[#f7f7f7] px-5 py-4">Price</td>
+                      <td className="bg-[#f7f7f7] px-5 py-2">Price</td>
 
-                      <td className="px-5 py-4">0.0000</td>
+                      <td className="px-5 py-2">0.0000</td>
                     </tr>
 
                     <tr>
-                      <td className="bg-[#f7f7f7] px-5 py-4">Activation</td>
+                      <td className="bg-[#f7f7f7] px-5 py-2">Activation</td>
 
-                      <td colSpan={3} className="px-5 py-4">
+                      <td colSpan={3} className="px-5 py-2">
                         {user.status === "active" ? "Y" : "N"}
                       </td>
                     </tr>

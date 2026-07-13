@@ -246,6 +246,23 @@ const PlantTable = ({
       `/monitor/plants/plant-detail?${params.toString()}`,
     );
   };
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "online":
+      case "normal":
+        return "bg-green-100 border border-green-700 text-green-700";
+
+      case "offline":
+      case "abnormal":
+        return "bg-red-100 border border-[#ff7875] text-red-700";
+
+      case "warning":
+        return "bg-yellow-100 border border-yellow-700 text-yellow-700";
+
+      default:
+        return "bg-gray-100 border border-gray-600 text-gray-700";
+    }
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -328,7 +345,11 @@ const PlantTable = ({
           {plants.map((p) => (
             <tr key={p.name} className="border-t whitespace-nowrap">
               <td className="p-3">
-                <span className="bg-gray-300 text-white text-xs px-2 py-1 rounded">
+                <span
+                  className={`text-black text-xs px-2 py-1 rounded font-medium ${getStatusStyle(
+                    p.status,
+                  )}`}
+                >
                   {p.status} ({p.totalDevices})
                 </span>
               </td>

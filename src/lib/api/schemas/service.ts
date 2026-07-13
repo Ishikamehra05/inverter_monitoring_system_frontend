@@ -92,6 +92,14 @@ export interface MonitorUserStatusCountsResponse {
     updatedAt: string;
   };
 }
+export type DeleteAccountRequest = {
+  account: string;
+};
+
+export type DeleteAccountResponse = {
+  success: boolean;
+  message: string;
+};
 export const profileSchema = z.object({
   account: z.string(),
   email: z.string(),

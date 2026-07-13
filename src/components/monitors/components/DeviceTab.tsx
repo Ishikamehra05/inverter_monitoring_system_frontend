@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pagination } from "../pagination";
 import { useRouter } from "next/navigation";
 
@@ -180,6 +180,11 @@ const DeviceTab = ({ devices }: { devices: Device[] }) => {
   const endIndex = startIndex + pageSize;
 
   const paginatedDevices = devices.slice(startIndex, endIndex);
+
+  // Reset to page 1 when device list changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [devices.length]);
 
   return (
     <div className="mt-4 space-y-3">

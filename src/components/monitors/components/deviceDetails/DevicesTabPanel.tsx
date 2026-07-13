@@ -12,6 +12,9 @@ import { useDeviceInformation, useDeviceChart } from "@/hooks/api/useDevices";
 type DeviceTabPanelProps = {
   className?: string;
   onTabChange?: (tab: string) => void;
+  deviceId?: string;
+  plantId?: string;
+  fromService?: boolean;
 };
 
 
@@ -67,6 +70,9 @@ const Tabs = ({
 const DevicesTabPanel = ({
   className = "",
   onTabChange,
+  deviceId: propDeviceId,
+  plantId: propPlantId,
+  fromService: propFromService,
 }: DeviceTabPanelProps) => {
   const [activeTab, setActiveTab] = useState<string>("chart");
   const [chartDate, setChartDate] = useState(
@@ -87,16 +93,17 @@ const DevicesTabPanel = ({
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : {};
+      : propFromService ? { fromService: true } : {};
 
-  const plantId = searchParams.get("plantId") ?? "";
+  const plantId = propPlantId ?? (searchParams.get("plantId") ?? "");
   const rawDeviceId = searchParams.get("deviceId") ?? "";
 
-  const deviceId =
+  const urlDeviceId =
     rawDeviceId.startsWith("device-")
       ? rawDeviceId.replace("device-", "")
       : rawDeviceId;
-  // console.log("deviceId", deviceId);
+
+  const deviceId = propDeviceId ?? urlDeviceId;
 
   const { data, isLoading } = useDeviceInformation(
     deviceId,

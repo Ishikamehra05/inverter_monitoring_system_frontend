@@ -63,6 +63,12 @@ export const useMonitorUsers = (params: Record<string, unknown> = {}) =>
     },
   });
 
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: (params: ServiceScopeParams = {}) =>
+      serviceApi.deleteAccount(params),
+  });
+}
 export function useMonitorUserStatusCounts(params: ServiceScopeParams = {}) {
   return useQuery({
     queryKey: ["monitor-user-status-counts", params],

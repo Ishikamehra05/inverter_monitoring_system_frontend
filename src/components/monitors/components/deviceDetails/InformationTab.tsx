@@ -1,8 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { HiOutlineDownload } from "react-icons/hi";
+import {
+  HiOutlineDownload,
+  HiChevronDown,
+  HiChevronRight,
+} from "react-icons/hi";
 import { useDeviceInformationExport } from "@/hooks/api/useDevices";
+import { useState } from "react";
 
 export type Stat = {
   label: string;
@@ -19,13 +24,46 @@ type InfoProps = {
   dateTo: string;
 };
 
-const SectionHeader = ({ title }: { title: string }) => (
-  <div className="flex items-center gap-2">
-    <span className="w-1 h-6 bg-blue-500 rounded"></span>
-    <h2 className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded">
-      {title}
-    </h2>
-  </div>
+type SectionHeaderProps = {
+  title: string;
+  isOpen: boolean;
+  onToggle: () => void;
+};
+
+const SectionHeader = ({ title, isOpen, onToggle }: SectionHeaderProps) => (
+  <button
+    onClick={onToggle}
+    className="
+      w-full
+      flex
+      items-center
+      justify-between
+      rounded-xl
+      border
+      border-gray-100
+      bg-gray-50
+      px-5
+      py-3
+      transition-all
+      duration-300
+      hover:bg-gray-100
+      hover:border-gray-300
+    "
+  >
+    <div className="flex items-center gap-3">
+      <div className="h-6 w-1 rounded-full bg-blue-500"></div>
+
+      <span className="text-base font-semibold text-blue-700">{title}</span>
+    </div>
+
+    <span className="text-blue-600 transition-transform duration-300">
+      {isOpen ? (
+        <HiChevronDown className="h-5 w-5" />
+      ) : (
+        <HiChevronRight className="h-5 w-5" />
+      )}
+    </span>
+  </button>
 );
 
 const StatsGrid = ({ stats }: { stats: Stat[] }) => {
@@ -34,16 +72,15 @@ const StatsGrid = ({ stats }: { stats: Stat[] }) => {
       {stats.map((stat, index) => (
         <div
           key={index}
-          className="rounded-xl border bg-white p-4 shadow-sm space-y-2"
+          className="rounded-xl border bg-white p-2 shadow-sm space-y-2 border-gray-200"
         >
           <p className="text-xs text-gray-400">{stat.label}</p>
-          <p className="text-sm font-medium text-gray-700">{stat.value}</p>
+          <p className="text-sm font-medium text-gray-800">{stat.value}</p>
         </div>
       ))}
     </div>
   );
 };
-
 
 const InformationTab = ({
   basicStats,
@@ -55,14 +92,14 @@ const InformationTab = ({
 }: InfoProps) => {
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
-
-  const serviceParams =
-    selectedEndUserId
-      ? {
+  const [basicOpen, setBasicOpen] = useState(true);
+  const [stringOpen, setStringOpen] = useState(true);
+  const serviceParams = selectedEndUserId
+    ? {
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : {};
+    : {};
   const informationExportMutation = useDeviceInformationExport();
 
   const handleInformationExport = async () => {
@@ -100,7 +137,6 @@ const InformationTab = ({
   return (
     <div className="space-y-8 mt-4">
       <div className="flex flex-wrap gap-2 items-center justify-end text-black">
-
         <button
           onClick={handleInformationExport}
           disabled={informationExportMutation.isPending}
@@ -116,11 +152,30 @@ const InformationTab = ({
           </span>
         </button>
       </div>
-      <div className="space-y-8 mt-4">
-        <SectionHeader title="Basic Info" />
-        <StatsGrid stats={basicStats} />
-        <SectionHeader title="String Info" />
-        <StatsGrid stats={stringStats} />
+      <div className="space-y-6">
+        <SectionHeader
+          title="Basic Information"
+          isOpen={basicOpen}
+          onToggle={() => setBasicOpen(!basicOpen)}
+        />
+
+        {basicOpen && (
+          <div className="animate-fadeIn">
+            <StatsGrid stats={basicStats} />
+          </div>
+        )}
+
+        <SectionHeader
+          title="String Information"
+          isOpen={stringOpen}
+          onToggle={() => setStringOpen(!stringOpen)}
+        />
+
+        {stringOpen && (
+          <div className="animate-fadeIn">
+            <StatsGrid stats={stringStats} />
+          </div>
+        )}
       </div>
     </div>
   );

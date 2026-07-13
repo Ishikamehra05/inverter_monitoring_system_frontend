@@ -34,7 +34,6 @@ export const chartResponseSchema = z.object({
   points: z.array(chartPointSchema),
 });
 
-
 export const logSchema = z.object({
   id: z.union([z.string(), z.number()]),
   name: z.string(),
@@ -64,7 +63,6 @@ export const plantInformationSchema = z.object({
   ),
 });
 
-
 export const plantOverviewSchema = z.object({
   plant: z.object({
     id: z.string(),
@@ -73,7 +71,15 @@ export const plantOverviewSchema = z.object({
     kwp: z.number(),
 
     installationDate: z.string(),
-    status: z.string(),
+
+    currentStatus: z
+      .object({
+        status: z.string(),
+        totalDevices: z.number(),
+        normalCount: z.number(),
+        abnormalCount: z.number(),
+      })
+      .optional(),
 
     income: z.object({
       value: z.number(),

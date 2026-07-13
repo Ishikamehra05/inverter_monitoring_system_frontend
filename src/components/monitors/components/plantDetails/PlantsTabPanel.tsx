@@ -90,21 +90,8 @@ const PlantsTabPanel = ({
   const [chartDate, setChartDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const devicesQuery = usePlantDevices(plantId, serviceParams);
   const plantInfoQuery = usePlantInformation(plantId, serviceParams);
   const plantInfo = plantInfoQuery.data;
-  const devices: Device[] =
-    devicesQuery.data?.items?.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      type: item.type,
-      sn: item.sn,
-      power: item.power?.value ?? 0,
-      today: item.today?.value ?? 0,
-      total: item.total?.value ?? 0,
-      hours: item.hours?.value ?? 0,
-      online: item.online,
-    })) ?? [];
   // const [logs] = useState<Log[]>();
 
   const handleTabChange = (tab: string) => {
@@ -129,7 +116,6 @@ const PlantsTabPanel = ({
 
         {activeTab === "device" && <DeviceTab
           plantId={plantId}
-          devices={devices}
         />}
 
         {activeTab === "information" && (
