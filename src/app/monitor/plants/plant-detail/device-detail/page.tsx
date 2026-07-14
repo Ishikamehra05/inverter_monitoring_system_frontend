@@ -26,6 +26,7 @@ export default function DeviceDetailsPage() {
 
   // console.log("deviceid", deviceId, plantId)
   const device = data;
+  // console.log("Passing latestUpdate:", device?.latestUpdate);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -43,7 +44,9 @@ export default function DeviceDetailsPage() {
           hours={device?.hTotal ?? 0}
           lastUpdate={
             device?.latestUpdate
-              ? new Date(device.latestUpdate).toLocaleString()
+              ? new Date(device.latestUpdate).toLocaleString("en-IN", {
+                timeZone: "UTC",
+              })
               : "-"
           }
         />;

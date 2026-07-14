@@ -27,7 +27,7 @@ const AddInverterModal = ({
     await onSubmit(serial.trim());
   };
   const handleClose = () => {
-    console.log("Resetting serial");
+    // console.log("Resetting serial");
     setSerial("");
     onClose();
   };

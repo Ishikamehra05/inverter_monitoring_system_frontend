@@ -94,16 +94,26 @@ const LogsTab = ({ deviceId, plantId }: LogsTabProps) => {
 
   const [showCalendar, setShowCalendar] = useState(false);
 
+  const today = new Date();
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(today.getDate() - 7);
+
   const [range, setRange] = useState<DateRangeSelection["selection"][]>([
     {
-      startDate: new Date("2026-05-30"),
-      endDate: new Date(),
+      startDate: sevenDaysAgo,
+      endDate: today,
       key: "selection",
     },
   ]);
 
-  const formatDate = (date: Date) =>
-    date.toISOString().split("T")[0];
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
 
@@ -191,7 +201,7 @@ const LogsTab = ({ deviceId, plantId }: LogsTabProps) => {
         </div>
 
         {/* Event Filter */}
-        <select
+        {/* <select
           value={eventFilter}
           onChange={(e) => {
             setEventFilter(e.target.value);
@@ -202,7 +212,7 @@ const LogsTab = ({ deviceId, plantId }: LogsTabProps) => {
           <option>All</option>
           <option>Grid under voltage</option>
           <option>Grid under frequency</option>
-        </select>
+        </select> */}
 
         {/* Download */}
         <button

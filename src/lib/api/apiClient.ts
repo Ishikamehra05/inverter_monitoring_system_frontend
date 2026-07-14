@@ -58,7 +58,7 @@ async function refreshAccessToken() {
 
   localStorage.setItem("refreshToken", newRefreshToken);
 
-  console.log(refreshAccessToken);
+  // console.log(refreshAccessToken);
 
   return accessToken;
 }

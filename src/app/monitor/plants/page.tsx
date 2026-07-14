@@ -232,7 +232,7 @@ const PlantTable = ({
 
     const params = new URLSearchParams({
       plantId,
-      status,
+      // status,
     });
 
     if (userId) {
@@ -253,10 +253,10 @@ const PlantTable = ({
         return "bg-green-100 border border-green-700 text-green-700";
 
       case "offline":
-      case "abnormal":
+      case "fault":
         return "bg-red-100 border border-[#ff7875] text-red-700";
 
-      case "warning":
+      case "abnormal":
         return "bg-yellow-100 border border-yellow-700 text-yellow-700";
 
       default:
@@ -723,7 +723,7 @@ export default function PlantPage() {
               sortOrder={sortOrder}
               onSort={handleSort}
               onDelete={(id) => {
-                console.log(id);
+                // console.log(id);
                 setDeletePlantId(id);
                 setShowDeleteModal(true);
               }}

@@ -18,6 +18,12 @@ export const dashboardKeys = {
 
   plantChartExport: (plantId: string, params: Record<string, unknown>,) =>
     [...dashboardKeys.all, "plantChartExport", plantId, params,] as const,
+
+  currentAlerts: (
+    plantId: string,
+    params: Record<string, unknown>
+  ) =>
+    [...dashboardKeys.all, "currentAlerts", plantId, params] as const,
 };
 
 /* ---------------- Overview ---------------- */
@@ -192,4 +198,15 @@ export const usePlantChartExport = () =>
         plantId,
         params,
       ),
+  });
+
+export const usePlantCurrentAlerts = (
+  plantId: string,
+  params: Record<string, unknown> = {}
+) =>
+  useQuery({
+    queryKey: dashboardKeys.currentAlerts(plantId, params),
+    queryFn: () =>
+      dashboardApi.plantCurrentAlerts(plantId, params),
+    enabled: !!plantId,
   });

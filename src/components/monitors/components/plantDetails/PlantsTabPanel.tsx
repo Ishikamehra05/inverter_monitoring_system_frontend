@@ -168,7 +168,7 @@ const PlantsTabPanel = ({
             plantId={plantId}
           />
         )}
-        {activeTab === "alerts" && <AlertsTab alerts={[]} />}
+        {activeTab === "alerts" && <AlertsTab plantId={plantId} />}
 
         {/* {activeTab === "alerts" && <AlertsTab alerts={} />} */}
       </div>

@@ -32,11 +32,11 @@ export default function InformationPage() {
   });
 
   useEffect(() => {
-    console.log(profileQuery.data);
+    // console.log(profileQuery.data);
   }, [profileQuery.data]);
 
   useEffect(() => {
-    console.log(" Profile API Response:", profileQuery.data);
+    // console.log(" Profile API Response:", profileQuery.data);
 
     if (profileQuery.data) {
       const profile = profileQuery.data;
@@ -51,7 +51,7 @@ export default function InformationPage() {
     }
   }, [profileQuery.data]);
   useEffect(() => {
-    console.log("Form Data:", formData);
+    // console.log("Form Data:", formData);
   }, [formData]);
   const [errors, setErrors] = useState<any>({});
   const handleSecurityUpdate = async () => {

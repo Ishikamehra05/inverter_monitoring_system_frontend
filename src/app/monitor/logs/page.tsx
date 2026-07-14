@@ -102,21 +102,35 @@ export default function LogsPage() {
 
   const [range, setRange] = useState<
     DateRangeSelection["selection"][]
-  >([
-    {
-      startDate: new Date("2025-01-01"),
-      endDate: new Date(),
-      key: "selection",
-    },
-  ]);
+  >(() => {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    return [
+      {
+        startDate: sevenDaysAgo,
+        endDate: today,
+        key: "selection",
+      },
+    ];
+  });
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
 
   const { data, isLoading } = useUserLogs({
     page: currentPage,
     pageSize,
     search,
     event: eventFilter,
-    dateFrom: range[0].startDate.toISOString().split("T")[0],
-    dateTo: range[0].endDate.toISOString().split("T")[0],
+    dateFrom: formatDate(range[0].startDate),
+    dateTo: formatDate(range[0].endDate),
     ...serviceParams,
   });
 
@@ -173,9 +187,10 @@ export default function LogsPage() {
               <div className="absolute right-0 z-20 mt-2 rounded border bg-white shadow-lg">
                 <DateRange
                   ranges={range}
-                  onChange={(ranges: DateRangeSelection) =>
-                    setRange([ranges.selection])
-                  }
+                  onChange={(ranges: DateRangeSelection) => {
+                    setRange([ranges.selection]);
+                    setCurrentPage(1);
+                  }}
                 />
 
                 <div className="flex justify-end p-2">

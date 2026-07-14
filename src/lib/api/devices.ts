@@ -1,7 +1,7 @@
 import { apiClient, withQuery } from "./apiClient";
 import type {
   AddDeviceRequest, ApiDevice, DeviceInformation, DeviceChart, DeviceView,
-  DeviceLogsExportParams, DeviceLogsResponse, DeviceLogsParams
+  DeviceLogsExportParams, DeviceLogsResponse, DeviceLogsParams, DeviceCurrentAlertsResponse
 } from "./schemas/devices";
 
 type ApiEnvelope<T> = {
@@ -143,9 +143,6 @@ export const devicesApi = {
     const url =
       `/monitor/devices/${deviceId}/chart${withQuery(params)}`;
 
-    console.log("CHART URL =", url);
-    console.log("CHART PARAMS =", params);
-
     return apiClient<ApiEnvelope<DeviceChart>>(url)
       .then((res) => res.data);
   },
@@ -209,5 +206,13 @@ export const devicesApi = {
     apiClient<string>(
       `/monitor/devices/${deviceId}/information/export${withQuery(params)}`
     ),
+
+  currentAlerts: (
+    deviceId: string,
+    params: Record<string, unknown>
+  ) =>
+    apiClient<ApiEnvelope<DeviceCurrentAlertsResponse>>(
+      `/monitor/devices/${deviceId}/alerts${withQuery(params)}`
+    ).then((res) => res.data),
 };
 

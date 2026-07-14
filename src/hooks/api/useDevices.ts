@@ -14,6 +14,10 @@ export const deviceKeys = {
     [...deviceKeys.all, "information", deviceId] as const,
   logs: (deviceId: string, params: Record<string, unknown>) =>
     [...deviceKeys.all, "logs", deviceId, params] as const,
+  currentAlerts: (
+    deviceId: string,
+    params: Record<string, unknown>
+  ) => [...deviceKeys.detail(deviceId), "current-alerts", params],
 };
 
 export const usePlantDevices = (
@@ -238,4 +242,15 @@ export const useDeviceInformationExport = () =>
         targetEndUserId?: string;
       }
     }) => devicesApi.informationExport(deviceId, params),
+  });
+
+export const useDeviceCurrentAlerts = (
+  deviceId: string,
+  params: Record<string, unknown>
+) =>
+  useQuery({
+    queryKey: deviceKeys.currentAlerts(deviceId, params),
+    queryFn: () =>
+      devicesApi.currentAlerts(deviceId, params),
+    enabled: !!deviceId,
   });

@@ -104,6 +104,28 @@ export type PlantChartExportResponse = {
   expiresAt: string;
 };
 
+export interface DeviceCurrentAlert {
+  id: string;
+  name: string;
+  sn: string;
+  event: string;
+  status: "active" | "inactive" | string;
+  startedAt: string;
+  lastUpdatedAt: string;
+}
+
+export interface Pagination {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface DeviceCurrentAlertsResponse {
+  items: DeviceCurrentAlert[];
+  pagination: Pagination;
+}
+
 export type PlantOverviewResponse = z.infer<typeof plantOverviewSchema>;
 export type ChartResponse = z.infer<typeof chartResponseSchema>;
 export type ApiLog = z.infer<typeof logSchema>;

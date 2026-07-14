@@ -5,7 +5,8 @@ import type {
   ChartResponse,
   PlantInformation,
   PlantOverviewResponse,
-  PlantChartExportResponse
+  PlantChartExportResponse,
+  DeviceCurrentAlertsResponse
 } from "./schemas/dashboard";
 
 type ApiEnvelope<T> = {
@@ -172,5 +173,13 @@ export const dashboardApi = {
   ) =>
     apiClient<ApiEnvelope<PlantChartExportResponse>>(
       `/monitor/plants/${plantId}/chart/export${withQuery(params)}`
+    ).then((res) => res.data),
+
+  plantCurrentAlerts: (
+    plantId: string,
+    params: Record<string, unknown> = {}
+  ) =>
+    apiClient<ApiEnvelope<DeviceCurrentAlertsResponse>>(
+      `/monitor/plants/${plantId}/alerts${withQuery(params)}`
     ).then((res) => res.data),
 };

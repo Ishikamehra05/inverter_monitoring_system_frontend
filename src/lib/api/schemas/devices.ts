@@ -123,6 +123,26 @@ export type DeviceLogsExportParams = {
   targetEndUserId?: string;
 };
 
+export interface DeviceCurrentAlert {
+  id: string;
+  name: string;
+  sn: string;
+  event: string;
+  status: string;
+  startedAt: string;
+  lastUpdatedAt: string;
+}
+
+export interface DeviceCurrentAlertsResponse {
+  items: DeviceCurrentAlert[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
 export type ApiDevice = z.infer<typeof deviceSchema>;
 export type DeviceInformation = z.infer<typeof deviceInformationSchema>;
 export type AddDeviceRequest = z.infer<typeof addDeviceRequestSchema>;

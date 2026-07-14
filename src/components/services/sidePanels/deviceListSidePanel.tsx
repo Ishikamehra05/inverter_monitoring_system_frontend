@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { X, RefreshCw, Download, Calendar, ChevronDown, Inbox } from "lucide-react";
-import { useDeviceInformationExport, useDeviceLogsExport, useDeviceLogs, useDeviceChart, useDeviceChartExport } from "@/hooks/api/useDevices";
+import { useDeviceInformationExport, useDeviceLogsExport, useDeviceLogs, useDeviceChart, useDeviceCurrentAlerts } from "@/hooks/api/useDevices";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -230,7 +230,7 @@ function CollapsibleSection({ title, fields }: InfoSection) {
       {/* Section header */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50  border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors text-left"
       >
         <ChevronDown
           size={14}
@@ -359,13 +359,26 @@ export default function DeviceSidebar({
   const [selectedLogOption, setSelectedLogOption] = useState("All");
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date("2026-05-30"),
-      endDate: new Date(),
-      key: "selection",
-    },
-  ]);
+  const [dateRange, setDateRange] = useState(() => {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    return [
+      {
+        startDate: sevenDaysAgo,
+        endDate: today,
+        key: "selection",
+      },
+    ];
+  });
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
 
 
   const logsQuery = useDeviceLogs(deviceId, {
@@ -373,8 +386,8 @@ export default function DeviceSidebar({
     page: 1,
     pageSize: 10,
     event: selectedLogOption,
-    dateFrom: dateRange[0].startDate?.toISOString().split("T")[0],
-    dateTo: dateRange[0].endDate?.toISOString().split("T")[0],
+    dateFrom: formatDate(dateRange[0].startDate),
+    dateTo: formatDate(dateRange[0].endDate),
     fromService: true,
     targetEndUserId,
   });
@@ -398,8 +411,6 @@ export default function DeviceSidebar({
     { key: "logs", label: "Logs" },
     { key: "alerts", label: "Current Alerts" },
   ];
-
-  const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   const handleLogsExport = () => {
     const params = new URLSearchParams({
@@ -431,14 +442,24 @@ export default function DeviceSidebar({
     }
   );
 
+  const alertsQuery = useDeviceCurrentAlerts(deviceId, {
+    plantId,
+    page: 1,
+    pageSize: 20,
+    fromService: true,
+    targetEndUserId,
+  });
+
   if (!isOpen) return null;
+
+  const alerts = alertsQuery.data?.items ?? [];
 
   return (
     <>
       <div className="fixed top-0 right-0 h-full w-[75%] bg-white shadow-2xl border-l border-gray-200 overflow-y-auto z-50 sidebar-slide-right flex flex-col">
 
         {/* Header: device name + close */}
-        <div className="px-8 pt-8 pb-6 flex items-start justify-between border-b border-gray-100">
+        <div className="px-8 pt-8 pb-6 flex items-start justify-between  border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900">{deviceName}</h2>
           <button
             onClick={onClose}
@@ -449,7 +470,7 @@ export default function DeviceSidebar({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 px-8">
+        <div className="flex  border-gray-200 px-8">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -539,7 +560,7 @@ export default function DeviceSidebar({
                 </div>
 
                 {/* Event Filter */}
-                <select
+                {/* <select
                   value={selectedLogOption}
                   onChange={(e) => setSelectedLogOption(e.target.value)}
                   className="border border-gray-200 rounded px-3 py-2 text-sm"
@@ -550,7 +571,7 @@ export default function DeviceSidebar({
                       {option}
                     </option>
                   ))}
-                </select>
+                </select> */}
 
                 {/* Download */}
                 <button
@@ -571,25 +592,57 @@ export default function DeviceSidebar({
               ) : logs.length === 0 ? (
                 <NoData />
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left">Time</th>
-                      <th className="px-4 py-3 text-left">Level</th>
-                      <th className="px-4 py-3 text-left">Event</th>
-                    </tr>
-                  </thead>
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr className="border-b border-gray-200">
+                        <th className="px-5 py-4 text-left font-semibold text-gray-700">
+                          Time
+                        </th>
 
-                  <tbody>
-                    {logs.map((log: any) => (
-                      <tr key={log.id} className="border-b border-gray-100">
-                        <td>{log.time}</td>
-                        <td>{log.status}</td>
-                        <td>{log.event}</td>
+                        <th className="px-5 py-4 text-left font-semibold text-gray-700">
+                          Level
+                        </th>
+
+                        <th className="px-5 py-4 text-right font-semibold text-gray-700">
+                          Event
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+
+                    <tbody>
+                      {logs.map((log: any) => (
+                        <tr
+                          key={log.id}
+                          className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-5 py-4 whitespace-nowrap text-gray-700">
+                            {log.time}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${log.status?.toLowerCase() === "active"
+                                ? " text-red-700"
+                                : log.status?.toLowerCase() === "warning"
+                                  ? " text-yellow-700"
+                                  : " text-blue-700"
+                                }`}
+                            >
+                              {log.status}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 text-right">
+                            <span className="inline-flex rounded-md bg-[#1890FF] px-3 py-1 text-xs font-medium text-white">
+                              {log.event}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
@@ -597,30 +650,60 @@ export default function DeviceSidebar({
           {/* ── CURRENT ALERTS ── */}
           {activeTab === "alerts" && (
             <div className="border border-gray-200 rounded-lg">
-              {/* Refresh button */}
               <div className="flex justify-end px-4 pt-3 pb-1">
-                <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                  <RefreshCw size={16} />
+                <button
+                  onClick={() => alertsQuery.refetch()}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={alertsQuery.isFetching ? "animate-spin" : ""}
+                  />
                 </button>
               </div>
 
-              {/* Table */}
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-t border-b border-gray-200 bg-gray-50">
-                    <th className="px-5 py-3 text-left text-gray-600 font-medium">Name</th>
-                    <th className="px-5 py-3 text-left text-gray-600 font-medium">SN</th>
-                    <th className="px-5 py-3 text-left text-gray-600 font-medium">Event</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colSpan={3}>
-                      <NoData />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              {alertsQuery.isLoading ? (
+                <div className="py-10 text-center">
+                  Loading...
+                </div>
+              ) : alerts.length === 0 ? (
+                <NoData />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-t  border-gray-200 bg-gray-50">
+                        <th className="px-5 py-3 text-left">Name</th>
+                        <th className="px-5 py-3 text-left">S/N</th>
+                        <th className="px-5 py-3 text-right">Event</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {alerts.map((alert) => (
+                        <tr
+                          key={alert.id}
+                          className=" border-gray-100"
+                        >
+                          <td className="px-5 py-3">
+                            {alert.name}
+                          </td>
+
+                          <td className="px-5 py-3">
+                            {alert.sn}
+                          </td>
+
+                          <td className="px-5 py-3 text-right">
+                            <span className="inline-flex rounded bg-[#1890FF] px-3 py-1 text-xs text-white">
+                              {alert.event}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

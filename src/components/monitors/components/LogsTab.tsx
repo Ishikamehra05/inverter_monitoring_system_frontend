@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Pagination } from "../pagination";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+
 export type Log = {
   id: number;
   name: string;
@@ -62,31 +66,77 @@ const LogsTable = ({ logs }: LogsTableProps) => {
 };
 
 const LogsTab = ({ logs }: { logs: Log[] }) => {
-      const [currentPage, setCurrentPage] = useState(1);
-      const [pageSize, setPageSize] = useState(10);
-    
-      const startIndex = (currentPage - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-    
-      const paginatedLogs = logs.slice(startIndex, endIndex);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  type DateRangeSelection = {
+    selection: {
+      startDate: Date;
+      endDate: Date;
+      key: string;
+    };
+  };
+
+  const [range, setRange] = useState<DateRangeSelection["selection"][]>(() => {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    return [
+      {
+        startDate: sevenDaysAgo,
+        endDate: today,
+        key: "selection",
+      },
+    ];
+  });
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  const paginatedLogs = logs.slice(startIndex, endIndex);
 
   return (
     <div className="mt-4 space-y-4">
       {/* Controls */}
-      <div className="flex flex-wrap gap-2 items-center justify-end">
-        <input type="date" className="border rounded px-2 py-1 text-sm" />
-        <span>—</span>
-        <input type="date" className="border rounded px-2 py-1 text-sm" />
-        <select className="border rounded px-2 py-1 text-sm">
-          <option>All</option>
-          <option>Grid under voltage</option>
-          <option>Grid under frequency</option>
-        </select>
-        <button className="px-3 py-1 text-sm rounded bg-blue-600 text-white">
-          🔍 Search
+      <div className="flex flex-wrap gap-2 items-center justify-end text-black">
+        <div className="relative">
+          <input
+            readOnly
+            onClick={() => setShowCalendar(!showCalendar)}
+            value={`${range[0].startDate.toLocaleDateString()} — ${range[0].endDate.toLocaleDateString()}`}
+            className="border rounded px-3 py-1.5 cursor-pointer"
+          />
+
+          {showCalendar && (
+            <div className="absolute right-0 mt-2 bg-white shadow-lg border rounded z-20">
+              <DateRange
+                ranges={range}
+                onChange={(ranges: DateRangeSelection) =>
+                  setRange([ranges.selection])
+                }
+              />
+
+              <div className="flex justify-end p-2">
+                <button
+                  onClick={() => setShowCalendar(false)}
+                  className="px-3 py-1 bg-blue-500 text-white rounded"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button className="px-3 py-1.5 rounded bg-blue-600 text-white">
+          Search
         </button>
-        <button className="px-3 py-1 text-sm rounded bg-gray-100">
-          ⬇ Download
+
+        <button className="px-3 py-1.5 rounded bg-gray-100">
+          Download
         </button>
       </div>
 

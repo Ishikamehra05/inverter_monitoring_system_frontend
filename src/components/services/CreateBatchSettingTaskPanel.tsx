@@ -300,7 +300,7 @@ export default function CreateBatchSettingTaskPanel({
             ) : (
               <button
                 onClick={() => {
-                  console.log("Submit", { taskName, settingCommand, selectedDevices });
+                  // console.log("Submit", { taskName, settingCommand, selectedDevices });
                   onClose();
                 }}
                 className="h-10 px-8 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] transition"

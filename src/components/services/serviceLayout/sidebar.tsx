@@ -95,7 +95,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const sidebarWidth = collapsed ? "w-16" : "w-64";
   const { role } = getAuthSession();
-  console.log("User Role", role);
+  // console.log("User Role", role);
   const filteredMenu = MENU.map((menu) => ({
     ...menu,
     children: menu.children.filter(
