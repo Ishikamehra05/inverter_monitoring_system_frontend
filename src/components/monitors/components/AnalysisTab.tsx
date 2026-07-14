@@ -91,13 +91,16 @@ const AnalysisChart = ({ selectedParams }: { selectedParams: string[] }) => {
           <XAxis dataKey="time" />
 
           {/* Voltage */}
-          <YAxis yAxisId="V" label={{ value: "(V)", angle: -90 }} />
+          <YAxis
+            yAxisId="V"
+            label={{ value: "(V)", angle: 0, position: "insideTopLeft" }}
+          />
 
           {/* Current */}
           <YAxis
             yAxisId="A"
             orientation="right"
-            label={{ value: "(A)", angle: 90 }}
+            label={{ value: "(A)", angle: 0, position: "insideTopRight" }}
           />
 
           {/* Power */}
@@ -105,7 +108,7 @@ const AnalysisChart = ({ selectedParams }: { selectedParams: string[] }) => {
             yAxisId="kW"
             orientation="right"
             offset={60}
-            label={{ value: "(kW)", angle: 90 }}
+            label={{ value: "(kW)", angle: 0, position: "insideTopRight" }}
           />
 
           <Tooltip />
@@ -120,11 +123,7 @@ const AnalysisChart = ({ selectedParams }: { selectedParams: string[] }) => {
                 dot={false}
                 strokeWidth={2}
                 yAxisId={
-                  param === "Voltage"
-                    ? "V"
-                    : param === "Current"
-                      ? "A"
-                      : "kW"
+                  param === "Voltage" ? "V" : param === "Current" ? "A" : "kW"
                 }
               />
             )),
