@@ -252,7 +252,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-1" text-sm>
+                    <td className="bg-[#f5f5f5] px-5 py-1 text-sm">
                       Model
                     </td>
 
@@ -421,9 +421,9 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       device={
                         user
                           ? {
-                              id: user.id,
-                              name: user.account,
-                            }
+                            id: user.id,
+                            name: user.account,
+                          }
                           : null
                       }
                       loading={deleteAccountMutation.isPending}
