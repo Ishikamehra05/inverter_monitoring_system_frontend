@@ -292,7 +292,9 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       Communication Module SN
                     </td>
 
-                    <td className="px-4 py-1">--</td>
+                    <td className="px-4 py-1">
+                      {device.communicationModuleSn ?? "--"}
+                    </td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
@@ -300,13 +302,17 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       Communication Module Version
                     </td>
 
-                    <td className="px-4 py-1">--</td>
+                    <td className="px-4 py-1">
+                      {device.communicationModuleVersion ?? "--"}
+                    </td>
 
                     <td className="bg-[#f5f5f5]  text-sm px-5 py-1">
                       Communication Status
                     </td>
 
-                    <td className="px-4 py-1">--</td>
+                    <td className="px-4 py-1">
+                      {device.communicationStatus ?? "--"}
+                    </td>
                   </tr>
 
                   <tr className="border-b text-sm border-[#ececec]">

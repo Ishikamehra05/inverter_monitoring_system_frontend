@@ -59,6 +59,9 @@ export interface SearchDeviceRequest {
 }
 
 export interface SearchDeviceResponse {
+  communicationStatus: string;
+  communicationModuleVersion: string;
+  communicationModuleSn: string;
   id: string;
   sno: string;
   inverterName: string | null;
@@ -78,7 +81,9 @@ export interface SearchDeviceResponse {
   updatedAt: string;
 }
 
-export type CreateSubAccountRequest = z.infer<typeof createSubAccountRequestSchema>;
+export type CreateSubAccountRequest = z.infer<
+  typeof createSubAccountRequestSchema
+>;
 export type SubAccountResponse = z.infer<typeof subAccountResponseSchema>;
 export type EditSubAccountRequest = z.infer<typeof editSubAccountRequestSchema>;
 export type SearchUserRequest = z.infer<typeof searchUserRequestSchema>;
