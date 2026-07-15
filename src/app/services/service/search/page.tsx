@@ -346,7 +346,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               onClose={() => setDeleteOpen(false)}
               onConfirm={handleDeleteDevice}
             />
-            <div className="mt-10">
+            {/* <div className="mt-10">
               <h3 className="text-[18px] font-semibold text-[#333] mb-5">
                 Device Details
               </h3>
@@ -356,7 +356,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                 fromService={true}
                 className="!pt-0 !px-0 border border-[#ececec]"
               />
-            </div>
+            </div> */}
           </>
         )}
         {mode === "user" && (
