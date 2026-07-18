@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, ChevronDown, Settings2 } from "lucide-react";
 import type { z } from "zod";
@@ -106,29 +106,144 @@ function buildTabEntry(tab: ModalTab, settings: RemoteSettings): RemoteSettingsT
 // mapping for engineers/downstream tooling, not form data). Parsing
 // through the tab's own schema strips anything that isn't a real field,
 // so it never round-trips back into a POST body via Upload.
+// function parseTabSettings<T>(schema: z.ZodType<T>, data: unknown): T {
+//   const result = schema.safeParse(data);
+//   return result.success ? result.data : ({} as T);
+// }
+
+function transformSettings(data: any) {
+  const obj = Object.fromEntries(
+    (data?.rawSettings ?? []).map((item: any) => [
+      item.fieldKey,
+      item.value,
+    ])
+  );
+
+  // Grid Parameters
+  const standardCodeMap: Record<number, "IN" | "EU" | "AU"> = {
+    94: "IN",
+    95: "EU",
+    96: "AU",
+  };
+
+  obj.standardCode = standardCodeMap[obj.standardCode];
+
+  obj.overFrequencyDeratingFunction = obj.overFrequencyDeratingFunction === 1;
+  obj.underFrequencyFunction = obj.underFrequencyFunction === 1;
+  obj.overVoltageDerating = obj.overVoltageDerating === 1;
+
+  // Feature Parameters
+  obj.faultRideThroughFunction = obj.faultRideThroughFunction === 1;
+  obj.islandDetection = obj.islandDetection === 1;
+  obj.terminalResistor = obj.terminalResistor === 1;
+
+
+  // Leave numeric values as-is
+  return obj;
+}
 function parseTabSettings<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
+
+  console.log("safeParse result:", result);
+
   return result.success ? result.data : ({} as T);
 }
 
-function applyTabData(tab: ModalTab, data: unknown, prev: RemoteSettings): RemoteSettings {
-  switch (tab) {
-    case "grid":
-      return { ...prev, gridParameters: parseTabSettings(gridParametersSchema, data) };
-    case "feature":
-      return { ...prev, featureParameters: parseTabSettings(featureParametersSchema, data) };
-    case "reactive":
-      return { ...prev, reactivePowerControl: parseTabSettings(reactivePowerControlSchema, data) };
-    case "powerLimit":
-      return { ...prev, powerLimit: parseTabSettings(powerLimitSchema, data) };
-    case "other":
-      return { ...prev, otherSetting: parseTabSettings(otherSettingSchema, data) };
-    case "masking":
-      return { ...prev, maskingFaultDetection: parseTabSettings(maskingFaultDetectionSchema, data) };
-  }
-}
+// function applyTabData(tab: ModalTab, data: unknown, prev: RemoteSettings): RemoteSettings {
+//   switch (tab) {
+//     case "grid":
+//       return {
+//         ...prev,
+//         gridParameters: parseTabSettings(
+//           gridParametersSchema,
+//           transformSettings(data)
+//         )
+//       };
+//     // case "grid":
+//     //   return { ...prev, gridParameters: parseTabSettings(gridParametersSchema, data) };
+//     case "feature":
+//       return { ...prev, featureParameters: parseTabSettings(featureParametersSchema, data) };
+//     case "reactive":
+//       return { ...prev, reactivePowerControl: parseTabSettings(reactivePowerControlSchema, data) };
+//     case "powerLimit":
+//       return { ...prev, powerLimit: parseTabSettings(powerLimitSchema, data) };
+//     case "other":
+//       return { ...prev, otherSetting: parseTabSettings(otherSettingSchema, data) };
+//     case "masking":
+//       return { ...prev, maskingFaultDetection: parseTabSettings(maskingFaultDetectionSchema, data) };
+//   }
+// }
 
 // ─── Shared field controls ─────────────────────────────────────────────────────
+
+function applyTabData(
+  tab: ModalTab,
+  data: unknown,
+  prev: RemoteSettings
+): RemoteSettings {
+  const transformed = transformSettings(data);
+  console.log("TAB:", tab);
+  console.log("TRANSFORMED:", transformed);
+
+  switch (tab) {
+    case "grid":
+      return {
+        ...prev,
+        gridParameters: parseTabSettings(
+          gridParametersSchema,
+          transformed
+        ),
+      };
+
+    case "feature":
+      return {
+        ...prev,
+        featureParameters: parseTabSettings(
+          featureParametersSchema,
+          transformed
+        ),
+      };
+
+    case "reactive":
+      return {
+        ...prev,
+        reactivePowerControl: parseTabSettings(
+          reactivePowerControlSchema,
+          transformed
+        ),
+      };
+
+    case "powerLimit":
+      return {
+        ...prev,
+        powerLimit: parseTabSettings(
+          powerLimitSchema,
+          transformed
+        ),
+      };
+
+    case "other":
+      return {
+        ...prev,
+        otherSetting: parseTabSettings(
+          otherSettingSchema,
+          transformed
+        ),
+      };
+
+    case "masking":
+      return {
+        ...prev,
+        maskingFaultDetection: parseTabSettings(
+          maskingFaultDetectionSchema,
+          transformed
+        ),
+      };
+
+    default:
+      return prev;
+  }
+}
 
 function FieldInput({
   label,
@@ -143,17 +258,23 @@ function FieldInput({
   onCommit?: (value: number | undefined) => void;
   error?: string;
 }) {
-  const [draft, setDraft] = useState(value != null ? String(value) : "");
-  const [prevValue, setPrevValue] = useState(value);
+  // const [draft, setDraft] = useState(value != null ? String(value) : "");
+  // const [prevValue, setPrevValue] = useState(value);
 
-  if (value !== prevValue) {
-    setPrevValue(value);
+  // if (value !== prevValue) {
+  //   setPrevValue(value);
+  //   setDraft(value != null ? String(value) : "");
+  // }
+
+  const [draft, setDraft] = useState(value != null ? String(value) : "");
+
+  useEffect(() => {
     setDraft(value != null ? String(value) : "");
-  }
+  }, [value]);
 
   return (
     <div>
-      <div className="text-sm text-gray-700 mb-1.5 leading-snug">{label}</div>
+      <div className="text-sm text-gray-500 mb-1.5 leading-snug">{label}</div>
       <input
         type="text"
         placeholder={placeholder}
@@ -168,11 +289,10 @@ function FieldInput({
           const parsed = Number(trimmed);
           onCommit?.(Number.isNaN(parsed) ? undefined : parsed);
         }}
-        className={`w-full bg-gray-100 border rounded px-3 py-2 text-sm text-gray-500 placeholder-gray-400 focus:outline-none focus:ring-1 ${
-          error
-            ? "border-red-400 focus:ring-red-400"
-            : "border-transparent focus:ring-[#1890FF]"
-        }`}
+        className={`w-full bg-gray-100 border rounded px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 ${error
+          ? "border-red-400 focus:ring-red-400"
+          : "border-transparent focus:ring-[#1890FF]"
+          }`}
       />
       {error && <div className="mt-1 text-xs text-red-500">{error}</div>}
     </div>
@@ -197,13 +317,13 @@ function FieldSelect({
 
   return (
     <div className="relative">
-      <div className="text-sm text-gray-700 mb-1.5 leading-snug">{label}</div>
+      <div className="text-sm text-black mb-1.5 leading-snug">{label}</div>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full bg-gray-100 rounded px-3 py-2 text-sm text-left text-gray-400 flex items-center justify-between focus:outline-none focus:ring-1 focus:ring-[#1890FF]"
+        className="w-full bg-gray-100 rounded px-3 py-2 text-sm text-left text-black flex items-center justify-between focus:outline-none focus:ring-1 focus:ring-[#1890FF]"
       >
         <span>{selectedLabel || placeholder || ""}</span>
-        <ChevronDown size={14} className="text-gray-400 shrink-0" />
+        <ChevronDown size={14} className="text-black shrink-0" />
       </button>
       {open && options.length > 0 && (
         <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg z-20">
@@ -214,7 +334,7 @@ function FieldSelect({
                 onChange?.(o.value);
                 setOpen(false);
               }}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+              className="w-full text-left px-3 py-2 text-sm text-black hover:bg-blue-50 transition-colors"
             >
               {o.label}
             </button>
@@ -236,17 +356,15 @@ function Toggle({
 }) {
   return (
     <div>
-      <div className="text-sm text-gray-700 mb-2 leading-snug">{label}</div>
+      <div className="text-sm text-black mb-2 leading-snug">{label}</div>
       <button
         onClick={() => onChange?.(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-          checked ? "bg-[#1890FF]" : "bg-gray-300"
-        }`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? "bg-[#1890FF]" : "bg-gray-300"
+          }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-6" : "translate-x-1"
-          }`}
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? "translate-x-6" : "translate-x-1"
+            }`}
         />
       </button>
     </div>
@@ -266,11 +384,11 @@ function ActionButton({
 }) {
   return (
     <div>
-      <div className="text-sm text-gray-700 mb-2 leading-snug">{label}</div>
+      <div className="text-sm text-black mb-2 leading-snug">{label}</div>
       <button
         onClick={onClick}
         disabled={disabled}
-        className="px-4 py-1.5 text-sm text-gray-500 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-1.5 text-sm text-black border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {text}
       </button>
@@ -327,38 +445,64 @@ function GridParametersTab({
       </div>
 
       {/* Row 4 */}
-      <div className="grid grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-4 gap-6">
         <FieldInput label="Frequency High Loss Level_1(Hz)" placeholder="53" value={value.frequencyHighLossLevel1} onCommit={(v) => onChange({ frequencyHighLossLevel1: v })} error={errors.frequencyHighLossLevel1} />
         <FieldInput label="Frequency Low Loss Level_1(Hz)" placeholder="47" value={value.frequencyLowLossLevel1} onCommit={(v) => onChange({ frequencyLowLossLevel1: v })} />
         <FieldInput label="Voltage High Loss Level_1(V)" placeholder="280" value={value.voltageHighLossLevel1} onCommit={(v) => onChange({ voltageHighLossLevel1: v })} error={errors.voltageHighLossLevel1} />
         <FieldInput label="Voltage Low Loss Level_1(V)" placeholder="170" value={value.voltageLowLossLevel1} onCommit={(v) => onChange({ voltageLowLossLevel1: v })} />
-      </div>
+      </div> */}
 
       {/* Row 5 */}
-      <div className="grid grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-4 gap-6">
         <FieldInput label="Frequency High Loss Time Level_1(ms)" placeholder="200" value={value.frequencyHighLossTimeLevel1} onCommit={(v) => onChange({ frequencyHighLossTimeLevel1: v })} error={errors.frequencyHighLossTimeLevel1} />
         <FieldInput label="Frequency Low Loss Time Level_1(ms)" placeholder="200" value={value.frequencyLowLossTimeLevel1} onCommit={(v) => onChange({ frequencyLowLossTimeLevel1: v })} error={errors.frequencyLowLossTimeLevel1} />
         <FieldInput label="Voltage High Loss Time Level_1(ms)" placeholder="2000" value={value.voltageHighLossTimeLevel1} onCommit={(v) => onChange({ voltageHighLossTimeLevel1: v })} error={errors.voltageHighLossTimeLevel1} />
         <FieldInput label="Voltage Low Loss Time Level_1(ms)" placeholder="2000" value={value.voltageLowLossTimeLevel1} onCommit={(v) => onChange({ voltageLowLossTimeLevel1: v })} error={errors.voltageLowLossTimeLevel1} />
-      </div>
+      </div> */}
 
       {/* Row 6 */}
-      <div className="grid grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-4 gap-6">
         <FieldInput label="Voltage High Loss Level_2(V)" placeholder="310.5" value={value.voltageHighLossLevel2} onCommit={(v) => onChange({ voltageHighLossLevel2: v })} error={errors.voltageHighLossLevel2} />
         <FieldInput label="Voltage Low Loss Level_2(V)" placeholder="115" value={value.voltageLowLossLevel2} onCommit={(v) => onChange({ voltageLowLossLevel2: v })} />
-      </div>
+      </div> */}
 
       {/* Row 7 */}
-      <div className="grid grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-4 gap-6">
         <FieldInput label="Voltage High Loss Time Level_2(ms)" placeholder="50" value={value.voltageHighLossTimeLevel2} onCommit={(v) => onChange({ voltageHighLossTimeLevel2: v })} error={errors.voltageHighLossTimeLevel2} />
         <FieldInput label="Voltage Low Loss Time Level_2(ms)" placeholder="100" value={value.voltageLowLossTimeLevel2} onCommit={(v) => onChange({ voltageLowLossTimeLevel2: v })} error={errors.voltageLowLossTimeLevel2} />
-      </div>
+      </div> */}
 
       {/* Toggles */}
       <div className="space-y-6">
-        <Toggle label="Over Frequency Derating Function" checked={value.overFrequencyDeratingFunction} onChange={(v) => onChange({ overFrequencyDeratingFunction: v })} />
-        <Toggle label="Under Frequency Function" checked={value.underFrequencyFunction} onChange={(v) => onChange({ underFrequencyFunction: v })} />
-        <Toggle label="Over Voltage Derating" checked={value.overVoltageDerating} onChange={(v) => onChange({ overVoltageDerating: v })} />
+        <Toggle
+          label="Over Frequency Derating Function"
+          checked={!!value.overFrequencyDeratingFunction}
+          onChange={(v) =>
+            onChange({
+              overFrequencyDeratingFunction: v,
+            })
+          }
+        />
+
+        <Toggle
+          label="Under Frequency Function"
+          checked={!!value.underFrequencyFunction}
+          onChange={(v) =>
+            onChange({
+              underFrequencyFunction: v,
+            })
+          }
+        />
+
+        <Toggle
+          label="Over Voltage Derating"
+          checked={!!value.overVoltageDerating}
+          onChange={(v) =>
+            onChange({
+              overVoltageDerating: v,
+            })
+          }
+        />
       </div>
     </div>
   );
@@ -377,9 +521,35 @@ function FeatureParametersTab({
     <div className="space-y-8">
       {/* Toggles row */}
       <div className="grid grid-cols-4 gap-6">
-        <Toggle label="Fault ride through function" checked={value.faultRideThroughFunction} onChange={(v) => onChange({ faultRideThroughFunction: v })} />
-        <Toggle label="Island Detection" checked={value.islandDetection} onChange={(v) => onChange({ islandDetection: v })} />
-        <Toggle label="Terminal Resistor" checked={value.terminalResistor} onChange={(v) => onChange({ terminalResistor: v })} />
+        <Toggle
+          label="Fault ride through function"
+          checked={!!value.faultRideThroughFunction}
+          onChange={(v) =>
+            onChange({
+              faultRideThroughFunction: v,
+            })
+          }
+        />
+
+        <Toggle
+          label="Island Detection"
+          checked={!!value.islandDetection}
+          onChange={(v) =>
+            onChange({
+              islandDetection: v,
+            })
+          }
+        />
+
+        <Toggle
+          label="Terminal Resistor"
+          checked={!!value.terminalResistor}
+          onChange={(v) =>
+            onChange({
+              terminalResistor: v,
+            })
+          }
+        />
       </div>
 
       {/* Input fields row */}
@@ -408,11 +578,10 @@ function ReactiveTab({
         <FieldInput label="Reactive Power Control Setting Time(s)" value={value.settingTime} onCommit={(v) => onChange({ settingTime: v })} error={errors.settingTime} />
       </div>
       <div className="max-w-xs">
-        <FieldSelect
+        <FieldInput
           label="Reactive Power Control Mode"
-          options={toOptions(["Mode 1", "Mode 2", "Mode 3"])}
-          value={value.mode}
-          onChange={(v) => onChange({ mode: v })}
+          value={value.mode ? Number(value.mode) : undefined}
+          onCommit={(v) => onChange({ mode: Number(v) })}
         />
       </div>
     </div>
@@ -431,10 +600,64 @@ function PowerLimitTab({
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-4 gap-6">
-        <FieldSelect label="Power Control" options={toOptions(["Disable", "Enable"])} value={value.powerControl} onChange={(v) => onChange({ powerControl: v as PowerLimit["powerControl"] })} />
-        <FieldSelect label="Meter Location" options={toOptions(["Grid side", "Load side"])} value={value.meterLocation} onChange={(v) => onChange({ meterLocation: v as PowerLimit["meterLocation"] })} />
-        <FieldSelect label="Power Flow Direction" options={toOptions(["Export", "Import"])} value={value.powerFlowDirection} onChange={(v) => onChange({ powerFlowDirection: v as PowerLimit["powerFlowDirection"] })} />
-        <FieldInput label="Maximum Feed In Grid Power(W)" value={value.maxFeedInGridPower} onCommit={(v) => onChange({ maxFeedInGridPower: v })} error={errors.maxFeedInGridPower} />
+        <FieldInput
+          label="Power Control"
+          value={Number(value.powerControl)}
+          onCommit={(v) => onChange({ powerControl: v as any })}
+        />
+
+        <FieldInput
+          label="Meter Location"
+          value={Number(value.meterLocation)}
+          onCommit={(v) => onChange({ meterLocation: v as any })}
+        />
+
+        <FieldInput
+          label="Power Flow Direction"
+          value={Number(value.powerFlowDirection)}
+          onCommit={(v) => onChange({ powerFlowDirection: v as any })}
+        />
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Maximum Feed In Grid Power (W)
+          </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FieldInput
+              label="Value 1"
+              value={value.maxFeedInGridPower?.[0]}
+              onCommit={(v) =>
+                onChange({
+                  maxFeedInGridPower: [
+                    v ?? 0,
+                    value.maxFeedInGridPower?.[1] ?? 0,
+                  ],
+                })
+              }
+            />
+
+            <FieldInput
+              label="Value 2"
+              value={value.maxFeedInGridPower?.[1]}
+              onCommit={(v) =>
+                onChange({
+                  maxFeedInGridPower: [
+                    value.maxFeedInGridPower?.[0] ?? 0,
+                    v ?? 0,
+                  ],
+                })
+              }
+            />
+          </div>
+        </div>
+
+        {/* <FieldInput
+          label="Maximum Feed In Grid Power(W)"
+          value={value.maxFeedInGridPower}
+          onCommit={(v) => onChange({ maxFeedInGridPower: v })}
+          error={errors.maxFeedInGridPower}
+        /> */}
       </div>
       <div className="max-w-xs">
         <FieldInput label="Modbus address" value={value.modbusAddress} onCommit={(v) => onChange({ modbusAddress: v })} error={errors.modbusAddress} />
@@ -456,29 +679,57 @@ function OtherSettingTab({
 }) {
   return (
     <div className="space-y-8">
-      {/* Toggles */}
+      {/* Input fields */}
       <div className="grid grid-cols-4 gap-6">
-        <Toggle label="AFD Function" checked={value.afdFunction} onChange={(v) => onChange({ afdFunction: v })} />
-        <Toggle label="Power On" checked={value.powerOn} onChange={(v) => onChange({ powerOn: v })} />
+        <FieldInput
+          label="AFD Function"
+          value={value.afdFunction as any}
+          onCommit={(v) => onChange({ afdFunction: v as any })}
+        />
+
+        <FieldInput
+          label="Power On"
+          value={value.powerOn as any}
+          onCommit={(v) => onChange({ powerOn: v as any })}
+        />
+
+        <FieldInput
+          label="Grid Voltage Type"
+          value={value.gridVoltageType as any}
+          onCommit={(v) => onChange({ gridVoltageType: v as any })}
+        />
       </div>
 
       {/* Action buttons */}
-      <div className="grid grid-cols-4 gap-6">
-        <ActionButton label="AFD Reset" text="Click to confirm" disabled={commandPending} onClick={() => onCommand({ afdReset: true })} />
-        <ActionButton label="Date and Time" text="Click to synchronize" disabled={commandPending} onClick={() => onCommand({ syncDateTime: true })} />
-        <ActionButton label="Reset" text="Click to confirm" disabled={commandPending} onClick={() => onCommand({ reset: true })} />
-        <ActionButton label="Clear All Data" text="Click to confirm" disabled={commandPending} onClick={() => onCommand({ clearAllData: true })} />
-      </div>
-
-      {/* Dropdown */}
-      <div className="max-w-xs">
-        <FieldSelect
-          label="Grid Voltage Type"
-          options={toOptions(["Single Phase", "Three Phase"])}
-          value={value.gridVoltageType}
-          onChange={(v) => onChange({ gridVoltageType: v as OtherSetting["gridVoltageType"] })}
+      {/* <div className="grid grid-cols-4 gap-6">
+        <ActionButton
+          label="AFD Reset"
+          text="Click to confirm"
+          disabled={commandPending}
+          onClick={() => onCommand({ afdReset: true })}
         />
-      </div>
+
+        <ActionButton
+          label="Date and Time"
+          text="Click to synchronize"
+          disabled={commandPending}
+          onClick={() => onCommand({ syncDateTime: true })}
+        />
+
+        <ActionButton
+          label="Reset"
+          text="Click to confirm"
+          disabled={commandPending}
+          onClick={() => onCommand({ reset: true })}
+        />
+
+        <ActionButton
+          label="Clear All Data"
+          text="Click to confirm"
+          disabled={commandPending}
+          onClick={() => onCommand({ clearAllData: true })}
+        />
+      </div> */}
     </div>
   );
 }
@@ -493,11 +744,15 @@ function MaskingFaultTab({
   return (
     <div className="grid grid-cols-4 gap-x-6 gap-y-8">
       {FAULT_FIELDS.map((f) => (
-        <Toggle
+        <FieldInput
           key={f.key}
           label={f.label}
-          checked={value[f.key]}
-          onChange={(checked) => onChange({ [f.key]: checked })}
+          value={value[f.key] as number | undefined}
+          onCommit={(v) =>
+            onChange({
+              [f.key]: v,
+            } as Partial<MaskingFaultDetection>)
+          }
         />
       ))}
     </div>
@@ -595,6 +850,7 @@ export default function RemoteSettingModal({
     setLastAction("read");
     setLastActionTab(activeTab);
     const result = await remoteSettingsTabQuery.refetch();
+    console.log("RESULT", result.data);
     if (result.data) setSettings((prev) => applyTabData(activeTab, result.data, prev));
   };
 
@@ -631,13 +887,13 @@ export default function RemoteSettingModal({
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
             <div className="flex items-center gap-3">
               <span className="text-base font-semibold text-gray-900">Remote Setting</span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-black">
                 <span className="font-medium text-gray-600">SN:</span>  {sn}
               </span>
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1 rounded hover:bg-gray-100 text-black hover:text-gray-600 transition-colors"
             >
               <X size={18} />
             </button>
@@ -649,11 +905,10 @@ export default function RemoteSettingModal({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`py-3 px-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                  activeTab === tab.key
-                    ? "text-[#1890FF] border-b-2 border-[#1890FF]"
-                    : "text-gray-600 hover:text-[#1890FF]"
-                }`}
+                className={`py-3 px-4 text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === tab.key
+                  ? "text-[#1890FF] border-b-2 border-[#1890FF]"
+                  : "text-gray-600 hover:text-[#1890FF]"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -681,39 +936,76 @@ export default function RemoteSettingModal({
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 shrink-0">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Settings2 size={15} className="text-[#1890FF] shrink-0" />
+
               {activeTabErrorCount > 0 ? (
                 <span className="text-red-500">
-                  Fix {activeTabErrorCount} field error{activeTabErrorCount > 1 ? "s" : ""} before uploading.
+                  Fix {activeTabErrorCount} field error
+                  {activeTabErrorCount > 1 ? "s" : ""} before uploading.
                 </span>
-              ) : lastAction === "upload" && lastActionTab === activeTab && uploadedForThisTab ? (
+              ) : isReading ? (
+                <span className="text-[#1890FF]">
+                  Reading parameters...
+                </span>
+              ) : lastAction === "read" &&
+                lastActionTab === activeTab &&
+                remoteSettingsTabQuery.isSuccess ? (
+                <span className="text-green-600">
+                  Parameters loaded successfully.
+                </span>
+              ) : lastAction === "read" &&
+                lastActionTab === activeTab &&
+                remoteSettingsTabQuery.isError ? (
+                <span className="text-red-500">
+                  Read failed. Please try again.
+                </span>
+              ) : isUploading ? (
+                <span className="text-[#1890FF]">
+                  Uploading parameters...
+                </span>
+              ) : lastAction === "upload" &&
+                lastActionTab === activeTab &&
+                uploadedForThisTab ? (
                 <span className="text-green-600">
                   Uploaded — task {submitTab.data?.taskId}.{" "}
-                  <Link href="/services/batch/setting" className="underline hover:text-green-700">
+                  <Link
+                    href="/services/batch/setting"
+                    className="underline hover:text-green-700"
+                  >
                     View task status
                   </Link>
                 </span>
-              ) : lastAction === "upload" && lastActionTab === activeTab && uploadErrorForThisTab ? (
-                <span className="text-red-500">Upload failed. Please try again.</span>
-              ) : lastAction === "read" && lastActionTab === activeTab && remoteSettingsTabQuery.isError ? (
-                <span className="text-red-500">Read failed. Please try again.</span>
+              ) : lastAction === "upload" &&
+                lastActionTab === activeTab &&
+                uploadErrorForThisTab ? (
+                <span className="text-red-500">
+                  Upload failed. Please try again.
+                </span>
               ) : (
                 <span>
-                  The parameters are loading.When setting multiple parameters, the time will increase proportionally.
+                  Click <strong>Read</strong> to fetch the latest parameters from the
+                  device.
                 </span>
               )}
             </div>
+
             <div className="flex items-center gap-2 shrink-0 ml-4">
               <button
                 onClick={handleRead}
                 disabled={!deviceId || !plantId || isReading}
-                className="px-5 py-1.5 text-sm text-gray-500 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-1.5 text-sm text-black border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isReading ? "Reading..." : "Read"}
               </button>
+
               <button
                 onClick={handleUpload}
-                disabled={!deviceId || !plantId || isUploading || activeTabErrorCount > 0}
-                className="px-5 py-1.5 text-sm text-gray-500 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  !deviceId ||
+                  !plantId ||
+                  isUploading ||
+                  activeTabErrorCount > 0
+                }
+                className="px-5 py-1.5 text-sm text-black border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? "Uploading..." : "Upload"}
               </button>

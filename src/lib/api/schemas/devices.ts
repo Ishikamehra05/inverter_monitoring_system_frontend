@@ -77,36 +77,51 @@ export const featureParametersSchema = z.object({
 
 export const reactivePowerControlSchema = z.object({
   settingTime: z.number().optional(),
-  mode: z.string().optional(),
+  mode: z.number().optional(),
 });
 
 export const powerLimitSchema = z.object({
-  powerControl: z.enum(["Disable", "Enable"]).optional(),
-  meterLocation: z.enum(["Grid side", "Load side"]).optional(),
-  powerFlowDirection: z.enum(["Export", "Import"]).optional(),
-  maxFeedInGridPower: z.number().optional(),
+  powerControl: z.number().optional(),
+  meterLocation: z.number().optional(),
+  powerFlowDirection: z.number().optional(),
+  maxFeedInGridPower: z.array(z.number()).optional(),
   modbusAddress: z.number().optional(),
 });
 
 export const otherSettingSchema = z.object({
-  afdFunction: z.boolean().optional(),
-  powerOn: z.boolean().optional(),
-  gridVoltageType: z.enum(["Single Phase", "Three Phase"]).optional(),
+  afdFunction: z.number().optional(),
+  powerOn: z.number().optional(),
+  gridVoltageType: z.number().optional(),
 });
 
+// export const maskingFaultDetectionSchema = z.object({
+//   a3: z.boolean().optional(),
+//   a4: z.boolean().optional(),
+//   b1: z.boolean().optional(),
+//   b2: z.boolean().optional(),
+//   cl: z.boolean().optional(),
+//   b4: z.boolean().optional(),
+//   c2: z.boolean().optional(),
+//   c3: z.boolean().optional(),
+//   cn: z.boolean().optional(),
+//   ce: z.boolean().optional(),
+//   bb: z.boolean().optional(),
+//   a8: z.boolean().optional(),
+// });
+
 export const maskingFaultDetectionSchema = z.object({
-  a3: z.boolean().optional(),
-  a4: z.boolean().optional(),
-  b1: z.boolean().optional(),
-  b2: z.boolean().optional(),
-  cl: z.boolean().optional(),
-  b4: z.boolean().optional(),
-  c2: z.boolean().optional(),
-  c3: z.boolean().optional(),
-  cn: z.boolean().optional(),
-  ce: z.boolean().optional(),
-  bb: z.boolean().optional(),
-  a8: z.boolean().optional(),
+  a3: z.number().optional(),
+  a4: z.number().optional(),
+  b1: z.number().optional(),
+  b2: z.number().optional(),
+  cl: z.number().optional(),
+  b4: z.number().optional(),
+  c2: z.number().optional(),
+  c3: z.number().optional(),
+  cn: z.number().optional(),
+  ce: z.number().optional(),
+  bb: z.number().optional(),
+  a8: z.number().optional(),
 });
 
 export const remoteSettingsSchema = z.object({
