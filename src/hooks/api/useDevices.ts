@@ -1,9 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { devicesApi } from "@/lib/api/devices";
+import { devicesApi, ServiceScopeParams } from "@/lib/api/devices";
 import { isBackendUnavailable } from "@/lib/api/errors";
-import { DeviceLogsExportParams } from "@/lib/api/schemas/devices"
+// import { DeviceLogsExportParams } from "@/lib/api/schemas/devices"
+import { serviceKeys } from "./useService";
+import {
+  DeviceLogsExportParams,
+  RemoteSettingsCommand,
+  RemoteSettingsTabEntry,
+  RemoteSettingsTabKey,
+} from "@/lib/api/schemas/devices"
 
 export const deviceKeys = {
   all: ["devices"] as const,
@@ -18,6 +25,11 @@ export const deviceKeys = {
     deviceId: string,
     params: Record<string, unknown>
   ) => [...deviceKeys.detail(deviceId), "current-alerts", params],
+  remoteSettingsTab: (
+    deviceId: string,
+    tab: RemoteSettingsTabKey,
+    params: Record<string, unknown>,
+  ) => [...deviceKeys.all, "remoteSettingsTab", deviceId, tab, params] as const,
 };
 
 export const usePlantDevices = (
@@ -253,4 +265,63 @@ export const useDeviceCurrentAlerts = (
     queryFn: () =>
       devicesApi.currentAlerts(deviceId, params),
     enabled: !!deviceId,
+  });
+
+
+export const useRemoteSettingsTab = <K extends RemoteSettingsTabKey>(
+  deviceId: string,
+  tab: K,
+  plantId: string,
+  params: ServiceScopeParams = {},
+  options: { enabled?: boolean } = {},
+) =>
+  useQuery({
+    queryKey: deviceKeys.remoteSettingsTab(deviceId, tab, { plantId, ...params }),
+    queryFn: () => devicesApi.remoteSettingsTab(deviceId, tab, plantId, params),
+    enabled: !!deviceId && !!plantId && (options.enabled ?? true),
+  });
+
+export const useSubmitRemoteSettingsTab = (plantId: string, params: ServiceScopeParams = {}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (variables: {
+      deviceId: string;
+      sn?: string;
+      entry: RemoteSettingsTabEntry;
+    }) =>
+      devicesApi.submitRemoteSettingsTab(
+        variables.deviceId,
+        variables.sn,
+        variables.entry,
+        plantId,
+        params,
+      ),
+
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: deviceKeys.remoteSettingsTab(
+          variables.deviceId,
+          variables.entry.tab,
+          { plantId, ...params },
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...serviceKeys.all, "settingTasks"],
+      });
+    },
+  });
+};
+
+export const useSubmitRemoteCommand = (plantId: string, params: ServiceScopeParams = {}) =>
+  useMutation({
+    mutationFn: ({
+      deviceId,
+      sn,
+      command,
+    }: {
+      deviceId: string;
+      sn?: string;
+      command: RemoteSettingsCommand;
+    }) => devicesApi.submitRemoteCommand(deviceId, { sn, command }, plantId, params),
   });

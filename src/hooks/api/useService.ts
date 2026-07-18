@@ -25,6 +25,8 @@ export const serviceKeys = {
     [...serviceKeys.all, "firmware", params] as const,
   upgradeTasks: (params: Record<string, unknown>) =>
     [...serviceKeys.all, "upgradeTasks", params] as const,
+  settingTasks: (params: Record<string, unknown>) =>
+    [...serviceKeys.all, "settingTasks", params] as const,
 };
 
 export const useMonitorUsers = (params: Record<string, unknown> = {}) =>
@@ -146,6 +148,42 @@ export const useUpgradeTasks = (params: Record<string, unknown> = {}) =>
       }
     },
   });
+
+export const useSettingTasks = (params: Record<string, unknown> = {}) =>
+  useQuery({
+    queryKey: serviceKeys.settingTasks(params),
+    queryFn: async () => {
+      try {
+        return await serviceApi.settingTasks(params);
+      } catch (error) {
+        if (!isBackendUnavailable(error)) throw error;
+        return {
+          items: mockTasks,
+          pagination: {
+            page: Number(params.page ?? 1),
+            pageSize: Number(params.pageSize ?? 10),
+            totalItems: mockTasks.length,
+            totalPages: 1,
+          },
+        };
+      }
+    },
+  });
+
+export const useCreateSettingTask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      serviceApi.createSettingTask(payload),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...serviceKeys.all, "settingTasks"],
+      });
+    },
+  });
+};
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();

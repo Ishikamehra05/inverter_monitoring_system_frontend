@@ -467,7 +467,10 @@ export default function DeviceListPage() {
       <RemoteSettingModal
         isOpen={remoteOpen}
         onClose={() => setRemoteOpen(false)}
+        deviceId={remoteDevice ? String(remoteDevice.id) : ""}
+        plantId={plantId}
         sn={remoteDevice?.sn}
+        targetEndUserId={targetEndUserId}
       />
 
       {/* Upgrade Info modal */}

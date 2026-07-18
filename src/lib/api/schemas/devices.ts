@@ -33,6 +33,98 @@ export const addDeviceRequestSchema = z.object({
   serialNumber: z.string().min(1),
 });
 
+
+export const gridParametersSchema = z.object({
+  standardCode: z.enum(["IN", "EU", "AU"]).optional(),
+  firstConnectDelayTime: z.number().optional(),
+  reconnectDelayTime: z.number().optional(),
+  firstConnectPowerGradient: z.number().optional(),
+  reconnectPowerGradient: z.number().optional(),
+  gridFirstConnectionVoltageHighLimit: z.number().optional(),
+  gridFirstConnectionVoltageLowLimit: z.number().optional(),
+  gridFirstConnectionFrequencyHighLimit: z.number().optional(),
+  gridFirstConnectionFrequencyLowLimit: z.number().optional(),
+  gridReconnectionVoltageHighLimit: z.number().optional(),
+  gridReconnectionVoltageLowLimit: z.number().optional(),
+  gridReconnectionFrequencyHighLimit: z.number().optional(),
+  gridReconnectionFrequencyLowLimit: z.number().optional(),
+  frequencyHighLossLevel1: z.number().optional(),
+  frequencyLowLossLevel1: z.number().optional(),
+  voltageHighLossLevel1: z.number().optional(),
+  voltageLowLossLevel1: z.number().optional(),
+  frequencyHighLossTimeLevel1: z.number().optional(),
+  frequencyLowLossTimeLevel1: z.number().optional(),
+  voltageHighLossTimeLevel1: z.number().optional(),
+  voltageLowLossTimeLevel1: z.number().optional(),
+  voltageHighLossLevel2: z.number().optional(),
+  voltageLowLossLevel2: z.number().optional(),
+  voltageHighLossTimeLevel2: z.number().optional(),
+  voltageLowLossTimeLevel2: z.number().optional(),
+  overFrequencyDeratingFunction: z.boolean().optional(),
+  underFrequencyFunction: z.boolean().optional(),
+  overVoltageDerating: z.boolean().optional(),
+});
+
+export const featureParametersSchema = z.object({
+  faultRideThroughFunction: z.boolean().optional(),
+  islandDetection: z.boolean().optional(),
+  terminalResistor: z.boolean().optional(),
+  deratedPower: z.number().optional(),
+  insulationImpedance: z.number().optional(),
+  leakageCurrentPoint: z.number().optional(),
+  movingAverageVoltageLimit: z.number().optional(),
+});
+
+export const reactivePowerControlSchema = z.object({
+  settingTime: z.number().optional(),
+  mode: z.string().optional(),
+});
+
+export const powerLimitSchema = z.object({
+  powerControl: z.enum(["Disable", "Enable"]).optional(),
+  meterLocation: z.enum(["Grid side", "Load side"]).optional(),
+  powerFlowDirection: z.enum(["Export", "Import"]).optional(),
+  maxFeedInGridPower: z.number().optional(),
+  modbusAddress: z.number().optional(),
+});
+
+export const otherSettingSchema = z.object({
+  afdFunction: z.boolean().optional(),
+  powerOn: z.boolean().optional(),
+  gridVoltageType: z.enum(["Single Phase", "Three Phase"]).optional(),
+});
+
+export const maskingFaultDetectionSchema = z.object({
+  a3: z.boolean().optional(),
+  a4: z.boolean().optional(),
+  b1: z.boolean().optional(),
+  b2: z.boolean().optional(),
+  cl: z.boolean().optional(),
+  b4: z.boolean().optional(),
+  c2: z.boolean().optional(),
+  c3: z.boolean().optional(),
+  cn: z.boolean().optional(),
+  ce: z.boolean().optional(),
+  bb: z.boolean().optional(),
+  a8: z.boolean().optional(),
+});
+
+export const remoteSettingsSchema = z.object({
+  gridParameters: gridParametersSchema.optional(),
+  featureParameters: featureParametersSchema.optional(),
+  reactivePowerControl: reactivePowerControlSchema.optional(),
+  powerLimit: powerLimitSchema.optional(),
+  otherSetting: otherSettingSchema.optional(),
+  maskingFaultDetection: maskingFaultDetectionSchema.optional(),
+});
+
+export const remoteSettingsCommandSchema = z.object({
+  afdReset: z.boolean().optional(),
+  syncDateTime: z.boolean().optional(),
+  reset: z.boolean().optional(),
+  clearAllData: z.boolean().optional(),
+});
+
 export interface DeviceChart {
   range: "day" | "month" | "year";
   chartType: "area" | "bar";
@@ -146,3 +238,30 @@ export interface DeviceCurrentAlertsResponse {
 export type ApiDevice = z.infer<typeof deviceSchema>;
 export type DeviceInformation = z.infer<typeof deviceInformationSchema>;
 export type AddDeviceRequest = z.infer<typeof addDeviceRequestSchema>;
+export type GridParameters = z.infer<typeof gridParametersSchema>;
+export type FeatureParameters = z.infer<typeof featureParametersSchema>;
+export type ReactivePowerControl = z.infer<typeof reactivePowerControlSchema>;
+export type PowerLimit = z.infer<typeof powerLimitSchema>;
+export type OtherSetting = z.infer<typeof otherSettingSchema>;
+export type MaskingFaultDetection = z.infer<typeof maskingFaultDetectionSchema>;
+export type RemoteSettings = z.infer<typeof remoteSettingsSchema>;
+export type RemoteSettingsCommand = z.infer<typeof remoteSettingsCommandSchema>;
+
+export type RemoteSettingsTabEntry =
+  | { tab: "gridParameters"; settings: GridParameters }
+  | { tab: "featureParameters"; settings: FeatureParameters }
+  | { tab: "reactivePowerControl"; settings: ReactivePowerControl }
+  | { tab: "powerLimit"; settings: PowerLimit }
+  | { tab: "otherSetting"; settings: OtherSetting }
+  | { tab: "maskingFaultDetection"; settings: MaskingFaultDetection };
+
+export type RemoteSettingsTabKey = RemoteSettingsTabEntry["tab"];
+
+export const REMOTE_SETTINGS_TAB_SLUGS: Record<RemoteSettingsTabKey, string> = {
+  gridParameters: "grid-parameters",
+  featureParameters: "feature-parameters",
+  reactivePowerControl: "reactive-power-control",
+  powerLimit: "power-limit",
+  otherSetting: "other-setting",
+  maskingFaultDetection: "masking-fault-detection",
+};
