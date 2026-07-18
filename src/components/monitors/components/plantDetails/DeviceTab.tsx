@@ -248,7 +248,7 @@ const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
                 <td className="px-3 py-4">{device.sn}</td>
                 <td className="px-3 py-4">{device.power.toFixed(2)} kW</td>
                 <td className="px-3 py-4">{device.today.toFixed(2)} kWh</td>
-                <td className="px-3 py-4">{device.total.toFixed(2)} MWh</td>
+                <td className="px-3 py-4">{device.total.toFixed(2)} kWh</td>
                 <td className="px-3 py-4">{device.hours.toFixed(2)} h</td>
                 <td className="px-3 py-4">
                   <div className="flex gap-2">
