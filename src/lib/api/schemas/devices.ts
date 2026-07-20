@@ -60,15 +60,15 @@ export const gridParametersSchema = z.object({
   voltageLowLossLevel2: z.number().optional(),
   voltageHighLossTimeLevel2: z.number().optional(),
   voltageLowLossTimeLevel2: z.number().optional(),
-  overFrequencyDeratingFunction: z.boolean().optional(),
-  underFrequencyFunction: z.boolean().optional(),
-  overVoltageDerating: z.boolean().optional(),
+  overFrequencyDeratingFunction: z.number().optional(),
+  underFrequencyFunction: z.number().optional(),
+  overVoltageDerating: z.number().optional(),
 });
 
 export const featureParametersSchema = z.object({
-  faultRideThroughFunction: z.boolean().optional(),
-  islandDetection: z.boolean().optional(),
-  terminalResistor: z.boolean().optional(),
+  faultRideThroughFunction: z.number().optional(),
+  islandDetection: z.number().optional(),
+  terminalResistor: z.number().optional(),
   deratedPower: z.number().optional(),
   insulationImpedance: z.number().optional(),
   leakageCurrentPoint: z.number().optional(),

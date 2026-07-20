@@ -112,14 +112,17 @@ function buildTabEntry(tab: ModalTab, settings: RemoteSettings): RemoteSettingsT
 // }
 
 function transformSettings(data: any) {
+  const rawSettings = Array.isArray(data?.rawSettings)
+    ? data.rawSettings
+    : [];
+
   const obj = Object.fromEntries(
-    (data?.rawSettings ?? []).map((item: any) => [
+    rawSettings.map((item: any) => [
       item.fieldKey,
       item.value,
     ])
   );
 
-  // Grid Parameters
   const standardCodeMap: Record<number, "IN" | "EU" | "AU"> = {
     94: "IN",
     95: "EU",
@@ -128,23 +131,21 @@ function transformSettings(data: any) {
 
   obj.standardCode = standardCodeMap[obj.standardCode];
 
-  obj.overFrequencyDeratingFunction = obj.overFrequencyDeratingFunction === 1;
-  obj.underFrequencyFunction = obj.underFrequencyFunction === 1;
-  obj.overVoltageDerating = obj.overVoltageDerating === 1;
+  // obj.overFrequencyDeratingFunction =
+  //   obj.overFrequencyDeratingFunction === 1;
 
-  // Feature Parameters
-  obj.faultRideThroughFunction = obj.faultRideThroughFunction === 1;
-  obj.islandDetection = obj.islandDetection === 1;
-  obj.terminalResistor = obj.terminalResistor === 1;
+  // obj.underFrequencyFunction =
+  //   obj.underFrequencyFunction === 1;
 
+  // obj.overVoltageDerating =
+  //   obj.overVoltageDerating === 1;
 
-  // Leave numeric values as-is
   return obj;
 }
 function parseTabSettings<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
 
-  console.log("safeParse result:", result);
+  // console.log("safeParse result:", result);
 
   return result.success ? result.data : ({} as T);
 }
@@ -476,30 +477,30 @@ function GridParametersTab({
       <div className="space-y-6">
         <Toggle
           label="Over Frequency Derating Function"
-          checked={!!value.overFrequencyDeratingFunction}
-          onChange={(v) =>
+          checked={value.overFrequencyDeratingFunction === 1}
+          onChange={(checked) =>
             onChange({
-              overFrequencyDeratingFunction: v,
+              overFrequencyDeratingFunction: checked ? 1 : 0,
             })
           }
         />
 
         <Toggle
           label="Under Frequency Function"
-          checked={!!value.underFrequencyFunction}
-          onChange={(v) =>
+          checked={value.underFrequencyFunction === 1}
+          onChange={(checked) =>
             onChange({
-              underFrequencyFunction: v,
+              underFrequencyFunction: checked ? 1 : 0,
             })
           }
         />
 
         <Toggle
           label="Over Voltage Derating"
-          checked={!!value.overVoltageDerating}
-          onChange={(v) =>
+          checked={value.overVoltageDerating === 1}
+          onChange={(checked) =>
             onChange({
-              overVoltageDerating: v,
+              overVoltageDerating: checked ? 1 : 0,
             })
           }
         />
@@ -523,30 +524,30 @@ function FeatureParametersTab({
       <div className="grid grid-cols-4 gap-6">
         <Toggle
           label="Fault ride through function"
-          checked={!!value.faultRideThroughFunction}
-          onChange={(v) =>
+          checked={value.faultRideThroughFunction === 1}
+          onChange={(checked) =>
             onChange({
-              faultRideThroughFunction: v,
+              faultRideThroughFunction: checked ? 1 : 0,
             })
           }
         />
 
         <Toggle
           label="Island Detection"
-          checked={!!value.islandDetection}
-          onChange={(v) =>
+          checked={value.islandDetection === 1}
+          onChange={(checked) =>
             onChange({
-              islandDetection: v,
+              islandDetection: checked ? 1 : 0,
             })
           }
         />
 
         <Toggle
           label="Terminal Resistor"
-          checked={!!value.terminalResistor}
-          onChange={(v) =>
+          checked={value.terminalResistor === 1}
+          onChange={(checked) =>
             onChange({
-              terminalResistor: v,
+              terminalResistor: checked ? 1 : 0,
             })
           }
         />
@@ -580,8 +581,12 @@ function ReactiveTab({
       <div className="max-w-xs">
         <FieldInput
           label="Reactive Power Control Mode"
-          value={value.mode ? Number(value.mode) : undefined}
-          onCommit={(v) => onChange({ mode: Number(v) })}
+          value={value.mode}
+          onCommit={(v) =>
+            onChange({
+              mode: v,
+            })
+          }
         />
       </div>
     </div>
@@ -771,6 +776,7 @@ export default function RemoteSettingModal({
 }: RemoteSettingModalProps) {
   const [activeTab, setActiveTab] = useState<ModalTab>("grid");
   const [settings, setSettings] = useState<RemoteSettings>({});
+  const [changedSettings, setChangedSettings] = useState<RemoteSettings>({});
   const [lastAction, setLastAction] = useState<"read" | "upload" | null>(null);
   const [lastActionTab, setLastActionTab] = useState<ModalTab | null>(null);
   const [session, setSession] = useState<{ open: boolean; deviceId?: string }>({
@@ -832,33 +838,147 @@ export default function RemoteSettingModal({
     submitTab.variables?.deviceId === deviceId &&
     submitTab.variables?.entry.tab === activeTabConfig.settingsKey;
 
-  const updateGrid = (patch: Partial<GridParameters>) =>
-    setSettings((prev) => ({ ...prev, gridParameters: { ...prev.gridParameters, ...patch } }));
-  const updateFeature = (patch: Partial<FeatureParameters>) =>
-    setSettings((prev) => ({ ...prev, featureParameters: { ...prev.featureParameters, ...patch } }));
-  const updateReactive = (patch: Partial<ReactivePowerControl>) =>
-    setSettings((prev) => ({ ...prev, reactivePowerControl: { ...prev.reactivePowerControl, ...patch } }));
-  const updatePowerLimit = (patch: Partial<PowerLimit>) =>
-    setSettings((prev) => ({ ...prev, powerLimit: { ...prev.powerLimit, ...patch } }));
-  const updateOther = (patch: Partial<OtherSetting>) =>
-    setSettings((prev) => ({ ...prev, otherSetting: { ...prev.otherSetting, ...patch } }));
-  const updateMasking = (patch: Partial<MaskingFaultDetection>) =>
-    setSettings((prev) => ({ ...prev, maskingFaultDetection: { ...prev.maskingFaultDetection, ...patch } }));
+  // const updateGrid = (patch: Partial<GridParameters>) =>
+  //   setSettings((prev) => ({ ...prev, gridParameters: { ...prev.gridParameters, ...patch } }));
+  const updateGrid = (patch: Partial<GridParameters>) => {
+    setSettings((prev) => ({
+      ...prev,
+      gridParameters: {
+        ...prev.gridParameters,
+        ...patch,
+      },
+    }));
+
+    setChangedSettings((prev) => ({
+      ...prev,
+      gridParameters: {
+        ...prev.gridParameters,
+        ...patch,
+      },
+    }));
+  };
+  const updateFeature = (patch: Partial<FeatureParameters>) => {
+    setSettings((prev) => ({
+      ...prev,
+      featureParameters: {
+        ...prev.featureParameters,
+        ...patch,
+      },
+    }));
+
+    setChangedSettings((prev) => ({
+      ...prev,
+      featureParameters: {
+        ...prev.featureParameters,
+        ...patch,
+      },
+    }));
+  };
+
+  const updateReactive = (patch: Partial<ReactivePowerControl>) => {
+    setSettings((prev) => ({
+      ...prev,
+      reactivePowerControl: {
+        ...prev.reactivePowerControl,
+        ...patch,
+      },
+    }));
+
+    setChangedSettings((prev) => ({
+      ...prev,
+      reactivePowerControl: {
+        ...prev.reactivePowerControl,
+        ...patch,
+      },
+    }));
+  };
+
+  const updatePowerLimit = (patch: Partial<PowerLimit>) => {
+    setSettings((prev) => ({
+      ...prev,
+      powerLimit: {
+        ...prev.powerLimit,
+        ...patch,
+      },
+    }));
+
+    setChangedSettings((prev) => ({
+      ...prev,
+      powerLimit: {
+        ...prev.powerLimit,
+        ...patch,
+      },
+    }));
+  };
+
+  const updateOther = (patch: Partial<OtherSetting>) => {
+    setSettings((prev) => ({
+      ...prev,
+      otherSetting: {
+        ...prev.otherSetting,
+        ...patch,
+      },
+    }));
+
+    setChangedSettings((prev) => ({
+      ...prev,
+      otherSetting: {
+        ...prev.otherSetting,
+        ...patch,
+      },
+    }));
+  };
+
+  const updateMasking = (patch: Partial<MaskingFaultDetection>) => {
+    setSettings((prev) => ({
+      ...prev,
+      maskingFaultDetection: {
+        ...prev.maskingFaultDetection,
+        ...patch,
+      },
+    }));
+
+    setChangedSettings((prev) => ({
+      ...prev,
+      maskingFaultDetection: {
+        ...prev.maskingFaultDetection,
+        ...patch,
+      },
+    }));
+  };
+
+  // const handleRead = async () => {
+  //   if (!deviceId || !plantId) return;
+  //   setLastAction("read");
+  //   setLastActionTab(activeTab);
+  //   const result = await remoteSettingsTabQuery.refetch();
+  //   console.log("RESULT", result.data);
+  //   if (result.data) setSettings((prev) => applyTabData(activeTab, result.data, prev));
+  // };
 
   const handleRead = async () => {
     if (!deviceId || !plantId) return;
-    setLastAction("read");
-    setLastActionTab(activeTab);
-    const result = await remoteSettingsTabQuery.refetch();
-    console.log("RESULT", result.data);
-    if (result.data) setSettings((prev) => applyTabData(activeTab, result.data, prev));
+
+    try {
+      const result = await remoteSettingsTabQuery.refetch();
+
+      if (result.data) {
+        setSettings((prev) => applyTabData(activeTab, result.data, prev));
+
+        setLastAction("read");
+        setLastActionTab(activeTab);
+      }
+    } catch (err) {
+      setLastAction("read");
+      setLastActionTab(activeTab);
+    }
   };
 
   const handleUpload = () => {
     if (!deviceId || !plantId || activeTabErrorCount > 0) return;
     setLastAction("upload");
     setLastActionTab(activeTab);
-    submitTab.mutate({ deviceId, sn, entry: buildTabEntry(activeTab, settings) });
+    submitTab.mutate({ deviceId, sn, entry: buildTabEntry(activeTab, changedSettings) });
   };
 
   const handleCommand = (command: RemoteSettingsCommand) => {
@@ -966,13 +1086,13 @@ export default function RemoteSettingModal({
                 lastActionTab === activeTab &&
                 uploadedForThisTab ? (
                 <span className="text-green-600">
-                  Uploaded — task {submitTab.data?.taskId}.{" "}
-                  <Link
+                  Parameters Uploaded Successfully.
+                  {/* <Link
                     href="/services/batch/setting"
                     className="underline hover:text-green-700"
                   >
                     View task status
-                  </Link>
+                  </Link> */}
                 </span>
               ) : lastAction === "upload" &&
                 lastActionTab === activeTab &&
