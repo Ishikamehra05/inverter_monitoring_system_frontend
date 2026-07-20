@@ -88,10 +88,14 @@ export default function MonitorHeader({
           <input
             type="text"
             value={filters.searchSN}
-            readOnly
-            onClick={() => setIsDevicePanelOpen(true)}
-            placeholder="Please enter or select"
-            className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff] cursor-pointer"
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                searchSN: e.target.value,
+              }))
+            }
+            placeholder="Please enter SN"
+            className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff] "
           />
         </div>
 
