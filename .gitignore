@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+webapps/node_modules/
+webapps/.next/
+webapps/out/

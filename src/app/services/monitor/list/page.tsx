@@ -126,6 +126,8 @@ export default function MonitorUserListPage() {
         filters={filterForm}
         setFilters={setFilterForm}
         onQuery={() => {
+          console.log("Query Filters:", filterForm);
+
           setPage(1);
           setQueryFilters(filterForm);
         }}
