@@ -107,7 +107,9 @@ function validateReactivePowerControl(
 function validatePowerLimit(v: PowerLimit): FieldErrors<PowerLimit> {
   const errors: FieldErrors<PowerLimit> = {};
 
-  if (v.maxFeedInGridPower != null && v.maxFeedInGridPower < 0) {
+  if (
+    v.maxFeedInGridPower?.some(value => value < 0)
+  ) {
     errors.maxFeedInGridPower = NON_NEGATIVE_MESSAGE;
   }
 
