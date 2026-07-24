@@ -408,9 +408,10 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
                 <input
                   type="text"
                   value={form.address}
+                  disabled
                   onChange={(e) => setField("address", e.target.value)}
                   placeholder="Please enter a detailed address"
-                  className="w-full border border-(--border) rounded px-3 py-2 mt-1"
+                  className="w-full border border-(--border) rounded px-3 py-2 mt-1 bg-gray-50"
                 />
               </div>
 

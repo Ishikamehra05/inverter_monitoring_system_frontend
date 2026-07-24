@@ -75,7 +75,7 @@ export default function MonitorHeader({
                 searchUser: e.target.value,
               }))
             }
-            placeholder="Please enter"
+            placeholder="Please enter user name"
             className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#1890ff]"
           />
         </div>
@@ -189,7 +189,7 @@ export default function MonitorHeader({
         </button>
       </div>
 
-      {isDevicePanelOpen && (
+      {/* {isDevicePanelOpen && (
         <DeviceSelectorPanel
           selectedDevices={filters.searchSN ? [filters.searchSN] : []}
           onClose={() => setIsDevicePanelOpen(false)}
@@ -201,7 +201,7 @@ export default function MonitorHeader({
             setIsDevicePanelOpen(false);
           }}
         />
-      )}
+      )} */}
     </div>
   );
 }
