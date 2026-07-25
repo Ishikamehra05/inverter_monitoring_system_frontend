@@ -58,6 +58,18 @@ export interface SearchDeviceRequest {
   sno: string;
 }
 
+export interface SearchModuleRequest  {
+  sno: string;
+};
+
+export interface SearchModuleResponse  {
+  sno: string;
+  status: string;
+  mac_address: string | null;
+  device_model: string | null;
+  firmware_version: string | null;
+};
+
 export interface SearchDeviceResponse {
   communicationStatus: string;
   communicationModuleVersion: string;

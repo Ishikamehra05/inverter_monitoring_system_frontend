@@ -6,6 +6,8 @@ import type {
   SearchUserRequest,
   SearchUserResponse,
   SubAccountResponse,
+  SearchModuleRequest,
+  SearchModuleResponse
 } from "./schemas/users";
 
 type ApiEnvelope<T> = {
@@ -24,6 +26,15 @@ export const usersApi = {
   searchUser: (payload: SearchUserRequest) =>
     apiClient<ApiEnvelope<{ user: SearchUserResponse }>>(
       "/service/search-user",
+      {
+        method: "POST",
+        body: payload,
+      },
+    ).then((res) => res.data),
+
+  searchModule: (payload: SearchModuleRequest) =>
+    apiClient<ApiEnvelope<{ device: SearchModuleResponse }>>(
+      "/service/search-module",
       {
         method: "POST",
         body: payload,

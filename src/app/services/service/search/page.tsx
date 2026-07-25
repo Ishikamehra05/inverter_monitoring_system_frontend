@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { useSearchDevice, useSearchUser } from "@/hooks/api/useUsers";
+import { useSearchDevice, useSearchUser, useSearchModule } from "@/hooks/api/useUsers";
 import Link from "next/link";
 import { toast } from "sonner";
 import DevicesTabPanel from "@/components/monitors/components/deviceDetails/DevicesTabPanel";
@@ -17,6 +17,7 @@ import {
 import { useDeleteDevice } from "@/hooks/api/useDevices";
 import DeleteInverterModal from "@/components/monitors/modals/DeleteInverterModal";
 import { useDeleteAccount } from "@/hooks/api/useService";
+import UpgradeInfoModal from "@/components/services/modals/UpgradeInfoModal";
 
 type Mode = "sn" | "datalogger" | "user" | "module";
 
@@ -36,6 +37,8 @@ export default function GlobalSearchPage() {
   const device = searchDevice.data?.device;
   const deleteAccountMutation = useDeleteAccount();
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const searchModule = useSearchModule();
+  const module = searchModule.data?.device;
   const deleteDeviceServiceParams = {
     fromService: true,
     targetEndUserId: device?.userId ?? undefined,
@@ -45,6 +48,7 @@ export default function GlobalSearchPage() {
     deleteDeviceServiceParams,
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const handleSearch = () => {
     const value = keyword.trim();
 
@@ -79,12 +83,28 @@ export default function GlobalSearchPage() {
         },
       );
     }
+
+    if (mode === "module") {
+      searchModule.mutate(
+        { sno: value },
+        {
+          onError: (error: Error) => {
+            toast.error(error.message || "Module not found.");
+          },
+        },
+      );
+
+      return;
+    }
   };
+
   const changeMode = (newMode: Mode) => {
     setMode(newMode);
     setKeyword("");
+
     searchUser.reset();
     searchDevice.reset();
+    searchModule.reset();
   };
 
   const handleDeleteDevice = async () => {
@@ -120,6 +140,7 @@ export default function GlobalSearchPage() {
       toast.error(error?.message || "Failed to delete account.");
     }
   };
+
   return (
     <div className="bg-white border border-[rgba(0,0,0,0.06)] rounded-xs flex flex-col lg:flex-row min-h-105 w-full">
       {/* ---------- LEFT MENU ---------- */}
@@ -169,7 +190,11 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
 
           <button
             onClick={handleSearch}
-            disabled={searchUser.isPending || searchDevice.isPending}
+            disabled={
+              searchUser.isPending ||
+              searchDevice.isPending ||
+              searchModule.isPending
+            }
             className="h-10 w-full sm:w-27.5 bg-[#1890ff] text-white text-[13px] tracking-[2px] hover:bg-[#40a9ff]"
           >
             SEARCH
@@ -469,7 +494,98 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
             )}
           </>
         )}
+
+        {mode === "module" && module && (
+          <>
+            <h3 className="text-[18px] font-semibold text-[#333] mb-5">
+              Module Info
+            </h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border border-[#ececec] border-collapse text-[15px]">
+                <tbody>
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] w-[30%] px-5 py-3">
+                      Module Operation
+                    </td>
+
+                    <td className="px-5 py-3">
+                      <button
+                        onClick={() => setUpgradeOpen(true)}
+                        className="flex items-center gap-1 hover:text-[#1890ff] transition-colors"
+                      >
+                        <HiOutlineUpload className="h-5 w-5" />
+                        <span>Upgrade Module</span>
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-3">
+                      Module SN
+                    </td>
+
+                    <td className="px-5 py-3">
+                      {module.mac_address ?? "--"}
+                    </td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-3">
+                      Module Version
+                    </td>
+
+                    <td className="px-5 py-3">
+                      {module.firmware_version ?? "--"}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="bg-[#f5f5f5] px-5 py-3">
+                      Associated Device SN
+                    </td>
+
+                    <td className="px-5 py-3">
+                      {module.sno}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="bg-[#f5f5f5] px-5 py-3">
+                      Device Model
+                    </td>
+
+                    <td className="px-5 py-3">
+                      {module.device_model ?? "--"}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="bg-[#f5f5f5] px-5 py-3">
+                      Status
+                    </td>
+
+                    <td className="px-5 py-3">
+                      {module.status}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </section>
+
+      <UpgradeInfoModal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        model={module?.device_model ?? ""}
+        sn={module?.mac_address ?? ""}
+        mdsp="311802"
+        sdsp="310601"
+        csb="010607"
+        status={module?.status ?? "DONE"}
+      />
     </div>
   );
 }

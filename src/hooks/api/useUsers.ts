@@ -5,6 +5,7 @@ import { usersApi } from "@/lib/api/users";
 import type {
   CreateSubAccountRequest,
   SearchDeviceRequest,
+  SearchModuleRequest
 } from "@/lib/api/schemas/users";
 
 export const useCreateSubAccount = () => {
@@ -69,5 +70,12 @@ export const useSearchDevice = () => {
   return useMutation({
     mutationFn: (payload: SearchDeviceRequest) =>
       usersApi.searchDevice(payload),
+  });
+};
+
+export const useSearchModule = () => {
+  return useMutation({
+    mutationFn: (payload: SearchModuleRequest) =>
+      usersApi.searchModule(payload),
   });
 };
