@@ -111,6 +111,7 @@ export const profileSchema = z.object({
 export const firmwareSchema = z.object({
   id: z.string(),
   name: z.string(),
+  chipType: z.string().optional(),
   version: z.string(),
   createdTime: z.string(),
   remark: z.string(),

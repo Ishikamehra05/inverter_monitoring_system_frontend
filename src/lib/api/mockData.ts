@@ -122,6 +122,7 @@ export const mockFirmwares: Firmware[] = [
   {
     id: "firmware_1",
     name: "G9511-251401-13_212608",
+    chipType: "MASTER_DSP",
     version: "G9511-251401-13_212608",
     createdTime: "2026-02-11 13:42:22",
     remark: "Release Firmware",
@@ -129,11 +130,13 @@ export const mockFirmwares: Firmware[] = [
   {
     id: "firmware_2",
     name: "G9511-251400-13_212603",
+    chipType: "SLAVE_DSP",
     version: "G9511-251400-13_212603",
     createdTime: "2026-02-11 13:41:29",
     remark: "Release Firmware",
   },
 ];
+
 
 export const mockTasks: ServiceTask[] = [
   {

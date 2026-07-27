@@ -4,49 +4,62 @@ import { RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import Pagination from "@/components/ui/Pagination";
 import UploadFirmwareModal from "@/components/services/modals/UploadFirmwareModal";
-import { useFirmware } from "@/hooks/api/useService";
+import DeleteFirmwareModal from "@/components/services/modals/DeleteFirmwareModal";
+import {
+  useDeleteFirmware,
+  useFirmware,
+  useUploadFirmware,
+} from "@/hooks/api/useService";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 5;
 
 const dummyData = [
   {
     name: "G9511-251401-13_212608",
+    chipType: "MASTER_DSP",
     version: "G9511-251401-13_212608",
     time: "2026-02-11 13:42:22",
     remark: "Release Firmware",
   },
   {
     name: "G9511-251400-13_212603",
+    chipType: "SLAVE_DSP",
     version: "G9511-251400-13_212603",
     time: "2026-02-11 13:41:29",
     remark: "Release Firmware",
   },
   {
     name: "SPECIAL-G9500-039600-12_312532",
+    chipType: "CSB",
     version: "G9500-039600-12_312532",
     time: "2026-02-09 17:44:37",
     remark: "Optimized 5V Abnormal Range",
   },
   {
     name: "SPECIAL-G9500-030100-03_410733",
+    chipType: "DCDC_DSP",
     version: "G9500-030100-03_410733",
     time: "2026-01-28 13:10:55",
     remark: "Record writing command 02",
   },
   {
     name: "Special-G9500-030100-03_410734",
+    chipType: "AFCI",
     version: "G9500-030100-03_410734",
     time: "2026-01-21 18:30:32",
     remark: "-",
   },
   {
     name: "G9500-039600-12_312408",
+    chipType: "BMS1",
     version: "G9500-039600-12_312408",
     time: "2026-01-16 15:54:22",
     remark: "Release Firmware",
   },
   {
     name: "SPECIAL-G9500-03A500-02_210530",
+    chipType: "LCD",
     version: "G9500-03A500-02_210530",
     time: "2026-01-14 14:52:58",
     remark: "Optimize the noise issue",
@@ -56,14 +69,19 @@ const dummyData = [
 export default function BatchFirmwareListPage() {
   const [firmwareName, setFirmwareName] = useState("");
   const [firmwareVersion, setFirmwareVersion] = useState("");
+  const [appliedFirmwareName, setAppliedFirmwareName] = useState("");
+  const [appliedFirmwareVersion, setAppliedFirmwareVersion] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
+  const [deleteFirmwareId, setDeleteFirmwareId] = useState<string | null>(null);
   const firmwareQuery = useFirmware({
-    firmwareName,
-    firmwareVersion,
+    firmwareName: appliedFirmwareName,
+    firmwareVersion: appliedFirmwareVersion,
     page: currentPage,
     pageSize: PAGE_SIZE,
   });
+  const uploadFirmwareMutation = useUploadFirmware();
+  const deleteFirmwareMutation = useDeleteFirmware();
 
   const totalPages =
     firmwareQuery.data?.pagination.totalPages ??
@@ -72,15 +90,88 @@ export default function BatchFirmwareListPage() {
   const paginatedData = useMemo(() => {
     if (firmwareQuery.data) {
       return firmwareQuery.data.items.map((item) => ({
+        id: item.id,
         name: item.name,
+        chipType: item.chipType,
         version: item.version,
         time: item.createdTime,
         remark: item.remark,
       }));
     }
     const start = (currentPage - 1) * PAGE_SIZE;
-    return dummyData.slice(start, start + PAGE_SIZE);
+    return dummyData.slice(start, start + PAGE_SIZE).map((item) => ({
+      id: undefined,
+      ...item,
+    }));
   }, [currentPage, firmwareQuery.data]);
+
+  const handleReset = () => {
+    setFirmwareName("");
+    setFirmwareVersion("");
+    setAppliedFirmwareName("");
+    setAppliedFirmwareVersion("");
+    setCurrentPage(1);
+  };
+
+  const handleQuery = () => {
+    const nextFirmwareName = firmwareName.trim();
+    const nextFirmwareVersion = firmwareVersion.trim();
+
+    if (
+      nextFirmwareName === appliedFirmwareName &&
+      nextFirmwareVersion === appliedFirmwareVersion &&
+      currentPage === 1
+    ) {
+      firmwareQuery.refetch();
+      return;
+    }
+
+    setAppliedFirmwareName(nextFirmwareName);
+    setAppliedFirmwareVersion(nextFirmwareVersion);
+    setCurrentPage(1);
+  };
+
+  const handleUploadFirmware = async (data: {
+    name: string;
+    chipType: string;
+    file: File | null;
+    remark: string;
+  }) => {
+    if (!data.file) return;
+
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("chipType", data.chipType);
+    formData.append("remark", data.remark);
+    formData.append("file", data.file);
+
+    await uploadFirmwareMutation.mutateAsync(formData);
+    setCurrentPage(1);
+  };
+
+  const handleDeleteFirmware = (firmwareId?: string) => {
+    if (!firmwareId) return;
+    setDeleteFirmwareId(firmwareId);
+  };
+
+  const confirmDeleteFirmware = async () => {
+    if (!deleteFirmwareId) return;
+
+    try {
+      const response = await deleteFirmwareMutation.mutateAsync(deleteFirmwareId);
+
+      toast.success(
+        response?.message ?? "Firmware deleted successfully."
+      );
+
+      setDeleteFirmwareId(null);
+      firmwareQuery.refetch();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ?? "Failed to delete firmware."
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -116,11 +207,17 @@ export default function BatchFirmwareListPage() {
 
             {/* Buttons */}
             <div className="flex gap-3 xl:ml-auto">
-              <button className="h-8 px-4 text-[14px] rounded-[2px] border border-[#d9d9d9] text-[rgba(0,0,0,0.65)] hover:border-[#1890ff] hover:text-[#1890ff] transition">
+              <button
+                onClick={handleReset}
+                className="h-8 px-4 text-[14px] rounded-[2px] border border-[#d9d9d9] text-[rgba(0,0,0,0.65)] hover:border-[#1890ff] hover:text-[#1890ff] transition"
+              >
                 Reset
               </button>
 
-              <button className="h-8 px-5 text-[14px] rounded-[2px] border border-[#1890ff] bg-[#1890ff] text-white hover:bg-[#40a9ff] hover:border-[#40a9ff] transition">
+              <button
+                onClick={handleQuery}
+                className="h-8 px-5 text-[14px] rounded-[2px] border border-[#1890ff] bg-[#1890ff] text-white hover:bg-[#40a9ff] hover:border-[#40a9ff] transition"
+              >
                 Query
               </button>
             </div>
@@ -143,10 +240,13 @@ export default function BatchFirmwareListPage() {
                 Upload Firmware
               </button>
 
-              <RefreshCw
-                size={18}
-                className="text-[rgba(0,0,0,0.45)] cursor-pointer hover:text-[rgba(0,0,0,0.85)] transition"
-              />
+              <button
+                onClick={() => firmwareQuery.refetch()}
+                aria-label="Refresh firmware list"
+                className="text-[rgba(0,0,0,0.45)] hover:text-[rgba(0,0,0,0.85)] transition"
+              >
+                <RefreshCw size={18} />
+              </button>
             </div>
           </div>
 
@@ -162,11 +262,14 @@ export default function BatchFirmwareListPage() {
             </div>
           )}
           <div className="overflow-x-auto border border-[#f0f0f0] rounded-lg">
-            <table className="min-w-[900px] w-full text-[14px]">
+            <table className="min-w-[1050px] w-full text-[14px]">
               <thead className="bg-[#fafafa] text-[rgba(0,0,0,0.65)]">
                 <tr>
                   <th className="px-6 py-3 text-left border-b border-[rgba(0,0,0,0.06)]">
                     Firmware Name
+                  </th>
+                  <th className="px-6 py-3 text-left border-b border-[rgba(0,0,0,0.06)]">
+                    Chip Type
                   </th>
                   <th className="px-6 py-3 text-left border-b border-[rgba(0,0,0,0.06)]">
                     Firmware Version
@@ -185,9 +288,12 @@ export default function BatchFirmwareListPage() {
 
               <tbody>
                 {paginatedData.map((item, index) => (
-                  <tr key={index} className="hover:bg-[#fafafa] transition">
+                  <tr key={item.id ?? index} className="hover:bg-[#fafafa] transition">
                     <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)] truncate max-w-[200px]">
                       {item.name}
+                    </td>
+                    <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
+                      {item.chipType || "-"}
                     </td>
                     <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
                       {item.version}
@@ -199,10 +305,14 @@ export default function BatchFirmwareListPage() {
                       {item.remark}
                     </td>
                     <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)] text-right">
-                      <Trash2
-                        size={16}
-                        className="text-[rgba(0,0,0,0.45)] hover:text-[#ff4d4f] cursor-pointer transition"
-                      />
+                      <button
+                        onClick={() => handleDeleteFirmware(item.id)}
+                        disabled={!item.id || deleteFirmwareMutation.isPending}
+                        aria-label="Delete firmware"
+                        className="text-[rgba(0,0,0,0.45)] hover:text-[#ff4d4f] disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -224,7 +334,15 @@ export default function BatchFirmwareListPage() {
       <UploadFirmwareModal
         open={open}
         onClose={() => setOpen(false)}
-        onSubmit={(data) => console.log(data)}
+        onSubmit={handleUploadFirmware}
+        isSubmitting={uploadFirmwareMutation.isPending}
+      />
+
+      <DeleteFirmwareModal
+        open={!!deleteFirmwareId}
+        onClose={() => setDeleteFirmwareId(null)}
+        onConfirm={confirmDeleteFirmware}
+        loading={deleteFirmwareMutation.isPending}
       />
     </div>
   );

@@ -128,6 +128,32 @@ export const useFirmware = (params: Record<string, unknown> = {}) =>
     },
   });
 
+export const useUploadFirmware = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: serviceApi.uploadFirmware,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...serviceKeys.all, "firmware"],
+      });
+    },
+  });
+};
+
+export const useDeleteFirmware = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: serviceApi.deleteFirmware,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...serviceKeys.all, "firmware"],
+      });
+    },
+  });
+};
+
 export const useUpgradeTasks = (params: Record<string, unknown> = {}) =>
   useQuery({
     queryKey: serviceKeys.upgradeTasks(params),

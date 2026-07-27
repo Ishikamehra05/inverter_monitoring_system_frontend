@@ -4,25 +4,41 @@ import { UploadCloud, X } from "lucide-react";
 import { useRef, useState } from "react";
 import clsx from "clsx";
 
+const CHIP_TYPES = [
+  "MASTER_DSP",
+  "SLAVE_DSP",
+  "CSB",
+  "DCDC_DSP",
+  "AFCI",
+  "BMS1",
+  "BMS2",
+  "LCD",
+] as const;
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onSubmit?: (data: {
     name: string;
+    chipType: string;
     file: File | null;
     remark: string;
-  }) => void;
+  }) => void | Promise<void>;
+  isSubmitting?: boolean;
 }
 
 export default function UploadFirmwareModal({
   open,
   onClose,
   onSubmit,
+  isSubmitting = false,
 }: Props) {
   const [firmwareName, setFirmwareName] = useState("");
+  const [chipType, setChipType] = useState("");
   const [remark, setRemark] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +47,7 @@ export default function UploadFirmwareModal({
   const handleFile = (selected: File | null) => {
     if (selected) {
       setFile(selected);
+      setUploadError(null);
     }
   };
 
@@ -41,10 +58,16 @@ export default function UploadFirmwareModal({
     handleFile(droppedFile);
   };
 
-  const handleUpload = () => {
-    if (!firmwareName.trim() || !file) return;
-    onSubmit?.({ name: firmwareName, file, remark });
-    onClose();
+  const handleUpload = async () => {
+    if (!firmwareName.trim() || !chipType || !file || isSubmitting) return;
+
+    try {
+      setUploadError(null);
+      await onSubmit?.({ name: firmwareName, chipType, file, remark });
+      onClose();
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+    }
   };
 
   return (
@@ -94,6 +117,27 @@ export default function UploadFirmwareModal({
               placeholder="Please Enter Firmware Name"
               className="input-light"
             />
+          </div>
+
+          {/* Chip Type */}
+          <div>
+            <label className="block mb-2 text-sm text-(--muted-fg)">
+              <span className="text-red-500 mr-1">*</span>
+              Chip Type
+            </label>
+
+            <select
+              value={chipType}
+              onChange={(e) => setChipType(e.target.value)}
+              className="input-light"
+            >
+              <option value="">Please Select Chip Type</option>
+              {CHIP_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Upload File */}
@@ -186,7 +230,12 @@ export default function UploadFirmwareModal({
         </div>
 
         {/* ================= FOOTER ================= */}
-        <div className="flex flex-col sm:flex-row justify-end gap-3 px-5 sm:px-8 py-5 border-t border-(--divider) bg-(--surface)">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 px-5 sm:px-8 py-5 border-t border-(--divider) bg-(--surface)">
+          {uploadError && (
+            <p className="text-sm text-[#ff4d4f] sm:mr-auto">
+              {uploadError}
+            </p>
+          )}
           <button
             onClick={onClose}
             className="
@@ -206,7 +255,7 @@ export default function UploadFirmwareModal({
 
           <button
             onClick={handleUpload}
-            disabled={!firmwareName || !file}
+            disabled={!firmwareName || !chipType || !file || isSubmitting}
             className="
               w-full sm:w-auto
               px-6
@@ -221,7 +270,7 @@ export default function UploadFirmwareModal({
               transition
             "
           >
-            Upload
+            {isSubmitting ? "Uploading..." : "Upload"}
           </button>
         </div>
       </div>
