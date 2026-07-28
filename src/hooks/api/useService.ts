@@ -29,6 +29,13 @@ export const serviceKeys = {
     [...serviceKeys.all, "settingTasks", params] as const,
 };
 
+export const useUpgradeTaskDetail = (taskId: string | undefined) =>
+  useQuery({
+    queryKey: [...serviceKeys.all, "upgradeTaskDetail", taskId],
+    queryFn: () => serviceApi.upgradeTaskDetail(taskId as string),
+    enabled: Boolean(taskId),
+  });
+
 export const useMonitorUsers = (params: Record<string, unknown> = {}) =>
   useQuery({
     queryKey: serviceKeys.monitorUsers(params),
@@ -285,6 +292,21 @@ export const useAssignMonitorUsers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["service", "monitorUsers"],
+      });
+    },
+  });
+};
+
+export const useCreateUpgradeTask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      serviceApi.createUpgradeTask(payload),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...serviceKeys.all, "upgradeTasks"],
       });
     },
   });

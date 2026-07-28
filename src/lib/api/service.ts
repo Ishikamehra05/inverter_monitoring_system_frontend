@@ -15,6 +15,7 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   MonitorUserStatusCountsResponse,
+  UpgradeTaskDetail
 } from "./schemas/service";
 
 type ApiEnvelope<T> = {
@@ -161,5 +162,10 @@ export const serviceApi = {
         method: "POST",
         body: payload,
       },
+    ).then((res) => res.data),
+
+      upgradeTaskDetail: (taskId: string) =>
+    apiClient<ApiEnvelope<UpgradeTaskDetail>>(
+      `/service/upgrade-tasks/${taskId}`
     ).then((res) => res.data),
 };

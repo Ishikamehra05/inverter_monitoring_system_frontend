@@ -1,28 +1,189 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronRight, Trash2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { Calendar } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { format, formatISO, isSameDay, parseISO, startOfToday } from "date-fns";
 import DeviceSelectorPanel from "./DeviceSelectorPanel";
+import type { InverterSummary } from "@/lib/api/schemas/devices";
+import { useFirmware, useCreateUpgradeTask } from "@/hooks/api/useService";
 
-export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
+const START_TIME_REQUIRED_MESSAGE = "Please select a future date and time.";
+
+// Calendar-only start-time picker: no text entry anywhere. The calendar
+// (react-date-range) disables past dates via minDate; hour/minute selects
+// disable past values when today is picked; Apply is disabled as a final
+// guard against the value going stale between opening the popover and
+// committing it. Stores/returns a Date — the parent converts to/from the
+// ISO-with-offset string (e.g. 2026-07-28T10:30:00+05:30) via date-fns.
+function StartTimePicker({
+  value,
+  onChange,
+  error,
+}: {
+  value: Date | null;
+  onChange: (date: Date) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draftDate, setDraftDate] = useState<Date>(value ?? new Date());
+  const [draftHour, setDraftHour] = useState<number>((value ?? new Date()).getHours());
+  const [draftMinute, setDraftMinute] = useState<number>((value ?? new Date()).getMinutes());
+
+  const openPicker = () => {
+    const base = value ?? new Date();
+    setDraftDate(base);
+    setDraftHour(base.getHours());
+    setDraftMinute(base.getMinutes());
+    setOpen(true);
+  };
+
+  const now = new Date();
+  const isDraftToday = isSameDay(draftDate, now);
+
+  const draftCombined = new Date(draftDate);
+  draftCombined.setHours(draftHour, draftMinute, 0, 0);
+  const isDraftInFuture = draftCombined.getTime() > now.getTime();
+
+  const handleApply = () => {
+    if (!isDraftInFuture) return;
+    onChange(draftCombined);
+    setOpen(false);
+  };
+
+  // Picking a date closes the popover immediately, using whichever time is
+  // currently set (defaults to "now"). If that combination isn't valid yet
+  // (rare — e.g. popover sat open past midnight into a stale past time),
+  // stay open so the time can still be adjusted via Apply instead.
+  const handleDateSelect = (date: Date) => {
+    setDraftDate(date);
+    const combined = new Date(date);
+    combined.setHours(draftHour, draftMinute, 0, 0);
+    if (combined.getTime() > Date.now()) {
+      onChange(combined);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <input
+        readOnly
+        onClick={openPicker}
+        // While the popover is open, show the live draft (updates the instant a
+        // date/hour/minute is picked) instead of only the last-committed value —
+        // otherwise clicking a date gives no visible feedback until Apply.
+        value={
+          open
+            ? format(draftCombined, "yyyy-MM-dd HH:mm")
+            : value
+              ? format(value, "yyyy-MM-dd HH:mm")
+              : ""
+        }
+        placeholder="Please select start date & time"
+        className={`w-full h-8 px-[11px] text-[14px] border ${
+          error ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+        } rounded-[2px] cursor-pointer bg-white focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
+      />
+
+      {open && (
+        <div className="absolute z-30 mt-2 bg-white shadow-lg border border-[rgba(0,0,0,0.06)] rounded-[2px]">
+          <Calendar date={draftDate} onChange={handleDateSelect} minDate={startOfToday()} />
+
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-[rgba(0,0,0,0.06)]">
+            <span className="text-[12px] text-[rgba(0,0,0,0.65)]">Time:</span>
+            <select
+              value={draftHour}
+              onChange={(e) => setDraftHour(Number(e.target.value))}
+              className="h-8 px-2 text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h} disabled={isDraftToday && h < now.getHours()}>
+                  {String(h).padStart(2, "0")}
+                </option>
+              ))}
+            </select>
+            <span className="text-[14px] text-[rgba(0,0,0,0.65)]">:</span>
+            <select
+              value={draftMinute}
+              onChange={(e) => setDraftMinute(Number(e.target.value))}
+              className="h-8 px-2 text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
+            >
+              {Array.from({ length: 60 }, (_, m) => (
+                <option
+                  key={m}
+                  value={m}
+                  disabled={isDraftToday && draftHour === now.getHours() && m < now.getMinutes()}
+                >
+                  {String(m).padStart(2, "0")}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {!isDraftInFuture && (
+            <p className="px-4 pb-2 text-[12px] text-[#ff4d4f]">{START_TIME_REQUIRED_MESSAGE}</p>
+          )}
+
+          <div className="flex justify-end gap-2 px-4 py-3 border-t border-[rgba(0,0,0,0.06)]">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="h-8 px-4 text-[14px] border border-[#d9d9d9] rounded-[2px] hover:border-[#1890ff] hover:text-[#1890ff] transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={!isDraftInFuture}
+              className="h-8 px-4 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+      {error && <p className="text-[12px] text-[#ff4d4f] mt-1">{error}</p>}
+    </div>
+  );
+}
+
+export default function CreateTaskPanel({
+  onClose,
+  targetEndUserId,
+}: {
+  onClose: () => void;
+  targetEndUserId?: string;
+}) {
   const [isOpen, setIsOpen] = useState(true);
   const [isVerifyOpen, setIsVerifyOpen] = useState(true);
-  const [deviceMode, setDeviceMode] = useState<"select" | "upload">("select");
-  const [firmwares, setFirmwares] = useState([1]);
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
-  const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+  const [selectedDevices, setSelectedDevices] = useState<InverterSummary[]>([]);
   const [step, setStep] = useState(1);
-  
+
   // Form state
   const [taskName, setTaskName] = useState("");
   const [startTime, setStartTime] = useState("");
-  const [firmwareSelections, setFirmwareSelections] = useState<string[]>([""]);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [selectedFirmwareId, setSelectedFirmwareId] = useState("");
+  const [updateType, setUpdateType] = useState<"" | "NORMAL" | "FORCE">("");
+  const [currentFirmware, setCurrentFirmware] = useState("");
+
+  // Firmware Package dropdown — sourced from the real firmware catalog.
+  // Chip Type is intrinsic to whichever firmware is picked (firmware.chip_type
+  // already exists in the DB), so it's shown inline in the option label rather
+  // than as its own field. Update Type and Current Firmware are NOT stored on
+  // the firmware catalog row — they're per-job choices, so they stay independent inputs.
+  const firmwareQuery = useFirmware({ pageSize: 100 });
+  const firmwareOptions = firmwareQuery.data?.items ?? [];
 
   // Validation errors
   const [errors, setErrors] = useState({
     taskName: "",
     firmwares: "",
+    updateType: "",
     startTime: "",
     devices: ""
   });
@@ -34,26 +195,11 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
-  const addFirmware = () => {
-    setFirmwares((prev) => [...prev, prev.length + 1]);
-    setFirmwareSelections((prev) => [...prev, ""]);
-  };
-
-  const removeFirmware = (index: number) => {
-    setFirmwares((prev) => prev.filter((_, i) => i !== index));
-    setFirmwareSelections((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateFirmwareSelection = (index: number, value: string) => {
-    const updated = [...firmwareSelections];
-    updated[index] = value;
-    setFirmwareSelections(updated);
-  };
-
   const validateStep1 = () => {
     const newErrors = {
       taskName: "",
       firmwares: "",
+      updateType: "",
       startTime: "",
       devices: ""
     };
@@ -65,25 +211,27 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
       isValid = false;
     }
 
-    // Validate Firmwares - at least one firmware selected
-    const hasValidFirmware = firmwareSelections.some(fw => fw.trim() !== "");
-    if (!hasValidFirmware) {
-      newErrors.firmwares = "At least one firmware package is required";
+    // Validate Firmware Package — exactly one selection required
+    if (!selectedFirmwareId) {
+      newErrors.firmwares = "Firmware package is required";
       isValid = false;
     }
 
-    // Validate Start Time
-    if (!startTime) {
-      newErrors.startTime = "Start time is required";
+    // Validate Update Type
+    if (!updateType) {
+      newErrors.updateType = "Update type is required";
       isValid = false;
     }
 
-    // Validate Devices based on mode
-    if (deviceMode === "select" && selectedDevices.length === 0) {
+    // Validate Start Time — required, and must be in the future
+    if (!startTime || parseISO(startTime).getTime() <= Date.now()) {
+      newErrors.startTime = START_TIME_REQUIRED_MESSAGE;
+      isValid = false;
+    }
+
+    // Validate Devices
+    if (selectedDevices.length === 0) {
       newErrors.devices = "Please select at least one device";
-      isValid = false;
-    } else if (deviceMode === "upload" && !uploadedFile) {
-      newErrors.devices = "Please upload a device file";
       isValid = false;
     }
 
@@ -97,20 +245,40 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadedFile(e.target.files[0]);
+  const createUpgradeTaskMutation = useCreateUpgradeTask();
+  const [submitError, setSubmitError] = useState("");
+
+  // plantId/loggerImei/firmwareUrl are omitted here — the backend defaults
+  // them (placeholder plant / "-1" / "http://-1") until the inverter->logger
+  // ->plant join and a real firmware download URL exist. See
+  // coding_action/Zcreate-job-01.md.
+  const handleSubmit = async () => {
+    setSubmitError("");
+    const firmware = firmwareOptions.find((item) => item.id === selectedFirmwareId);
+    if (!firmware || !firmware.chipType || !updateType) {
+      setSubmitError("Missing required task info — please go back to Step 1.");
+      return;
+    }
+
+    try {
+      await createUpgradeTaskMutation.mutateAsync({
+        name: taskName,
+        newFirmwareVersion: firmware.version,
+        firmwareId: firmware.id,
+        chipType: firmware.chipType,
+        updateType,
+        devices: selectedDevices.map((device) => ({
+          inverterSerialNo: device.serialNumber,
+          ...(currentFirmware.trim() ? { currentFirmware: currentFirmware.trim() } : {}),
+        })),
+      });
+      onClose();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Failed to submit task. Please try again."
+      );
     }
   };
-
-  // Dummy firmware options
-  const firmwareOptions = [
-    "Firmware v1.0.0",
-    "Firmware v1.1.0", 
-    "Firmware v1.2.0",
-    "Firmware v2.0.0",
-    "Firmware v2.1.0"
-  ];
 
   return (
     <>
@@ -210,52 +378,91 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
                         )}
                       </div>
 
-                      {/* FIRMWARE SECTION */}
+                      {/* FIRMWARE PACKAGE SECTION */}
                       <div className="space-y-5">
                         <p className="text-[14px] font-medium text-[rgba(0,0,0,0.65)]">
-                          Firmware Package <span className="text-[#ff4d4f]">*</span>
+                          Firmware Package
                         </p>
 
-                        {firmwares.map((fw, index) => (
-                          <div key={index} className="space-y-2">
-                            <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
-                              Sequence {fw}-Firmware
+                        {/* Firmware Package — single select, sourced from the real firmware catalog */}
+                        <div className="space-y-2">
+                          <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
+                            <span className="text-[#ff4d4f]">*</span> Firmware Package
+                          </label>
+                          <select
+                            value={selectedFirmwareId}
+                            onChange={(e) => setSelectedFirmwareId(e.target.value)}
+                            disabled={firmwareQuery.isLoading}
+                            className={`w-full h-8 px-[11px] text-[14px] border ${
+                              errors.firmwares ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+                            } rounded-[2px] focus:outline-none focus:border-[#40a9ff]`}
+                          >
+                            <option value="">
+                              {firmwareQuery.isLoading
+                                ? "Loading firmware..."
+                                : "Please select firmware package"}
+                            </option>
+                            {firmwareOptions.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.name} ({item.version})
+                                {item.chipType ? ` — ${item.chipType}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {firmwareQuery.isError && (
+                            <p className="text-[12px] text-[#ff4d4f]">
+                              Unable to load firmware list.
+                            </p>
+                          )}
+                          {errors.firmwares && (
+                            <p className="text-[12px] text-[#ff4d4f]">{errors.firmwares}</p>
+                          )}
+                        </div>
+
+                        {/* Update Type — per-job choice, not stored on the firmware catalog row */}
+                        <div className="space-y-2">
+                          <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
+                            <span className="text-[#ff4d4f]">*</span> Update Type
+                          </label>
+                          <div className="flex gap-6 text-[14px]">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                checked={updateType === "NORMAL"}
+                                onChange={() => setUpdateType("NORMAL")}
+                              />
+                              Normal
                             </label>
-
-                            <div className="flex items-center gap-3">
-                              <select
-                                value={firmwareSelections[index] || ""}
-                                onChange={(e) => updateFirmwareSelection(index, e.target.value)}
-                                className="flex-1 h-8 px-[11px] text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
-                              >
-                                <option value="">Please select firmware</option>
-                                {firmwareOptions.map((option, i) => (
-                                  <option key={i} value={option}>{option}</option>
-                                ))}
-                              </select>
-
-                              {firmwares.length > 1 && (
-                                <button
-                                  onClick={() => removeFirmware(index)}
-                                  className="text-[rgba(0,0,0,0.45)] hover:text-[#ff4d4f] transition"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
-                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                checked={updateType === "FORCE"}
+                                onChange={() => setUpdateType("FORCE")}
+                              />
+                              Force
+                            </label>
                           </div>
-                        ))}
+                          {errors.updateType && (
+                            <p className="text-[12px] text-[#ff4d4f]">{errors.updateType}</p>
+                          )}
+                        </div>
 
-                        {errors.firmwares && (
-                          <p className="text-[12px] text-[#ff4d4f]">{errors.firmwares}</p>
-                        )}
-
-                        <button
-                          onClick={addFirmware}
-                          className="w-full h-8 text-[14px] border border-dashed border-[#d9d9d9] rounded-[2px] bg-white hover:border-[#1890ff] hover:text-[#1890ff] transition"
-                        >
-                          + Add Firmware
-                        </button>
+                        {/* Current Firmware — optional reference; the version already on the
+                            device, not something the firmware catalog can supply */}
+                        <div className="space-y-2">
+                          <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
+                            Current Firmware{" "}
+                            <span className="text-[12px] text-[rgba(0,0,0,0.45)]">
+                              (optional, for reference)
+                            </span>
+                          </label>
+                          <input
+                            value={currentFirmware}
+                            onChange={(e) => setCurrentFirmware(e.target.value)}
+                            placeholder="Existing firmware version on the device"
+                            className="w-full h-8 px-[11px] text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -267,102 +474,42 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
                           <span className="text-[#ff4d4f]">*</span> Task Start Time
                         </label>
 
-                        <input
-                          type="datetime-local"
-                          value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
-                          className={`w-full h-8 px-[11px] text-[14px] border ${
-                            errors.startTime ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                          } rounded-[2px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
+                        <StartTimePicker
+                          value={startTime ? parseISO(startTime) : null}
+                          onChange={(date) => setStartTime(formatISO(date))}
+                          error={errors.startTime}
                         />
-                        {errors.startTime && (
-                          <p className="text-[12px] text-[#ff4d4f]">{errors.startTime}</p>
-                        )}
                       </div>
 
-                      {/* DEVICE MODE */}
-                      <div className="space-y-4">
-                        <div className="flex gap-6 text-[14px]">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              checked={deviceMode === "select"}
-                              onChange={() => setDeviceMode("select")}
-                            />
-                            Select Devices
-                          </label>
+                      {/* DEVICES — one entry point; List vs. Upload is chosen
+                          inside the picker itself, not duplicated out here. */}
+                      <div className="space-y-2">
+                        <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
+                          <span className="text-[#ff4d4f]">*</span> Devices
+                        </label>
+                        <div className="flex">
+                          <input
+                            readOnly
+                            value={
+                              selectedDevices.length
+                                ? `${selectedDevices.length} device(s) selected`
+                                : ""
+                            }
+                            className={`flex-1 h-8 px-[11px] text-[14px] border ${
+                              errors.devices ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+                            } rounded-l-[2px] bg-white truncate`}
+                            placeholder="Click to select or upload devices"
+                          />
 
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              checked={deviceMode === "upload"}
-                              onChange={() => setDeviceMode("upload")}
-                            />
-                            Upload Devices
-                          </label>
+                          <button
+                            onClick={() => setShowDeviceSelector(true)}
+                            className="h-8 px-4 border border-l-0 border-[#d9d9d9] rounded-r-[2px] hover:bg-[#fafafa]"
+                          >
+                            📋
+                          </button>
                         </div>
-
-                        {deviceMode === "select" && (
-                          <div className="space-y-2">
-                            <div className="flex">
-                              <input
-                                readOnly
-                                value={
-                                  selectedDevices.length
-                                    ? `${selectedDevices.length} device(s) selected`
-                                    : ""
-                                }
-                                className={`flex-1 h-8 px-[11px] text-[14px] border ${
-                                  errors.devices ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                                } rounded-l-[2px] bg-white truncate`}
-                                placeholder="Please click right side to select devices"
-                              />
-
-                              <button
-                                onClick={() => setShowDeviceSelector(true)}
-                                className="h-8 px-4 border border-l-0 border-[#d9d9d9] rounded-r-[2px] hover:bg-[#fafafa]"
-                              >
-                                📋
-                              </button>
-                            </div>
-                            {errors.devices && (
-                              <p className="text-[12px] text-[#ff4d4f]">{errors.devices}</p>
-                            )}
-                          </div>
-                        )}
-
-                        {deviceMode === "upload" && (
-                          <div className="space-y-2">
-                            <div 
-                              className={`h-28 border border-dashed ${
-                                errors.devices ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                              } rounded-[2px] flex flex-col items-center justify-center bg-white text-center px-4 cursor-pointer hover:border-[#1890ff] transition relative`}
-                              onClick={() => document.getElementById('file-upload')?.click()}
-                            >
-                              <input
-                                id="file-upload"
-                                type="file"
-                                accept=".xlsx"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                              />
-                              {uploadedFile ? (
-                                <p className="text-[14px] text-[#1890ff]">{uploadedFile.name}</p>
-                              ) : (
-                                <>
-                                  <p className="text-[14px] font-medium text-[rgba(0,0,0,0.85)]">
-                                    Click to upload file
-                                  </p>
-                                  <p className="text-[12px] text-[rgba(0,0,0,0.45)]">
-                                    (Currently only supports .xlsx format files)
-                                  </p>
-                                </>
-                              )}
-                            </div>
-                            {errors.devices && (
-                              <p className="text-[12px] text-[#ff4d4f]">{errors.devices}</p>
-                            )}
-                          </div>
+                        {errors.devices && (
+                          <p className="text-[12px] text-[#ff4d4f]">{errors.devices}</p>
                         )}
                       </div>
                     </div>
@@ -406,52 +553,84 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
                         <thead className="bg-[#fafafa] text-[rgba(0,0,0,0.65)]">
                           <tr>
                             <th className="px-6 py-3 text-left border-b border-[rgba(0,0,0,0.06)]">
-                              SN
+                              Name
                             </th>
                             <th className="px-6 py-3 text-left border-b border-[rgba(0,0,0,0.06)]">
-                              Pass
+                              Serial Number
                             </th>
                             <th className="px-6 py-3 text-left border-b border-[rgba(0,0,0,0.06)]">
-                              Info
+                              Status
                             </th>
                           </tr>
                         </thead>
 
                         <tbody>
-                          <tr className="hover:bg-[#fafafa] transition">
-                            <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
-                              2248-50900391P
-                            </td>
-                            <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)] text-[#52c41a]">
-                              ✔
-                            </td>
-                            <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)] text-[rgba(0,0,0,0.45)]">
-                              -
-                            </td>
-                          </tr>
+                          {selectedDevices.map((device) => {
+                            const isOnline = device.status.toLowerCase() === "online";
+                            return (
+                              <tr key={device.serialNumber} className="hover:bg-[#fafafa] transition">
+                                <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
+                                  {device.name}
+                                </td>
+                                <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)] font-mono">
+                                  {device.serialNumber}
+                                </td>
+                                <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
+                                  <span className="flex items-center gap-2">
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        isOnline ? "bg-[#52c41a]" : "bg-[#d9d9d9]"
+                                      }`}
+                                    />
+                                    {device.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {selectedDevices.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={3}
+                                className="px-6 py-6 text-center text-[rgba(0,0,0,0.45)] border-b border-[rgba(0,0,0,0.06)]"
+                              >
+                                No devices selected.
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
 
-                    {/* Pagination */}
+                    {/* Count */}
                     <div className="flex justify-end px-6 py-4 text-[rgba(0,0,0,0.45)] text-sm border-b border-[rgba(0,0,0,0.06)]">
-                      1-1 of 1 items
+                      {selectedDevices.length} item{selectedDevices.length === 1 ? "" : "s"}
                     </div>
                   </>
                 )}
 
                 {/* Step 2 Footer - Bottom Right */}
-                <div className="flex justify-end gap-4 p-6">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="px-6 h-8 text-[14px] rounded-[2px] border border-[#d9d9d9] text-[rgba(0,0,0,0.65)] hover:border-[#1890ff] hover:text-[#1890ff] transition"
-                  >
-                    ← Previous
-                  </button>
+                <div className="flex flex-col items-end gap-2 p-6">
+                  {submitError && (
+                    <p className="text-[12px] text-[#ff4d4f]">{submitError}</p>
+                  )}
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={() => setStep(1)}
+                      disabled={createUpgradeTaskMutation.isPending}
+                      className="px-6 h-8 text-[14px] rounded-[2px] border border-[#d9d9d9] text-[rgba(0,0,0,0.65)] hover:border-[#1890ff] hover:text-[#1890ff] transition disabled:opacity-50"
+                    >
+                      ← Previous
+                    </button>
 
-                  <button className="px-6 h-8 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] transition">
-                    Submit
-                  </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={createUpgradeTaskMutation.isPending}
+                      className="px-6 h-8 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] transition disabled:opacity-60"
+                    >
+                      {createUpgradeTaskMutation.isPending ? "Submitting..." : "Submit"}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -464,6 +643,7 @@ export default function CreateTaskPanel({ onClose }: { onClose: () => void }) {
           selectedDevices={selectedDevices}
           onClose={() => setShowDeviceSelector(false)}
           onConfirm={(devices) => setSelectedDevices(devices)}
+          targetEndUserId={targetEndUserId}
         />
       )}
     </>

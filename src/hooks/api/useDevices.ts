@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { devicesApi, ServiceScopeParams } from "@/lib/api/devices";
 import { isBackendUnavailable } from "@/lib/api/errors";
-// import { DeviceLogsExportParams } from "@/lib/api/schemas/devices"
 import { serviceKeys } from "./useService";
 import {
   DeviceLogsExportParams,
@@ -14,6 +13,8 @@ import {
 
 export const deviceKeys = {
   all: ["devices"] as const,
+  inverters: (params: Record<string, unknown>) =>
+    [...deviceKeys.all, "inverters", params] as const,
   plant: (plantId: string, params: Record<string, unknown>) =>
     [...deviceKeys.all, "plant", plantId, params] as const,
   detail: (deviceId: string) => [...deviceKeys.all, "detail", deviceId] as const,
@@ -31,6 +32,17 @@ export const deviceKeys = {
     params: Record<string, unknown>,
   ) => [...deviceKeys.all, "remoteSettingsTab", deviceId, tab, params] as const,
 };
+
+export const useInverters = (params: Record<string, unknown> = {}) =>
+  useQuery({
+    queryKey: deviceKeys.inverters(params),
+    queryFn: () => devicesApi.inverters(params),
+  });
+
+export const useUploadInverterList = () =>
+  useMutation({
+    mutationFn: (formData: FormData) => devicesApi.uploadInverterList(formData),
+  });
 
 export const usePlantDevices = (
   plantId: string,

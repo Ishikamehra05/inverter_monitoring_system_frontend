@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { RefreshCw, Trash2 } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import TaskDetailSidebar from "@/components/services/TaskDetailSidebar";
@@ -34,6 +35,9 @@ const tasks = [
 ];
 
 export default function BatchTaskPage() {
+  const searchParams = useSearchParams();
+  const targetEndUserId = searchParams.get("userid") ?? undefined;
+
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -205,7 +209,12 @@ export default function BatchTaskPage() {
         />
       )}
 
-      {showCreate && <CreateTaskPanel onClose={() => setShowCreate(false)} />}
+      {showCreate && (
+        <CreateTaskPanel
+          onClose={() => setShowCreate(false)}
+          targetEndUserId={targetEndUserId}
+        />
+      )}
     </div>
   );
 }

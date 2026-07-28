@@ -479,9 +479,7 @@ export default function DeviceListPage() {
         onClose={() => setUpgradeOpen(false)}
         model={sidebarDevice?.deviceName?.split(" ")[0]}
         sn={upgradeDevice?.sn}
-        mdsp="311802"
-        sdsp="310601"
-        csb="010607"
+        plantId={plantId}
         status="DONE"
       />
     </div>

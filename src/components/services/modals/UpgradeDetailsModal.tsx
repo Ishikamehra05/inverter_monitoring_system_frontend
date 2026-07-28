@@ -1,14 +1,40 @@
 "use client";
 
-import { X, CheckCircle } from "lucide-react";
+import { X, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import type { UpgradeJob } from "@/lib/api/schemas/service";
 
 type Props = {
-  open: boolean;
+  job: UpgradeJob | null;
   onClose: () => void;
 };
 
-export default function UpgradeDetailsModal({ open, onClose }: Props) {
-  if (!open) return null;
+// Mirrors backend FOTA_JOB_STATUSES order
+// (backendapps/src/server/features/fota/constants.ts) — used only to derive
+// a progress percentage for the bar below; kept in sync by hand since the
+// two apps don't share a types package.
+const STATUS_ORDER = [
+  "PENDING",
+  "SENDING_INFORMATION",
+  "LINK_SAVED",
+  "DOWNLOADING",
+  "DOWNLOAD_COMPLETED",
+  "FLASHING",
+  "RESTARTING",
+  "COMPLETED",
+];
+
+function progressPercent(status: string): number {
+  if (status === "FAILED") return 100;
+  const index = STATUS_ORDER.indexOf(status);
+  if (index === -1) return 0;
+  return Math.round(((index + 1) / STATUS_ORDER.length) * 100);
+}
+
+export default function UpgradeDetailsModal({ job, onClose }: Props) {
+  if (!job) return null;
+
+  const isFailed = job.status === "FAILED";
+  const percent = progressPercent(job.status);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
@@ -29,57 +55,46 @@ export default function UpgradeDetailsModal({ open, onClose }: Props) {
           {/* DEVICE INFO */}
           <div className="border border-gray-300 rounded-md p-4 space-y-4">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="text-gray-500">SN:</span>{" "}
-                <span className="font-medium">2524-87026701P</span>
+                <span className="font-medium">{job.inverterSerialNo}</span>
               </div>
 
               <div>
-                <span className="text-gray-500">Model:</span>{" "}
-                <span className="font-medium">PSIS-3K6</span>
+                <span className="text-gray-500">Chip Type:</span>{" "}
+                <span className="font-medium">{job.chipType}</span>
               </div>
 
               <div>
-                <span className="text-gray-500">Device Status:</span>{" "}
-                <span className="font-medium text-green-600">Online</span>
+                <span className="text-gray-500">Update Type:</span>{" "}
+                <span className="font-medium">
+                  {job.updateType === "FORCE" ? "Force" : "Normal"}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">Status:</span>{" "}
+                <span className={`font-medium ${isFailed ? "text-red-600" : "text-green-600"}`}>
+                  {job.message}
+                </span>
               </div>
             </div>
 
-            <p className="text-sm text-gray-600">Version before upgrade :</p>
-
-            {/* TABLE */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border border-gray-300">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="p-2 border border-gray-300">MDSP</th>
-                    <th className="p-2 border border-gray-300">SDSP</th>
-                    <th className="p-2 border border-gray-300">DCDC</th>
-                    <th className="p-2 border border-gray-300">CSB</th>
-                    <th className="p-2 border border-gray-300">Communication Module</th>
-                    <th className="p-2 border border-gray-300">AFCI</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr className="text-center">
-                    <td className="p-2 border border-gray-300 font-medium">
-                      030100-01_410203
-                    </td>
-                    <td className="p-2 border border-gray-300 font-medium">
-                      030101-00_010000
-                    </td>
-                    <td className="p-2 border border-gray-300">---</td>
-                    <td className="p-2 border border-gray-300">---</td>
-                    <td className="p-2 border border-gray-300 font-medium">
-                      050400-09_011810
-                    </td>
-                    <td className="p-2 border border-gray-300">---</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-500">Current Firmware:</span>{" "}
+                <span className="font-medium">{job.currentFirmware ?? "—"}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">New Firmware Version:</span>{" "}
+                <span className="font-medium">{job.newFirmwareVersion}</span>
+              </div>
             </div>
+
+            {job.failureReason && (
+              <p className="text-sm text-red-600">Failure reason: {job.failureReason}</p>
+            )}
           </div>
 
           {/* PROGRESS SECTION */}
@@ -91,7 +106,7 @@ export default function UpgradeDetailsModal({ open, onClose }: Props) {
 
             <div className="text-sm">
               <p className="text-gray-500">Current Status:</p>
-              <p className="font-medium">Upgrade Completed</p>
+              <p className="font-medium">{job.message}</p>
             </div>
 
             {/* PROGRESS BAR */}
@@ -100,32 +115,40 @@ export default function UpgradeDetailsModal({ open, onClose }: Props) {
 
               <div className="flex items-center gap-3">
                 <div className="w-full bg-gray-200 h-2 rounded">
-                  <div className="bg-blue-500 h-2 rounded w-full"></div>
+                  <div
+                    className={`h-2 rounded ${isFailed ? "bg-red-500" : "bg-blue-500"}`}
+                    style={{ width: `${percent}%` }}
+                  ></div>
                 </div>
-                <span className="text-sm">100%</span>
+                <span className="text-sm">{percent}%</span>
               </div>
             </div>
 
-            {/* STATUS LIST */}
+            {/* COMMAND LOG */}
             <div className="space-y-3 text-sm">
+              {job.commandLog.length === 0 && (
+                <p className="text-gray-500">No command log entries yet.</p>
+              )}
 
-              <div className="flex items-center gap-3">
-                <CheckCircle className="text-green-500" size={16} />
+              {job.commandLog.map((log: any) => (
+                <div key={log.step} className="flex items-center gap-3">
+                  {log.status === "SUCCESS" ? (
+                    <CheckCircle className="text-green-500 shrink-0" size={16} />
+                  ) : log.status === "FAILED" || log.status === "TIMEOUT" ? (
+                    <AlertCircle className="text-red-500 shrink-0" size={16} />
+                  ) : (
+                    <Clock className="text-gray-400 shrink-0" size={16} />
+                  )}
 
-                <span>
-                  Sequence 1-G9500-030100-03_410601-Upgrade Successfully
-                </span>
+                  <span>
+                    Step {log.step} — {log.commandSent}
+                  </span>
 
-                <span className="text-gray-500 ml-auto">
-                  Finished Time: 2026-01-13 11:32:53
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <CheckCircle className="text-green-500" size={16} />
-                <span className="font-medium">Upgrade Completed</span>
-              </div>
-
+                  <span className="text-gray-500 ml-auto whitespace-nowrap">
+                    {log.respondedAt ? `Responded: ${log.respondedAt}` : `Sent: ${log.sentAt}`}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 

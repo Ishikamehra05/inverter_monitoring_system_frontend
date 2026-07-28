@@ -158,19 +158,53 @@ export const assignMonitorUsersResponseSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type AssignMonitorUsersPayload = z.infer<
-  typeof assignMonitorUsersPayloadSchema
->;
-export type AssignMonitorUsersResponse = z.infer<
-  typeof assignMonitorUsersResponseSchema
->;
+export const upgradeJobCommandLogSchema = z.object({
+  step: z.number(),
+  commandSent: z.string(),
+  rawResponse: z.string().nullable(),
+  parsedResult: z.string().nullable(),
+  status: z.string(),
+  sentAt: z.string(),
+  respondedAt: z.string().nullable(),
+});
 
-export type CreateMonitorUserPayload = z.infer<
-  typeof createMonitorUserPayloadSchema
->;
+export const upgradeJobSchema = z.object({
+  jobId: z.string(),
+  plantId: z.string(),
+  loggerImei: z.string(),
+  inverterSerialNo: z.string(),
+  currentFirmware: z.string().nullable(),
+  newFirmwareVersion: z.string(),
+  firmwareId: z.string().nullable(),
+  chipType: z.string(),
+  updateType: z.string(),
+  firmwareUrl: z.string(),
+  status: z.string(),
+  message: z.string(),
+  failureReason: z.string().nullable(),
+  stepDeadlineAt: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  commandLog: z.array(upgradeJobCommandLogSchema),
+});
+
+export const upgradeTaskDetailSchema = z.object({
+  taskId: z.string(),
+  name: z.string(),
+  status: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  jobs: z.array(upgradeJobSchema),
+});
+
+export type AssignMonitorUsersPayload = z.infer<typeof assignMonitorUsersPayloadSchema>;
+export type AssignMonitorUsersResponse = z.infer<typeof assignMonitorUsersResponseSchema>;
+export type CreateMonitorUserPayload = z.infer<typeof createMonitorUserPayloadSchema>;
+export type UpgradeTaskDetail = z.infer<typeof upgradeTaskDetailSchema>;
 export type CreatedMonitorUser = z.infer<typeof createdMonitorUserSchema>;
 export type MonitorUser = z.infer<typeof monitorUserSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Firmware = z.infer<typeof firmwareSchema>;
 export type ServiceTask = z.infer<typeof taskSchema>;
 export type MonitorFilters = z.infer<typeof monitorFiltersSchema>;
+export type UpgradeJob = z.infer<typeof upgradeJobSchema>;

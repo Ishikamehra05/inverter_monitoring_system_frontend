@@ -250,6 +250,30 @@ export interface DeviceCurrentAlertsResponse {
   };
 }
 
+
+// Real device_inverters rows only (no dataloggers) — name, serialNumber, status.
+export const inverterSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  serialNumber: z.string(),
+  status: z.string(),
+});
+
+// A row parsed directly from an uploaded .xlsx sheet — not cross-checked
+// against device_inverters, just whatever the file says.
+export const uploadedDeviceSchema = z.object({
+  serialNumber: z.string(),
+  name: z.string(),
+});
+
+export type UploadedDevice = z.infer<typeof uploadedDeviceSchema>;
+
+export const inverterListResponseSchema = z.object({
+  items: z.array(inverterSummarySchema),
+  pagination: paginationSchema,
+});
+
+export type InverterSummary = z.infer<typeof inverterSummarySchema>;
 export type ApiDevice = z.infer<typeof deviceSchema>;
 export type DeviceInformation = z.infer<typeof deviceInformationSchema>;
 export type AddDeviceRequest = z.infer<typeof addDeviceRequestSchema>;

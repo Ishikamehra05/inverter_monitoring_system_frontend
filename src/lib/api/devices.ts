@@ -2,7 +2,7 @@ import { apiClient, withQuery } from "./apiClient";
 import type {
   AddDeviceRequest, ApiDevice, DeviceInformation, DeviceChart, DeviceView,
   DeviceLogsExportParams, DeviceLogsResponse, DeviceLogsParams, DeviceCurrentAlertsResponse,
-  RemoteSettingsCommand, RemoteSettingsTabEntry, RemoteSettingsTabKey
+  RemoteSettingsCommand, RemoteSettingsTabEntry, RemoteSettingsTabKey, InverterSummary, UploadedDevice
 } from "./schemas/devices";
 import { REMOTE_SETTINGS_TAB_SLUGS } from "./schemas/devices";
 
@@ -285,5 +285,24 @@ export const devicesApi = {
     apiClient<ApiEnvelope<DeviceCurrentAlertsResponse>>(
       `/monitor/devices/${deviceId}/alerts${withQuery(params)}`
     ).then((res) => res.data),
+
+  inverters: (params: Record<string, unknown> = {}) =>
+    apiClient<
+      ApiEnvelope<{
+        items: InverterSummary[];
+        pagination: {
+          page: number;
+          pageSize: number;
+          totalItems: number;
+          totalPages: number;
+        };
+      }>
+    >(`/service/inverters${withQuery(params)}`).then((res) => res.data),
+
+  uploadInverterList: (formData: FormData) =>
+    apiClient<ApiEnvelope<{ devices: UploadedDevice[] }>>("/service/inverters/upload", {
+      method: "POST",
+      formData,
+    }).then((res) => res.data),
 };
 
