@@ -7,7 +7,9 @@ import type {
   SearchUserResponse,
   SubAccountResponse,
   SearchModuleRequest,
-  SearchModuleResponse
+  SearchModuleResponse,
+  SearchDataloggerResponse,
+  SearchDataloggerRequest,
 } from "./schemas/users";
 
 type ApiEnvelope<T> = {
@@ -49,6 +51,16 @@ export const usersApi = {
         body: payload,
       },
     ).then((res) => res.data),
+
+  searchDatalogger: (payload: SearchDataloggerRequest) =>
+    apiClient<ApiEnvelope<{ datalogger: SearchDataloggerResponse }>>(
+      "/service/search-datalogger",
+      {
+        method: "POST",
+        body: payload,
+      },
+    ).then((res) => res.data),
+
   getViewUsers: () =>
     apiClient<ApiEnvelope<any>>(`/service/admin`, {
       method: "GET",

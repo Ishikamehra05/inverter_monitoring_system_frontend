@@ -58,17 +58,17 @@ export interface SearchDeviceRequest {
   sno: string;
 }
 
-export interface SearchModuleRequest  {
+export interface SearchModuleRequest {
   sno: string;
-};
+}
 
-export interface SearchModuleResponse  {
+export interface SearchModuleResponse {
   sno: string;
   status: string;
   mac_address: string | null;
   device_model: string | null;
   firmware_version: string | null;
-};
+}
 
 export interface SearchDeviceResponse {
   communicationStatus: string;
@@ -93,6 +93,36 @@ export interface SearchDeviceResponse {
   updatedAt: string;
 }
 
+export const SearchDataloggerSchema = z.object({
+  macAddress: z.string().trim().min(1),
+});
+export interface SearchDataloggerRequest {
+  macAddress: string;
+}
+export interface SearchDataloggerResponse {
+  id: string;
+  sno: string;
+  inverterName: string | null;
+  macAddress: string | null;
+
+  dayDate: string;
+  latestTimestamp: string;
+
+  sourceLogId: string;
+  batchKey: string;
+
+  dailyProduction: number | null;
+  totalEnergy: number | null;
+  totalHours: number | null;
+  currentPower: number | null;
+
+  logger_status: string | null;
+  module_version_no: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+}
+export type SearchDataloggerPayload = z.infer<typeof SearchDataloggerSchema>;
 export type CreateSubAccountRequest = z.infer<
   typeof createSubAccountRequestSchema
 >;

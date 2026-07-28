@@ -57,7 +57,7 @@ const MENU: MenuItem[] = [
     icon: Search,
     children: [
       { label: "Global Search", href: "/services/service/search" },
-      { label: "App Export", href: "/services/service/export" },
+      // { label: "App Export", href: "/services/service/export" },
     ],
   },
   {
@@ -68,11 +68,11 @@ const MENU: MenuItem[] = [
       { label: "Batch Task", href: "/services/batch/task" },
     ],
   },
-  {
-    title: "Batch Setting",
-    icon: Settings,
-    children: [{ label: "Batch Setting", href: "/services/batch/setting" }],
-  },
+  // {
+  //   title: "Batch Setting",
+  //   icon: Settings,
+  //   children: [{ label: "Batch Setting", href: "/services/batch/setting" }],
+  // },
 ];
 
 type SidebarProps = {
