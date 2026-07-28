@@ -13,9 +13,7 @@ export default function Sidebar() {
         hidden md:block
       `}
     >
-      <div className="p-4 font-semibold text-gray-700">
-        Monitor
-      </div>
+      <div className="p-4 font-semibold text-gray-700">Monitor</div>
 
       <nav className="text-sm">
         <SidebarItem label="User List" active />
@@ -28,13 +26,7 @@ export default function Sidebar() {
   );
 }
 
-function SidebarItem({
-  label,
-  active,
-}: {
-  label: string;
-  active?: boolean;
-}) {
+function SidebarItem({ label, active }: { label: string; active?: boolean }) {
   return (
     <div
       className={`

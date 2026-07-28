@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import { useSearchDevice, useSearchUser, useSearchModule } from "@/hooks/api/useUsers";
+import {
+  useSearchDevice,
+  useSearchUser,
+  useSearchModule,
+  useSearchDatalogger,
+} from "@/hooks/api/useUsers";
 import Link from "next/link";
 import { toast } from "sonner";
 import DevicesTabPanel from "@/components/monitors/components/deviceDetails/DevicesTabPanel";
@@ -39,6 +44,8 @@ export default function GlobalSearchPage() {
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const searchModule = useSearchModule();
   const module = searchModule.data?.device;
+  const searchDatalogger = useSearchDatalogger();
+  const datalogger = searchDatalogger.data?.datalogger;
   const deleteDeviceServiceParams = {
     fromService: true,
     targetEndUserId: device?.userId ?? undefined,
@@ -56,7 +63,9 @@ export default function GlobalSearchPage() {
       toast.error(
         mode === "user"
           ? "Please enter account."
-          : "Please enter Serial Number.",
+          : mode === "datalogger"
+            ? "Please enter MAC Address."
+            : "Please enter Serial Number.",
       );
       return;
     }
@@ -83,7 +92,20 @@ export default function GlobalSearchPage() {
         },
       );
     }
+    if (mode === "datalogger") {
+      searchDatalogger.mutate(
+        {
+          macAddress: value,
+        },
+        {
+          onError: (error: Error) => {
+            toast.error(error.message || "Datalogger not found.");
+          },
+        },
+      );
 
+      return;
+    }
     if (mode === "module") {
       searchModule.mutate(
         { sno: value },
@@ -101,7 +123,7 @@ export default function GlobalSearchPage() {
   const changeMode = (newMode: Mode) => {
     setMode(newMode);
     setKeyword("");
-
+    searchDatalogger.reset();
     searchUser.reset();
     searchDevice.reset();
     searchModule.reset();
@@ -149,9 +171,12 @@ export default function GlobalSearchPage() {
           Search Device(SN)
         </MenuItem>
 
-        {/* <MenuItem active={mode === "datalogger"} onClick={() => setMode("datalogger")}>
+        <MenuItem
+          active={mode === "datalogger"}
+          onClick={() => changeMode("datalogger")}
+        >
           Search Device(Datalogger)
-        </MenuItem> */}
+        </MenuItem>
 
         <MenuItem active={mode === "user"} onClick={() => changeMode("user")}>
           Search User
@@ -182,7 +207,9 @@ export default function GlobalSearchPage() {
             placeholder={
               mode === "user"
                 ? "Please enter account"
-                : "Please enter Serial Number"
+                : mode === "datalogger"
+                  ? "Please enter MAC Address"
+                  : "Please enter Serial Number"
             }
             className="w-full
 sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
@@ -193,7 +220,8 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
             disabled={
               searchUser.isPending ||
               searchDevice.isPending ||
-              searchModule.isPending
+              searchModule.isPending ||
+              searchDatalogger.isPending
             }
             className="h-10 w-full sm:w-27.5 bg-[#1890ff] text-white text-[13px] tracking-[2px] hover:bg-[#40a9ff]"
           >
@@ -277,9 +305,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-1 text-sm">
-                      Model
-                    </td>
+                    <td className="bg-[#f5f5f5] px-5 py-1 text-sm">Model</td>
 
                     <td className="px-4 py-1 text-sm">
                       {device.inverterName ?? "--"}
@@ -446,9 +472,9 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       device={
                         user
                           ? {
-                            id: user.id,
-                            name: user.account,
-                          }
+                              id: user.id,
+                              name: user.account,
+                            }
                           : null
                       }
                       loading={deleteAccountMutation.isPending}
@@ -460,9 +486,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
 
                       <td className="px-5 py-2">{user.email ?? "-"}</td>
 
-                      <td className="bg-[#f7f7f7] w-[140px] px-5 py-2">
-                        Phone
-                      </td>
+                      <td className="bg-[#f7f7f7] w-35 px-5 py-2">Phone</td>
 
                       <td className="px-5 py-2">{user.phone ?? "-"}</td>
                     </tr>
@@ -476,9 +500,9 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                         {new Date(user.createdAt).toLocaleString()}
                       </td>
 
-                      <td className="bg-[#f7f7f7] px-5 py-2">Price</td>
+                      {/* <td className="bg-[#f7f7f7] px-5 py-2">Price</td>
 
-                      <td className="px-5 py-2">0.0000</td>
+                      <td className="px-5 py-2">0.0000</td> */}
                     </tr>
 
                     <tr>
@@ -521,19 +545,13 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">
-                      Module SN
-                    </td>
+                    <td className="bg-[#f5f5f5] px-5 py-3">Module SN</td>
 
-                    <td className="px-5 py-3">
-                      {module.mac_address ?? "--"}
-                    </td>
+                    <td className="px-5 py-3">{module.mac_address ?? "--"}</td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
-                    <td className="bg-[#f5f5f5] px-5 py-3">
-                      Module Version
-                    </td>
+                    <td className="bg-[#f5f5f5] px-5 py-3">Module Version</td>
 
                     <td className="px-5 py-3">
                       {module.firmware_version ?? "--"}
@@ -545,28 +563,73 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       Associated Device SN
                     </td>
 
-                    <td className="px-5 py-3">
-                      {module.sno}
-                    </td>
+                    <td className="px-5 py-3">{module.sno}</td>
                   </tr>
 
                   <tr>
-                    <td className="bg-[#f5f5f5] px-5 py-3">
-                      Device Model
-                    </td>
+                    <td className="bg-[#f5f5f5] px-5 py-3">Device Model</td>
 
-                    <td className="px-5 py-3">
-                      {module.device_model ?? "--"}
-                    </td>
+                    <td className="px-5 py-3">{module.device_model ?? "--"}</td>
                   </tr>
 
                   <tr>
-                    <td className="bg-[#f5f5f5] px-5 py-3">
-                      Status
-                    </td>
+                    <td className="bg-[#f5f5f5] px-5 py-3">Status</td>
 
-                    <td className="px-5 py-3">
-                      {module.status}
+                    <td className="px-5 py-3">{module.status}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+        {mode === "datalogger" && datalogger && (
+          <>
+            <h3 className="text-[18px] font-semibold text-[#333] mb-5">
+              Datalogger Info
+            </h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border border-[#ececec] border-collapse text-[15px]">
+                <tbody>
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-2 w-[30%]">
+                      MAC Address
+                    </td>
+                    <td className="px-5 py-2">
+                      {datalogger.macAddress ?? "--"}
+                    </td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-2">Device SN</td>
+                    <td className="px-5 py-2">{datalogger.sno}</td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-2">Inverter Model</td>
+                    <td className="px-5 py-2">
+                      {datalogger.inverterName ?? "--"}
+                    </td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-2"> Power</td>
+                    <td className="px-5 py-2">
+                      {datalogger.currentPower ?? 0} kW
+                    </td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-2">E-Today</td>
+                    <td className="px-5 py-2">
+                      {datalogger.dailyProduction ?? 0} kWh
+                    </td>
+                  </tr>
+
+                  <tr className="border-b border-[#ececec]">
+                    <td className="bg-[#f5f5f5] px-5 py-2">E-Total</td>
+                    <td className="px-5 py-2">
+                      {datalogger.totalEnergy ?? 0} kWh
                     </td>
                   </tr>
                 </tbody>
