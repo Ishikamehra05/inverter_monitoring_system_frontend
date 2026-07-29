@@ -9,6 +9,7 @@ type EnergyFlowProps = {
   consumption?: number; // kW consumption
   batteryPower?: number; // kW battery (positive = charging, negative = discharging)
   className?: string;
+  consumptionUnit?: string;
 };
 
 type EnergyNodeProps = {
@@ -29,7 +30,7 @@ const EnergyFlow = ({
   solarPower = 0,
   gridPower = 0,
   consumption = 0,
-
+  consumptionUnit = "",
   className = "",
 }: EnergyFlowProps) => {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -85,11 +86,15 @@ const EnergyFlow = ({
         )}
       </div>
 
-      {/* <div className="text-center">
-        <span className="text-[10px] sm:text-xs font-medium text-gray-600 block">
-          {label}
-        </span>
-      </div> */}
+      <div className="text-center">
+        {nodeId === "consumption" && (
+          <>
+            <span className="text-sm font-semibold text-black block">
+              {value.toFixed(2)} {unit}
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Tooltip on hover */}
       {/* {hoveredNode === nodeId && (
@@ -140,6 +145,7 @@ const EnergyFlow = ({
             icon={FaPlug}
             label="Consumption"
             value={consumption}
+            unit={consumptionUnit}
             isActive={isConsumptionActive}
             colorClass="text-teal-500"
             bgClass="bg-teal-50"

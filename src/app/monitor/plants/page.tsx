@@ -252,15 +252,17 @@ const PlantTable = ({
       case "normal":
         return "bg-green-100 border border-green-700 text-green-700";
 
-      case "offline":
+      case "abnormal":
       case "fault":
         return "bg-red-100 border border-[#ff7875] text-red-700";
 
-      case "abnormal":
+      case "standby":
         return "bg-yellow-100 border border-yellow-700 text-yellow-700";
 
-      default:
+      case "offline":
         return "bg-gray-100 border border-gray-600 text-gray-700";
+      default:
+        return "bg-gray-100 border border-gray-400 text-gray-600";
     }
   };
 

@@ -15,13 +15,17 @@ import {
 import { MonitorFilters } from "@/lib/api/schemas/service";
 const PAGE_SIZE = 10;
 
+type ValueWithUnit = {
+  value: number;
+  unit: string;
+};
 type MonitorUserRow = {
   id: string | number;
   account: string;
   affiliation: string;
-  power: number;
-  today: number;
-  total: number;
+  power: ValueWithUnit;
+  today: ValueWithUnit;
+  total: ValueWithUnit;
   status: {
     online: number;
     abnormal: number;
@@ -82,9 +86,9 @@ export default function MonitorUserListPage() {
         id: user.id,
         account: user.account,
         affiliation: user.affiliation,
-        power: user.power.value,
-        today: user.today.value,
-        total: user.total.value,
+        power: user.power,
+        today: user.today,
+        total: user.total,
         status: user.status,
       })) ?? []
     );
@@ -93,8 +97,8 @@ export default function MonitorUserListPage() {
     if (!sortKey) return users;
 
     return [...users].sort((a, b) => {
-      if (sortOrder === "asc") return a[sortKey] - b[sortKey];
-      return b[sortKey] - a[sortKey];
+      if (sortOrder === "asc") return a[sortKey].value - b[sortKey].value;
+      return b[sortKey].value - a[sortKey].value;
     });
   }, [users, sortKey, sortOrder]);
 
@@ -298,15 +302,15 @@ export default function MonitorUserListPage() {
                   </td>
 
                   <td className="px-4 py-3 border-b border-[#f0f0f0]">
-                    {u.power.toFixed(2)} kW
+                    {u.power.value.toFixed(2)} {u.power.unit}
                   </td>
 
                   <td className="px-4 py-3 border-b border-[#f0f0f0]">
-                    {u.today.toFixed(2)} kWh
+                    {u.today.value.toFixed(2)} {u.today.unit}
                   </td>
 
                   <td className="px-4 py-3 border-b border-[#f0f0f0]">
-                    {u.total.toFixed(2)} kWh
+                    {u.total.value.toFixed(2)} {u.total.unit}{" "}
                   </td>
 
                   {/* DEVICE STATUS */}
@@ -347,9 +351,17 @@ export default function MonitorUserListPage() {
               <div className="text-[#1677ff] font-medium">{u.account}</div>
               <div className="text-sm text-[#595959]">{u.affiliation}</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Power: {u.power} kW</div>
-                <div>Today: {u.today} kWh</div>
-                <div>Total: {u.total} kWh</div>
+                <div>
+                  Power: {u.power.value.toFixed(2)} {u.power.unit}
+                </div>
+
+                <div>
+                  Today: {u.today.value.toFixed(2)} {u.today.unit}
+                </div>
+
+                <div>
+                  Total: {u.total.value.toFixed(2)} {u.total.unit}
+                </div>
               </div>
             </div>
           ))}

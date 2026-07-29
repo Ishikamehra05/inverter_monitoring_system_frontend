@@ -11,16 +11,17 @@ export default function DeviceDetailsPage() {
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
 
-  const serviceParams =
-    selectedEndUserId
-      ? {
+  const serviceParams = selectedEndUserId
+    ? {
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : {};
+    : {};
   const rawDeviceId = searchParams.get("deviceId") ?? "";
 
-  const deviceId = rawDeviceId.startsWith("device-") ? rawDeviceId.replace("device-", "") : rawDeviceId;
+  const deviceId = rawDeviceId.startsWith("device-")
+    ? rawDeviceId.replace("device-", "")
+    : rawDeviceId;
   const plantId = searchParams.get("plantId") ?? "";
   const { data, isLoading } = useDeviceView(deviceId, plantId, serviceParams);
 
@@ -45,11 +46,12 @@ export default function DeviceDetailsPage() {
           lastUpdate={
             device?.latestUpdate
               ? new Date(device.latestUpdate).toLocaleString("en-IN", {
-                timeZone: "UTC",
-              })
+                  timeZone: "UTC",
+                })
               : "-"
           }
-        />;
+        />
+        ;
       </div>
 
       <DevicesTabPanel

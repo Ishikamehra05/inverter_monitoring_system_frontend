@@ -64,12 +64,12 @@ export default function PlantDetailsPage() {
           name={overview.plant.name}
           type={overview.plant.type}
           status={overview.plant.currentStatus?.status ?? "-"}
-          currentPower={overview.metrics.currentPower.value}
-          todayEnergy={overview.metrics.eToday.value}
-          totalEnergy={overview.metrics.eTotal.value}
-          income={overview.plant.income.value}
-          hours={overview.metrics.hTotal.value}
-          capacity={overview.metrics.capacity.value}
+          currentPower={overview.metrics.currentPower}
+          todayEnergy={overview.metrics.eToday}
+          totalEnergy={overview.metrics.eTotal}
+          income={overview.plant.income}
+          hours={overview.metrics.hTotal}
+          capacity={overview.metrics.capacity}
           installDate={overview.plant.installationDate}
         />
       </div>
@@ -77,7 +77,8 @@ export default function PlantDetailsPage() {
       <EnergyFlow
         solarPower={5.2}
         gridPower={-1.5}
-        consumption={3.8}
+        consumption={overview.metrics.currentPower.value}
+        consumptionUnit={overview.metrics.currentPower.unit}
         className="bg-(--theme-bg) p-6 rounded-lg"
       />
 
