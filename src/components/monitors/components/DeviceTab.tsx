@@ -57,12 +57,12 @@ const DeviceTable = ({ devices }: { devices: Device[] }) => {
     ) : (
       <span className="ml-1 text-gray-300">▲</span>
     );
- const router = useRouter();
+  const router = useRouter();
 
   // ✅ Separate function for navigation
- const handleClick = () => {
-  router.push("/monitor/plants/plant-detail/device-detail");
-};
+  const handleClick = () => {
+    router.push("/monitor/plants/plant-detail/device-detail");
+  };
   return (
     <div className="mt-4 rounded-lg border overflow-hidden">
       <div className="overflow-x-auto">
@@ -133,16 +133,18 @@ const DeviceTable = ({ devices }: { devices: Device[] }) => {
                 <td className="px-3 py-4">
                   <span
                     className={`inline-block h-2 w-2 rounded-full ${
-                      device.online ? "bg-green-500" : "bg-red-500"
+                      device.online ? "bg-green-500" : "bg-gray-500"
                     }`}
                   />
                 </td>
 
-                <td className="px-3 py-4 max-w-55 wrap-break-word"
-                 onClick={handleClick}>
+                <td
+                  className="px-3 py-4 max-w-55 wrap-break-word"
+                  onClick={handleClick}
+                >
                   {/* <button 
                   className="text-blue-600 hover:underline cursor-pointer"> */}
-                    {device.name}
+                  {device.name}
                   {/* </button> */}
                 </td>
 
@@ -206,6 +208,5 @@ const DeviceTab = ({ devices }: { devices: Device[] }) => {
     </div>
   );
 };
-
 
 export default DeviceTab;

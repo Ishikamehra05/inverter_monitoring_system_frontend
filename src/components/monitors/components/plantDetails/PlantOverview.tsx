@@ -2,16 +2,20 @@
 import { IoIosArrowDropleftCircle } from "react-icons/io";
 import { useRouter, useSearchParams } from "next/navigation";
 
+type ValueWithUnit = {
+  value: number;
+  unit: string;
+};
 type PlantOverviewProps = {
   name: string;
   type: string;
   status: string;
-  currentPower: number;
-  todayEnergy: number;
-  totalEnergy: number;
-  income: number;
-  hours: number;
-  capacity: number;
+  currentPower: ValueWithUnit;
+  todayEnergy: ValueWithUnit;
+  totalEnergy: ValueWithUnit;
+  income: ValueWithUnit;
+  hours: ValueWithUnit;
+  capacity: ValueWithUnit;
   installDate: string;
   className?: string;
 };
@@ -50,8 +54,9 @@ const PlantOverview = ({
         return "bg-green-500 text-white";
 
       case "offline":
-        return "bg-red-500 text-white";
+        return "bg-gray-500 text-white";
 
+      case "standby":
       case "warning":
         return "bg-yellow-500 text-gray-800";
 
@@ -92,28 +97,40 @@ const PlantOverview = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 text-md text-gray-500 mt-6">
         <span className="flex items-center gap-2">
           <p className="font-semibold">Current Power:</p>
-          <p className="text-black">{currentPower} kW</p>
+          <p className="text-black">
+            {currentPower.value} {currentPower.unit}{" "}
+          </p>
         </span>
         <span className="flex items-center gap-2">
           <p className="font-semibold">E-Today:</p>
-          <p className="text-black">{todayEnergy} kWh</p>
+          <p className="text-black">
+            {todayEnergy.value} {todayEnergy.unit}
+          </p>
         </span>
 
         <span className="flex items-center gap-2">
           <p className="font-semibold">E-Total:</p>
-          <p className="text-black">{totalEnergy} MWh</p>
+          <p className="text-black">
+            {totalEnergy.value} {totalEnergy.unit}
+          </p>
         </span>
         <span className="flex items-center gap-2">
           <p className="font-semibold">Total Income:</p>
-          <p className="text-black">₹ {income.toLocaleString("en-IN")}</p>
+          <p className="text-black">
+            ₹ {income.value.toLocaleString("en-IN")}
+          </p>{" "}
         </span>
         <span className="flex items-center gap-2">
           <p className="font-semibold">H-Total:</p>
-          <p className="text-black">{hours} Hrs</p>
+          <p className="text-black">
+            {hours.value} {hours.unit}
+          </p>{" "}
         </span>
         <span className="flex items-center gap-2">
           <p className="font-semibold">Capacity:</p>
-          <p className="text-black">{capacity} Wp</p>
+          <p className="text-black">
+            {capacity.value} {capacity.unit}
+          </p>{" "}
         </span>
         <span className="flex items-center gap-2">
           <p className="font-semibold">Installation Time:</p>
