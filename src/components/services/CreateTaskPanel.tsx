@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ChevronRight } from "lucide-react";
 import { Calendar } from "react-date-range";
 import "react-date-range/dist/styles.css";
@@ -9,6 +9,7 @@ import { format, formatISO, isSameDay, parseISO, startOfToday } from "date-fns";
 import DeviceSelectorPanel from "./DeviceSelectorPanel";
 import type { InverterSummary } from "@/lib/api/schemas/devices";
 import { useFirmware, useCreateUpgradeTask } from "@/hooks/api/useService";
+import { createPortal } from "react-dom";
 
 const START_TIME_REQUIRED_MESSAGE = "Please select a future date and time.";
 
@@ -18,6 +19,139 @@ const START_TIME_REQUIRED_MESSAGE = "Please select a future date and time.";
 // guard against the value going stale between opening the popover and
 // committing it. Stores/returns a Date — the parent converts to/from the
 // ISO-with-offset string (e.g. 2026-07-28T10:30:00+05:30) via date-fns.
+// function StartTimePicker({
+//   value,
+//   onChange,
+//   error,
+// }: {
+//   value: Date | null;
+//   onChange: (date: Date) => void;
+//   error?: string;
+// }) {
+//   const [open, setOpen] = useState(false);
+//   const [draftDate, setDraftDate] = useState<Date>(value ?? new Date());
+//   const [draftHour, setDraftHour] = useState<number>((value ?? new Date()).getHours());
+//   const [draftMinute, setDraftMinute] = useState<number>((value ?? new Date()).getMinutes());
+
+//   const openPicker = () => {
+//     const base = value ?? new Date();
+//     setDraftDate(base);
+//     setDraftHour(base.getHours());
+//     setDraftMinute(base.getMinutes());
+//     setOpen(true);
+//   };
+
+//   const now = new Date();
+//   const isDraftToday = isSameDay(draftDate, now);
+
+//   const draftCombined = new Date(draftDate);
+//   draftCombined.setHours(draftHour, draftMinute, 0, 0);
+//   const isDraftInFuture = draftCombined.getTime() > now.getTime();
+
+//   const handleApply = () => {
+//     if (!isDraftInFuture) return;
+//     onChange(draftCombined);
+//     setOpen(false);
+//   };
+
+//   // Picking a date closes the popover immediately, using whichever time is
+//   // currently set (defaults to "now"). If that combination isn't valid yet
+//   // (rare — e.g. popover sat open past midnight into a stale past time),
+//   // stay open so the time can still be adjusted via Apply instead.
+//   const handleDateSelect = (date: Date) => {
+//     setDraftDate(date);
+//     const combined = new Date(date);
+//     combined.setHours(draftHour, draftMinute, 0, 0);
+//     if (combined.getTime() > Date.now()) {
+//       onChange(combined);
+//       setOpen(false);
+//     }
+//   };
+
+//   return (
+//     <div className="relative">
+//       <input
+//         readOnly
+//         onClick={openPicker}
+//         // While the popover is open, show the live draft (updates the instant a
+//         // date/hour/minute is picked) instead of only the last-committed value —
+//         // otherwise clicking a date gives no visible feedback until Apply.
+//         value={
+//           open
+//             ? format(draftCombined, "yyyy-MM-dd HH:mm")
+//             : value
+//               ? format(value, "yyyy-MM-dd HH:mm")
+//               : ""
+//         }
+//         placeholder="Please select start date & time"
+//         className={`w-full h-8 px-[11px] text-[14px] border ${
+//           error ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+//         } rounded-[2px] cursor-pointer bg-white focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
+//       />
+
+//       {open && (
+//         <div className="absolute z-30 mt-2 bg-white shadow-lg border border-[rgba(0,0,0,0.06)] rounded-[2px]">
+//           <Calendar date={draftDate} onChange={handleDateSelect} minDate={startOfToday()} />
+
+//           <div className="flex items-center gap-2 px-4 py-3 border-t border-[rgba(0,0,0,0.06)]">
+//             <span className="text-[12px] text-[rgba(0,0,0,0.65)]">Time:</span>
+//             <select
+//               value={draftHour}
+//               onChange={(e) => setDraftHour(Number(e.target.value))}
+//               className="h-8 px-2 text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
+//             >
+//               {Array.from({ length: 24 }, (_, h) => (
+//                 <option key={h} value={h} disabled={isDraftToday && h < now.getHours()}>
+//                   {String(h).padStart(2, "0")}
+//                 </option>
+//               ))}
+//             </select>
+//             <span className="text-[14px] text-[rgba(0,0,0,0.65)]">:</span>
+//             <select
+//               value={draftMinute}
+//               onChange={(e) => setDraftMinute(Number(e.target.value))}
+//               className="h-8 px-2 text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
+//             >
+//               {Array.from({ length: 60 }, (_, m) => (
+//                 <option
+//                   key={m}
+//                   value={m}
+//                   disabled={isDraftToday && draftHour === now.getHours() && m < now.getMinutes()}
+//                 >
+//                   {String(m).padStart(2, "0")}
+//                 </option>
+//               ))}
+//             </select>
+//           </div>
+
+//           {!isDraftInFuture && (
+//             <p className="px-4 pb-2 text-[12px] text-[#ff4d4f]">{START_TIME_REQUIRED_MESSAGE}</p>
+//           )}
+
+//           <div className="flex justify-end gap-2 px-4 py-3 border-t border-[rgba(0,0,0,0.06)]">
+//             <button
+//               type="button"
+//               onClick={() => setOpen(false)}
+//               className="h-8 px-4 text-[14px] border border-[#d9d9d9] rounded-[2px] hover:border-[#1890ff] hover:text-[#1890ff] transition"
+//             >
+//               Cancel
+//             </button>
+//             <button
+//               type="button"
+//               onClick={handleApply}
+//               disabled={!isDraftInFuture}
+//               className="h-8 px-4 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] disabled:opacity-50 disabled:cursor-not-allowed transition"
+//             >
+//               Apply
+//             </button>
+//           </div>
+//         </div>
+//       )}
+//       {error && <p className="text-[12px] text-[#ff4d4f] mt-1">{error}</p>}
+//     </div>
+//   );
+// }
+
 function StartTimePicker({
   value,
   onChange,
@@ -28,126 +162,200 @@ function StartTimePicker({
   error?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [draftDate, setDraftDate] = useState<Date>(value ?? new Date());
-  const [draftHour, setDraftHour] = useState<number>((value ?? new Date()).getHours());
-  const [draftMinute, setDraftMinute] = useState<number>((value ?? new Date()).getMinutes());
+
+  const [draftDate, setDraftDate] = useState(value ?? new Date());
+  const [draftHour, setDraftHour] = useState(
+    (value ?? new Date()).getHours()
+  );
+  const [draftMinute, setDraftMinute] = useState(
+    (value ?? new Date()).getMinutes()
+  );
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [position, setPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  const updatePosition = () => {
+    if (!inputRef.current) return;
+
+    const rect = inputRef.current.getBoundingClientRect();
+
+    setPosition({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  };
 
   const openPicker = () => {
     const base = value ?? new Date();
+
     setDraftDate(base);
     setDraftHour(base.getHours());
     setDraftMinute(base.getMinutes());
+
+    updatePosition();
     setOpen(true);
   };
 
+  useEffect(() => {
+    if (!open) return;
+
+    const handle = () => updatePosition();
+
+    window.addEventListener("scroll", handle, true);
+    window.addEventListener("resize", handle);
+
+    return () => {
+      window.removeEventListener("scroll", handle, true);
+      window.removeEventListener("resize", handle);
+    };
+  }, [open]);
+
   const now = new Date();
+
   const isDraftToday = isSameDay(draftDate, now);
 
   const draftCombined = new Date(draftDate);
   draftCombined.setHours(draftHour, draftMinute, 0, 0);
-  const isDraftInFuture = draftCombined.getTime() > now.getTime();
+
+  const isDraftInFuture = draftCombined > now;
 
   const handleApply = () => {
     if (!isDraftInFuture) return;
+
     onChange(draftCombined);
     setOpen(false);
   };
 
-  // Picking a date closes the popover immediately, using whichever time is
-  // currently set (defaults to "now"). If that combination isn't valid yet
-  // (rare — e.g. popover sat open past midnight into a stale past time),
-  // stay open so the time can still be adjusted via Apply instead.
   const handleDateSelect = (date: Date) => {
     setDraftDate(date);
-    const combined = new Date(date);
-    combined.setHours(draftHour, draftMinute, 0, 0);
-    if (combined.getTime() > Date.now()) {
-      onChange(combined);
-      setOpen(false);
-    }
   };
 
   return (
-    <div className="relative">
-      <input
-        readOnly
-        onClick={openPicker}
-        // While the popover is open, show the live draft (updates the instant a
-        // date/hour/minute is picked) instead of only the last-committed value —
-        // otherwise clicking a date gives no visible feedback until Apply.
-        value={
-          open
-            ? format(draftCombined, "yyyy-MM-dd HH:mm")
-            : value
-              ? format(value, "yyyy-MM-dd HH:mm")
-              : ""
-        }
-        placeholder="Please select start date & time"
-        className={`w-full h-8 px-[11px] text-[14px] border ${
-          error ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-        } rounded-[2px] cursor-pointer bg-white focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
-      />
+    <>
+      <div className="relative">
+        <input
+          ref={inputRef}
+          readOnly
+          onClick={openPicker}
+          value={
+            open
+              ? format(draftCombined, "yyyy-MM-dd HH:mm")
+              : value
+                ? format(value, "yyyy-MM-dd HH:mm")
+                : ""
+          }
+          placeholder="Please select start date & time"
+          className={`w-full h-10 px-3 text-sm border rounded cursor-pointer bg-white focus:outline-none ${error
+              ? "border-red-500"
+              : "border-gray-300 focus:border-blue-500"
+            }`}
+        />
 
-      {open && (
-        <div className="absolute z-30 mt-2 bg-white shadow-lg border border-[rgba(0,0,0,0.06)] rounded-[2px]">
-          <Calendar date={draftDate} onChange={handleDateSelect} minDate={startOfToday()} />
+        {error && (
+          <p className="mt-1 text-xs text-red-500">{error}</p>
+        )}
+      </div>
 
-          <div className="flex items-center gap-2 px-4 py-3 border-t border-[rgba(0,0,0,0.06)]">
-            <span className="text-[12px] text-[rgba(0,0,0,0.65)]">Time:</span>
-            <select
-              value={draftHour}
-              onChange={(e) => setDraftHour(Number(e.target.value))}
-              className="h-8 px-2 text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
-            >
-              {Array.from({ length: 24 }, (_, h) => (
-                <option key={h} value={h} disabled={isDraftToday && h < now.getHours()}>
-                  {String(h).padStart(2, "0")}
-                </option>
-              ))}
-            </select>
-            <span className="text-[14px] text-[rgba(0,0,0,0.65)]">:</span>
-            <select
-              value={draftMinute}
-              onChange={(e) => setDraftMinute(Number(e.target.value))}
-              className="h-8 px-2 text-[14px] border border-[#d9d9d9] rounded-[2px] focus:outline-none focus:border-[#40a9ff]"
-            >
-              {Array.from({ length: 60 }, (_, m) => (
-                <option
-                  key={m}
-                  value={m}
-                  disabled={isDraftToday && draftHour === now.getHours() && m < now.getMinutes()}
-                >
-                  {String(m).padStart(2, "0")}
-                </option>
-              ))}
-            </select>
-          </div>
+      {open &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: position.top,
+              left: position.left,
+              zIndex: 99999,
+            }}
+            className="w-[420px] bg-white border rounded shadow-xl"
+          >
+            <Calendar
+              date={draftDate}
+              onChange={handleDateSelect}
+              minDate={startOfToday()}
+            />
 
-          {!isDraftInFuture && (
-            <p className="px-4 pb-2 text-[12px] text-[#ff4d4f]">{START_TIME_REQUIRED_MESSAGE}</p>
-          )}
+            <div className="flex items-center gap-2 px-4 py-3 border-t">
+              <span className="text-sm">Time:</span>
 
-          <div className="flex justify-end gap-2 px-4 py-3 border-t border-[rgba(0,0,0,0.06)]">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="h-8 px-4 text-[14px] border border-[#d9d9d9] rounded-[2px] hover:border-[#1890ff] hover:text-[#1890ff] transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleApply}
-              disabled={!isDraftInFuture}
-              className="h-8 px-4 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      )}
-      {error && <p className="text-[12px] text-[#ff4d4f] mt-1">{error}</p>}
-    </div>
+              <select
+                value={draftHour}
+                onChange={(e) =>
+                  setDraftHour(Number(e.target.value))
+                }
+                className="border rounded px-2 h-8"
+              >
+                {Array.from({ length: 24 }, (_, h) => (
+                  <option
+                    key={h}
+                    value={h}
+                    disabled={
+                      isDraftToday &&
+                      h < now.getHours()
+                    }
+                  >
+                    {String(h).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+
+              <span>:</span>
+
+              <select
+                value={draftMinute}
+                onChange={(e) =>
+                  setDraftMinute(Number(e.target.value))
+                }
+                className="border rounded px-2 h-8"
+              >
+                {Array.from({ length: 60 }, (_, m) => (
+                  <option
+                    key={m}
+                    value={m}
+                    disabled={
+                      isDraftToday &&
+                      draftHour === now.getHours() &&
+                      m < now.getMinutes()
+                    }
+                  >
+                    {String(m).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {!isDraftInFuture && (
+              <p className="px-4 pb-2 text-xs text-red-500">
+                {START_TIME_REQUIRED_MESSAGE}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 px-4 py-3 border-t">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="px-4 h-8 border rounded hover:border-blue-500"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={!isDraftInFuture}
+                onClick={handleApply}
+                className="px-4 h-8 rounded bg-blue-500 text-white disabled:opacity-50"
+              >
+                Apply
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -303,11 +511,10 @@ export default function CreateTaskPanel({
             {/* Step 1 */}
             <div className="flex items-center gap-3">
               <div
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${
-                  step >= 1
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${step >= 1
                     ? "bg-[#1890ff] text-white"
                     : "border border-[#d9d9d9] text-[rgba(0,0,0,0.65)]"
-                }`}
+                  }`}
               >
                 {step > 1 ? "✓" : "1"}
               </div>
@@ -322,13 +529,12 @@ export default function CreateTaskPanel({
             {/* Step 2 */}
             <div className="flex items-center gap-3">
               <div
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${
-                  step === 2
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${step === 2
                     ? "bg-[#1890ff] text-white"
                     : step > 2
-                    ? "bg-[#1890ff] text-white"
-                    : "border border-[#d9d9d9] text-[rgba(0,0,0,0.65)]"
-                }`}
+                      ? "bg-[#1890ff] text-white"
+                      : "border border-[#d9d9d9] text-[rgba(0,0,0,0.65)]"
+                  }`}
               >
                 {step > 2 ? "✓" : "2"}
               </div>
@@ -368,9 +574,8 @@ export default function CreateTaskPanel({
                         <input
                           value={taskName}
                           onChange={(e) => setTaskName(e.target.value)}
-                          className={`w-full h-8 px-[11px] text-[14px] border ${
-                            errors.taskName ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                          } rounded-[2px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
+                          className={`w-full h-8 px-[11px] text-[14px] border ${errors.taskName ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+                            } rounded-[2px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
                           placeholder="Please Input Task Name"
                         />
                         {errors.taskName && (
@@ -393,9 +598,8 @@ export default function CreateTaskPanel({
                             value={selectedFirmwareId}
                             onChange={(e) => setSelectedFirmwareId(e.target.value)}
                             disabled={firmwareQuery.isLoading}
-                            className={`w-full h-8 px-[11px] text-[14px] border ${
-                              errors.firmwares ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                            } rounded-[2px] focus:outline-none focus:border-[#40a9ff]`}
+                            className={`w-full h-8 px-[11px] text-[14px] border ${errors.firmwares ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+                              } rounded-[2px] focus:outline-none focus:border-[#40a9ff]`}
                           >
                             <option value="">
                               {firmwareQuery.isLoading
@@ -495,9 +699,8 @@ export default function CreateTaskPanel({
                                 ? `${selectedDevices.length} device(s) selected`
                                 : ""
                             }
-                            className={`flex-1 h-8 px-[11px] text-[14px] border ${
-                              errors.devices ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                            } rounded-l-[2px] bg-white truncate`}
+                            className={`flex-1 h-8 px-[11px] text-[14px] border ${errors.devices ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
+                              } rounded-l-[2px] bg-white truncate`}
                             placeholder="Click to select or upload devices"
                           />
 
@@ -578,9 +781,8 @@ export default function CreateTaskPanel({
                                 <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
                                   <span className="flex items-center gap-2">
                                     <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        isOnline ? "bg-[#52c41a]" : "bg-[#d9d9d9]"
-                                      }`}
+                                      className={`w-2 h-2 rounded-full ${isOnline ? "bg-[#52c41a]" : "bg-[#d9d9d9]"
+                                        }`}
                                     />
                                     {device.status}
                                   </span>
