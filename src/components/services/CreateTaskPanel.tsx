@@ -164,13 +164,11 @@ function StartTimePicker({
   const [open, setOpen] = useState(false);
 
   const [draftDate, setDraftDate] = useState(value ?? new Date());
-  const [draftHour, setDraftHour] = useState(
-    (value ?? new Date()).getHours()
-  );
+  const [draftHour, setDraftHour] = useState((value ?? new Date()).getHours());
   const [draftMinute, setDraftMinute] = useState(
-    (value ?? new Date()).getMinutes()
+    (value ?? new Date()).getMinutes(),
   );
-
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [position, setPosition] = useState({
@@ -184,13 +182,32 @@ function StartTimePicker({
 
     const rect = inputRef.current.getBoundingClientRect();
 
+    // Actual popup size
+    const POPUP_WIDTH = 420;
+    const POPUP_HEIGHT = 560;
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // Open above if there isn't enough room below
+    const openAbove = spaceBelow < POPUP_HEIGHT && spaceAbove > POPUP_HEIGHT;
+
+    let top = openAbove ? rect.top - POPUP_HEIGHT - 8 : rect.bottom + 8;
+
+    // Keep popup inside viewport
+    top = Math.max(8, Math.min(top, window.innerHeight - POPUP_HEIGHT - 8));
+
+    let left = rect.left;
+
+    // Prevent horizontal overflow
+    left = Math.min(left, window.innerWidth - POPUP_WIDTH - 8);
+
     setPosition({
-      top: rect.bottom + 4,
-      left: rect.left,
+      top,
+      left,
       width: rect.width,
     });
   };
-
   const openPicker = () => {
     const base = value ?? new Date();
 
@@ -251,27 +268,32 @@ function StartTimePicker({
                 : ""
           }
           placeholder="Please select start date & time"
-          className={`w-full h-10 px-3 text-sm border rounded cursor-pointer bg-white focus:outline-none ${error
-              ? "border-red-500"
-              : "border-gray-300 focus:border-blue-500"
-            }`}
+          className={`w-full h-10 px-3 text-sm border rounded cursor-pointer bg-white focus:outline-none ${
+            error ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+          }`}
         />
 
-        {error && (
-          <p className="mt-1 text-xs text-red-500">{error}</p>
-        )}
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       </div>
 
       {open &&
         createPortal(
           <div
             style={{
-              position: "fixed",
+              position: "absolute",
               top: position.top,
               left: position.left,
               zIndex: 99999,
             }}
-            className="w-[420px] bg-white border rounded shadow-xl"
+            className="
+    w-[420px]
+    bg-white
+    border
+    rounded
+    shadow-xl
+    max-h-[85vh]
+    overflow-y-auto
+  "
           >
             <Calendar
               date={draftDate}
@@ -284,19 +306,14 @@ function StartTimePicker({
 
               <select
                 value={draftHour}
-                onChange={(e) =>
-                  setDraftHour(Number(e.target.value))
-                }
+                onChange={(e) => setDraftHour(Number(e.target.value))}
                 className="border rounded px-2 h-8"
               >
                 {Array.from({ length: 24 }, (_, h) => (
                   <option
                     key={h}
                     value={h}
-                    disabled={
-                      isDraftToday &&
-                      h < now.getHours()
-                    }
+                    disabled={isDraftToday && h < now.getHours()}
                   >
                     {String(h).padStart(2, "0")}
                   </option>
@@ -307,9 +324,7 @@ function StartTimePicker({
 
               <select
                 value={draftMinute}
-                onChange={(e) =>
-                  setDraftMinute(Number(e.target.value))
-                }
+                onChange={(e) => setDraftMinute(Number(e.target.value))}
                 className="border rounded px-2 h-8"
               >
                 {Array.from({ length: 60 }, (_, m) => (
@@ -353,7 +368,7 @@ function StartTimePicker({
               </button>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -393,7 +408,7 @@ export default function CreateTaskPanel({
     firmwares: "",
     updateType: "",
     startTime: "",
-    devices: ""
+    devices: "",
   });
 
   useEffect(() => {
@@ -409,7 +424,7 @@ export default function CreateTaskPanel({
       firmwares: "",
       updateType: "",
       startTime: "",
-      devices: ""
+      devices: "",
     };
     let isValid = true;
 
@@ -462,7 +477,9 @@ export default function CreateTaskPanel({
   // coding_action/Zcreate-job-01.md.
   const handleSubmit = async () => {
     setSubmitError("");
-    const firmware = firmwareOptions.find((item) => item.id === selectedFirmwareId);
+    const firmware = firmwareOptions.find(
+      (item) => item.id === selectedFirmwareId,
+    );
     if (!firmware || !firmware.chipType || !updateType) {
       setSubmitError("Missing required task info — please go back to Step 1.");
       return;
@@ -477,13 +494,17 @@ export default function CreateTaskPanel({
         updateType,
         devices: selectedDevices.map((device) => ({
           inverterSerialNo: device.serialNumber,
-          ...(currentFirmware.trim() ? { currentFirmware: currentFirmware.trim() } : {}),
+          ...(currentFirmware.trim()
+            ? { currentFirmware: currentFirmware.trim() }
+            : {}),
         })),
       });
       onClose();
     } catch (error) {
       setSubmitError(
-        error instanceof Error ? error.message : "Failed to submit task. Please try again."
+        error instanceof Error
+          ? error.message
+          : "Failed to submit task. Please try again.",
       );
     }
   };
@@ -511,10 +532,11 @@ export default function CreateTaskPanel({
             {/* Step 1 */}
             <div className="flex items-center gap-3">
               <div
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${step >= 1
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${
+                  step >= 1
                     ? "bg-[#1890ff] text-white"
                     : "border border-[#d9d9d9] text-[rgba(0,0,0,0.65)]"
-                  }`}
+                }`}
               >
                 {step > 1 ? "✓" : "1"}
               </div>
@@ -529,12 +551,13 @@ export default function CreateTaskPanel({
             {/* Step 2 */}
             <div className="flex items-center gap-3">
               <div
-                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${step === 2
+                className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${
+                  step === 2
                     ? "bg-[#1890ff] text-white"
                     : step > 2
                       ? "bg-[#1890ff] text-white"
                       : "border border-[#d9d9d9] text-[rgba(0,0,0,0.65)]"
-                  }`}
+                }`}
               >
                 {step > 2 ? "✓" : "2"}
               </div>
@@ -574,12 +597,17 @@ export default function CreateTaskPanel({
                         <input
                           value={taskName}
                           onChange={(e) => setTaskName(e.target.value)}
-                          className={`w-full h-8 px-[11px] text-[14px] border ${errors.taskName ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                            } rounded-[2px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
+                          className={`w-full h-8 px-[11px] text-[14px] border ${
+                            errors.taskName
+                              ? "border-[#ff4d4f]"
+                              : "border-[#d9d9d9]"
+                          } rounded-[2px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition`}
                           placeholder="Please Input Task Name"
                         />
                         {errors.taskName && (
-                          <p className="text-[12px] text-[#ff4d4f]">{errors.taskName}</p>
+                          <p className="text-[12px] text-[#ff4d4f]">
+                            {errors.taskName}
+                          </p>
                         )}
                       </div>
 
@@ -592,14 +620,20 @@ export default function CreateTaskPanel({
                         {/* Firmware Package — single select, sourced from the real firmware catalog */}
                         <div className="space-y-2">
                           <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
-                            <span className="text-[#ff4d4f]">*</span> Firmware Package
+                            <span className="text-[#ff4d4f]">*</span> Firmware
+                            Package
                           </label>
                           <select
                             value={selectedFirmwareId}
-                            onChange={(e) => setSelectedFirmwareId(e.target.value)}
+                            onChange={(e) =>
+                              setSelectedFirmwareId(e.target.value)
+                            }
                             disabled={firmwareQuery.isLoading}
-                            className={`w-full h-8 px-[11px] text-[14px] border ${errors.firmwares ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                              } rounded-[2px] focus:outline-none focus:border-[#40a9ff]`}
+                            className={`w-full h-8 px-[11px] text-[14px] border ${
+                              errors.firmwares
+                                ? "border-[#ff4d4f]"
+                                : "border-[#d9d9d9]"
+                            } rounded-[2px] focus:outline-none focus:border-[#40a9ff]`}
                           >
                             <option value="">
                               {firmwareQuery.isLoading
@@ -619,14 +653,17 @@ export default function CreateTaskPanel({
                             </p>
                           )}
                           {errors.firmwares && (
-                            <p className="text-[12px] text-[#ff4d4f]">{errors.firmwares}</p>
+                            <p className="text-[12px] text-[#ff4d4f]">
+                              {errors.firmwares}
+                            </p>
                           )}
                         </div>
 
                         {/* Update Type — per-job choice, not stored on the firmware catalog row */}
                         <div className="space-y-2">
                           <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
-                            <span className="text-[#ff4d4f]">*</span> Update Type
+                            <span className="text-[#ff4d4f]">*</span> Update
+                            Type
                           </label>
                           <div className="flex gap-6 text-[14px]">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -647,7 +684,9 @@ export default function CreateTaskPanel({
                             </label>
                           </div>
                           {errors.updateType && (
-                            <p className="text-[12px] text-[#ff4d4f]">{errors.updateType}</p>
+                            <p className="text-[12px] text-[#ff4d4f]">
+                              {errors.updateType}
+                            </p>
                           )}
                         </div>
 
@@ -675,7 +714,8 @@ export default function CreateTaskPanel({
                       {/* START TIME */}
                       <div className="space-y-2">
                         <label className="text-[14px] text-[rgba(0,0,0,0.65)]">
-                          <span className="text-[#ff4d4f]">*</span> Task Start Time
+                          <span className="text-[#ff4d4f]">*</span> Task Start
+                          Time
                         </label>
 
                         <StartTimePicker
@@ -699,8 +739,11 @@ export default function CreateTaskPanel({
                                 ? `${selectedDevices.length} device(s) selected`
                                 : ""
                             }
-                            className={`flex-1 h-8 px-[11px] text-[14px] border ${errors.devices ? "border-[#ff4d4f]" : "border-[#d9d9d9]"
-                              } rounded-l-[2px] bg-white truncate`}
+                            className={`flex-1 h-8 px-[11px] text-[14px] border ${
+                              errors.devices
+                                ? "border-[#ff4d4f]"
+                                : "border-[#d9d9d9]"
+                            } rounded-l-[2px] bg-white truncate`}
                             placeholder="Click to select or upload devices"
                           />
 
@@ -712,7 +755,9 @@ export default function CreateTaskPanel({
                           </button>
                         </div>
                         {errors.devices && (
-                          <p className="text-[12px] text-[#ff4d4f]">{errors.devices}</p>
+                          <p className="text-[12px] text-[#ff4d4f]">
+                            {errors.devices}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -769,9 +814,13 @@ export default function CreateTaskPanel({
 
                         <tbody>
                           {selectedDevices.map((device) => {
-                            const isOnline = device.status.toLowerCase() === "online";
+                            const isOnline =
+                              device.status.toLowerCase() === "online";
                             return (
-                              <tr key={device.serialNumber} className="hover:bg-[#fafafa] transition">
+                              <tr
+                                key={device.serialNumber}
+                                className="hover:bg-[#fafafa] transition"
+                              >
                                 <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
                                   {device.name}
                                 </td>
@@ -781,8 +830,11 @@ export default function CreateTaskPanel({
                                 <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)]">
                                   <span className="flex items-center gap-2">
                                     <span
-                                      className={`w-2 h-2 rounded-full ${isOnline ? "bg-[#52c41a]" : "bg-[#d9d9d9]"
-                                        }`}
+                                      className={`w-2 h-2 rounded-full ${
+                                        isOnline
+                                          ? "bg-[#52c41a]"
+                                          : "bg-[#d9d9d9]"
+                                      }`}
                                     />
                                     {device.status}
                                   </span>
@@ -806,7 +858,8 @@ export default function CreateTaskPanel({
 
                     {/* Count */}
                     <div className="flex justify-end px-6 py-4 text-[rgba(0,0,0,0.45)] text-sm border-b border-[rgba(0,0,0,0.06)]">
-                      {selectedDevices.length} item{selectedDevices.length === 1 ? "" : "s"}
+                      {selectedDevices.length} item
+                      {selectedDevices.length === 1 ? "" : "s"}
                     </div>
                   </>
                 )}
@@ -830,7 +883,9 @@ export default function CreateTaskPanel({
                       disabled={createUpgradeTaskMutation.isPending}
                       className="px-6 h-8 text-[14px] rounded-[2px] bg-[#1890ff] text-white hover:bg-[#40a9ff] transition disabled:opacity-60"
                     >
-                      {createUpgradeTaskMutation.isPending ? "Submitting..." : "Submit"}
+                      {createUpgradeTaskMutation.isPending
+                        ? "Submitting..."
+                        : "Submit"}
                     </button>
                   </div>
                 </div>

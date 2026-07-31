@@ -37,15 +37,27 @@ const tasks = [
 export default function BatchTaskPage() {
   const searchParams = useSearchParams();
   const targetEndUserId = searchParams.get("userid") ?? undefined;
-
+  const [taskName, setTaskName] = useState("");
+  const [queryTaskName, setQueryTaskName] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const tasksQuery = useUpgradeTasks({ page: currentPage, pageSize: PAGE_SIZE });
-  const taskItems = tasksQuery.data?.items ?? tasks;
+  const tasksQuery = useUpgradeTasks({
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+    taskName: queryTaskName || undefined,
+  });
+  // const taskItems = tasksQuery.data?.items ?? tasks;
 
+  const rawItems = tasksQuery.data?.items ?? [];
+  const taskItems = queryTaskName
+    ? rawItems.filter((t) =>
+        t.name.toLowerCase().includes(queryTaskName.toLowerCase()),
+      )
+    : rawItems;
   const totalPages =
-    tasksQuery.data?.pagination.totalPages ?? Math.ceil(tasks.length / PAGE_SIZE);
+    tasksQuery.data?.pagination.totalPages ??
+    Math.ceil(tasks.length / PAGE_SIZE);
 
   return (
     <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -57,18 +69,33 @@ export default function BatchTaskPage() {
           </span>
 
           <input
+            value={taskName}
+            onChange={(e) => setTaskName(e.target.value)}
             className="h-8 px-2.75 rounded-xs border border-[#d9d9d9] w-full sm:w-72 text-[14px] focus:outline-none focus:border-[#40a9ff] focus:ring-2 focus:ring-[#1890ff]/20 transition"
             placeholder="Please enter"
           />
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button className="w-full sm:w-auto px-4 h-8 text-[14px] rounded-xs border border-[#d9d9d9] text-[rgba(0,0,0,0.65)] hover:border-[#1890ff] hover:text-[#1890ff] transition">
-            Reset
+          <button
+            onClick={() => {
+              setCurrentPage(1);
+              setQueryTaskName(taskName.trim());
+            }}
+            className="w-full sm:w-auto px-5 h-8 text-[14px] rounded-xs border border-[#1890ff] bg-[#1890ff] text-white hover:bg-[#40a9ff] hover:border-[#40a9ff] transition"
+          >
+            Query
           </button>
 
-          <button className="w-full sm:w-auto px-5 h-8 text-[14px] rounded-xs border border-[#1890ff] bg-[#1890ff] text-white hover:bg-[#40a9ff] hover:border-[#40a9ff] transition">
-            Query
+          <button
+            onClick={() => {
+              setTaskName("");
+              setQueryTaskName("");
+              setCurrentPage(1);
+            }}
+            className="w-full sm:w-auto px-4 h-8 text-[14px] rounded-xs border border-[#d9d9d9] text-[rgba(0,0,0,0.65)] hover:border-[#1890ff] hover:text-[#1890ff] transition"
+          >
+            Reset
           </button>
         </div>
       </div>
@@ -89,10 +116,12 @@ export default function BatchTaskPage() {
               + Create Task
             </button>
 
-            <RefreshCw
-              size={18}
-              className="cursor-pointer text-[rgba(0,0,0,0.45)] hover:text-[rgba(0,0,0,0.85)] transition"
-            />
+            <button
+              className="text-gray-400 hover:text-[#1890FF] transition-colors"
+              onClick={() => tasksQuery.refetch()}
+            >
+              <RefreshCw size={16} />
+            </button>
           </div>
         </div>
 

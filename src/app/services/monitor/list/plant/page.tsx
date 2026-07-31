@@ -1,11 +1,11 @@
 // plant/page.tsx
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { usePlants } from '@/hooks/api/usePlants';
+import { usePlants } from "@/hooks/api/usePlants";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function PlantPage() {
@@ -39,11 +39,9 @@ export default function PlantPage() {
 
   // console.log(plantsQuery.data?.items);
 
-  const totalItems =
-    plantsQuery.data?.pagination.totalItems ?? 0;
+  const totalItems = plantsQuery.data?.pagination.totalItems ?? 0;
 
-  const totalPages =
-    plantsQuery.data?.pagination.totalPages ?? 1;
+  const totalPages = plantsQuery.data?.pagination.totalPages ?? 1;
 
   const sortedPlants = useMemo(() => {
     if (!sortKey) return plants;
@@ -52,13 +50,8 @@ export default function PlantPage() {
       const aVal = a[sortKey as keyof typeof a];
       const bVal = b[sortKey as keyof typeof b];
 
-      if (
-        typeof aVal === "number" &&
-        typeof bVal === "number"
-      ) {
-        return sortOrder === "asc"
-          ? aVal - bVal
-          : bVal - aVal;
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
       }
 
       return 0;
@@ -87,34 +80,73 @@ export default function PlantPage() {
             onClick={() => router.back()}
             className="inline-flex items-center text-[#1890FF] cursor-pointer hover:underline text-base font-medium"
           >
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-5 h-5 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Back
           </span>
         </div>
 
-
         <div className="border border-gray-300 rounded-lg inline-block min-w-full">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-black">Status</th>
-                <th className="px-4 py-2 text-left font-medium text-black">PlantName</th>
-                <SortableHeader label="Power" sortKey="power" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <SortableHeader label="E-Today" sortKey="eToday" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <SortableHeader label="E-Total" sortKey="eTotal" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <SortableHeader label="Capacity" sortKey="capacity" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <th className="px-4 py-2 text-left font-medium text-black">Installed Date</th>
-                <th className="px-4 py-2 text-left font-medium text-black">PlantType</th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  Status
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  PlantName
+                </th>
+                <SortableHeader
+                  label="Power"
+                  sortKey="power"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="E-Today"
+                  sortKey="eToday"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="E-Total"
+                  sortKey="eTotal"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Capacity"
+                  sortKey="capacity"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  Installed Date
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  PlantType
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {sortedPlants.map((plant) => (
                 <tr key={plant.id}>
-                  <td className="px-4 py-2">
-                    {plant.plantStatus.status}
-                  </td>
+                  <td className="px-4 py-2">{plant.plantStatus.status}</td>
 
                   <td className="px-4 py-2">
                     <Link
@@ -130,24 +162,18 @@ export default function PlantPage() {
                   </td>
 
                   <td className="px-4 py-2">
-                    {(plant.eToday?.value ?? 0)} {plant.eToday?.unit ?? ""}
+                    {plant.eToday?.value ?? 0} {plant.eToday?.unit ?? ""}
                   </td>
 
                   <td className="px-4 py-2">
-                    {(plant.eTotal?.value ?? 0)} {plant.eTotal?.unit ?? ""}
+                    {plant.eTotal?.value ?? 0} {plant.eTotal?.unit ?? ""}
                   </td>
 
-                  <td className="px-4 py-2">
-                    {Number(plant.kwp ?? 0)} kWp
-                  </td>
+                  <td className="px-4 py-2">{Number(plant.kwp ?? 0)} kW</td>
 
-                  <td className="px-4 py-2">
-                    {plant.installed}
-                  </td>
+                  <td className="px-4 py-2">{plant.installed}</td>
 
-                  <td className="px-4 py-2">
-                    {plant.type ?? "-"}
-                  </td>
+                  <td className="px-4 py-2">{plant.type ?? "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -156,8 +182,8 @@ export default function PlantPage() {
 
         <div className="flex items-center justify-end gap-4 mt-4 text-sm">
           <span>
-            {(page - 1) * pageSize + 1}-
-            {Math.min(page * pageSize, totalItems)} of {totalItems} items
+            {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalItems)}{" "}
+            of {totalItems} items
           </span>
 
           <div className="flex items-center gap-1">
@@ -190,8 +216,11 @@ export default function PlantPage() {
 /* ================= Sortable Header Component ================= */
 function SortableHeader({ label, sortKey, currentKey, order, onSort }: any) {
   const isActive = currentKey === sortKey;
-  const nextOrder = !isActive ? 'asc' : order === 'asc' ? 'desc' : 'asc';
-  const tooltipText = nextOrder === 'asc' ? 'Click to sort ascending' : 'Click to sort descending';
+  const nextOrder = !isActive ? "asc" : order === "asc" ? "desc" : "asc";
+  const tooltipText =
+    nextOrder === "asc"
+      ? "Click to sort ascending"
+      : "Click to sort descending";
 
   return (
     <th className="px-4 py-2 text-left font-medium text-black overflow-visible">
@@ -201,10 +230,21 @@ function SortableHeader({ label, sortKey, currentKey, order, onSort }: any) {
       >
         {label}
         <div className="flex flex-col text-[10px] leading-none ml-1">
-          <span className={isActive && order === 'asc' ? 'text-[#1677ff]' : 'text-[#bfbfbf]'}>▲</span>
-          <span className={isActive && order === 'desc' ? 'text-[#1677ff]' : 'text-[#bfbfbf]'}>▼</span>
+          <span
+            className={
+              isActive && order === "asc" ? "text-[#1677ff]" : "text-[#bfbfbf]"
+            }
+          >
+            ▲
+          </span>
+          <span
+            className={
+              isActive && order === "desc" ? "text-[#1677ff]" : "text-[#bfbfbf]"
+            }
+          >
+            ▼
+          </span>
         </div>
-
 
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#595959] text-white text-[12px] px-3 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 pointer-events-none shadow-lg">
           {tooltipText}

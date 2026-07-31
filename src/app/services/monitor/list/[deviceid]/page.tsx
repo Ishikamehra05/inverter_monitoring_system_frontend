@@ -22,6 +22,7 @@ interface Device {
   eToday: number;
   eTotal: number;
   updateTime: string;
+  type: string;
 }
 
 function SortableHeader({
@@ -267,7 +268,7 @@ export default function DeviceListPage() {
           </h1>
           <button
             className="text-gray-400 hover:text-[#1890FF] transition-colors"
-            onClick={() => window.location.reload()}
+            onClick={() => informationQuery.refetch()}
           >
             <RefreshCw size={16} />
           </button>
@@ -289,6 +290,9 @@ export default function DeviceListPage() {
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-[#000000D9] text-sm">
                   Device Name
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-[#000000D9] text-sm">
+                  SN
                 </th>
                 <SortableHeader
                   label="Power"
@@ -349,7 +353,7 @@ export default function DeviceListPage() {
                       className={`inline-block w-3 h-3 rounded-full ${
                         device.status === "online"
                           ? "bg-green-500"
-                          : "bg-red-500"
+                          : "bg-gray-500"
                       }`}
                     />
                   </td>
@@ -366,7 +370,9 @@ export default function DeviceListPage() {
                       {device.name}
                     </button>
                   </td>
-
+                  <td className="px-4 py-4 whitespace-nowrap text-[#000000D9]">
+                    {device.sn}
+                  </td>
                   {/* Power */}
                   <td className="px-4 py-4">
                     {device.power?.value?.toFixed(2)} {device.power?.unit}
@@ -477,7 +483,7 @@ export default function DeviceListPage() {
       <UpgradeInfoModal
         isOpen={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        model={sidebarDevice?.deviceName?.split(" ")[0]}
+        model={upgradeDevice?.type}
         sn={upgradeDevice?.sn}
         plantId={plantId}
         status="DONE"
