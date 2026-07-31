@@ -644,9 +644,9 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
         onClose={() => setUpgradeOpen(false)}
         model={module?.device_model ?? ""}
         sn={module?.mac_address ?? ""}
-        mdsp="311802"
-        sdsp="310601"
-        csb="010607"
+        // mdsp="311802"
+        // sdsp="310601"
+        // csb="010607"
         status={module?.status ?? "DONE"}
       />
     </div>
