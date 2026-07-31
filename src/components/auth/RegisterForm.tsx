@@ -3,15 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useRegister,
-  useSendVerificationCode,
-} from "@/hooks/api/useAuth";
+import { useRegister, useSendVerificationCode } from "@/hooks/api/useAuth";
 
 export default function RegisterForm() {
   const router = useRouter();
   const register = useRegister();
   const sendCode = useSendVerificationCode();
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -35,7 +33,8 @@ export default function RegisterForm() {
       return "Password and confirm password must match.";
     }
     if (!form.email.trim()) return "Email is required.";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Please enter a valid email.";
+    if (!/^\S+@\S+\.\S+$/.test(form.email))
+      return "Please enter a valid email.";
     if (!form.verificationCode.trim()) return "Verification code is required.";
     return null;
   };
@@ -43,6 +42,12 @@ export default function RegisterForm() {
   const handleRegisterSubmit = async () => {
     setErrorMessage(null);
     setSuccessMessage(null);
+    if (!acceptedTerms) {
+      setErrorMessage(
+        "Please accept the Privacy Policy & Terms and Conditions.",
+      );
+      return;
+    }
     const validationError = validateForm();
 
     if (validationError) {
@@ -132,13 +137,41 @@ export default function RegisterForm() {
       {successMessage && (
         <p className="text-green-600 text-sm text-center">{successMessage}</p>
       )}
+      <div className="flex items-start gap-2 mt-2">
+        <input
+          id="acceptTerms"
+          type="checkbox"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          className="mt-1 h-4 w-4 cursor-pointer"
+        />
 
+        <label
+          htmlFor="acceptTerms"
+          className="text-sm text-gray-600 leading-5"
+        >
+          I have read and agree to the{" "}
+          <a
+            href="https://solarlogger.in/terms-conditions"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Privacy Policy & Terms and Conditions
+          </a>
+          .
+        </label>
+      </div>
       <div className="flex flex-col">
         <button
           type="button"
           onClick={handleRegisterSubmit}
-          disabled={register.isPending}
-          className="btn-primary bg-blue-500 text-white rounded-sm p-1.5  cursor-pointer"
+          disabled={register.isPending || !acceptedTerms}
+          className={`rounded-sm p-1.5 text-white transition-colors ${
+            register.isPending || !acceptedTerms
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+          }`}
         >
           {register.isPending ? "Registering..." : "Register"}
         </button>
