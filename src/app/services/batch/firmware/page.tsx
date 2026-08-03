@@ -158,17 +158,16 @@ export default function BatchFirmwareListPage() {
     if (!deleteFirmwareId) return;
 
     try {
-      const response = await deleteFirmwareMutation.mutateAsync(deleteFirmwareId);
+      const response =
+        await deleteFirmwareMutation.mutateAsync(deleteFirmwareId);
 
-      toast.success(
-        response?.message ?? "Firmware deleted successfully."
-      );
+      toast.success(response?.message ?? "Firmware deleted successfully.");
 
       setDeleteFirmwareId(null);
       firmwareQuery.refetch();
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ?? "Failed to delete firmware."
+        error?.response?.data?.message ?? "Failed to delete firmware.",
       );
     }
   };
@@ -288,7 +287,10 @@ export default function BatchFirmwareListPage() {
 
               <tbody>
                 {paginatedData.map((item, index) => (
-                  <tr key={item.id ?? index} className="hover:bg-[#fafafa] transition">
+                  <tr
+                    key={item.id ?? index}
+                    className="hover:bg-[#fafafa] transition"
+                  >
                     <td className="px-6 py-4 border-b border-[rgba(0,0,0,0.06)] truncate max-w-[200px]">
                       {item.name}
                     </td>
@@ -340,6 +342,8 @@ export default function BatchFirmwareListPage() {
 
       <DeleteFirmwareModal
         open={!!deleteFirmwareId}
+        title="Delete Firmware"
+        message="Are you sure you want to delete this firmware package?"
         onClose={() => setDeleteFirmwareId(null)}
         onConfirm={confirmDeleteFirmware}
         loading={deleteFirmwareMutation.isPending}

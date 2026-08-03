@@ -6,7 +6,8 @@ import { RefreshCw, Trash2 } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import TaskDetailSidebar from "@/components/services/TaskDetailSidebar";
 import CreateTaskPanel from "@/components/services/CreateTaskPanel";
-import { useUpgradeTasks } from "@/hooks/api/useService";
+import { useDeleteUpgradeTask, useUpgradeTasks } from "@/hooks/api/useService";
+import DeleteFirmwareModal from "@/components/services/modals/DeleteFirmwareModal";
 
 const PAGE_SIZE = 10;
 
@@ -47,6 +48,24 @@ export default function BatchTaskPage() {
     pageSize: PAGE_SIZE,
     taskName: queryTaskName || undefined,
   });
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const deleteTask = useDeleteUpgradeTask();
+  const handleDeleteTask = () => {
+    if (!selectedTaskId) return;
+
+    deleteTask.mutate(selectedTaskId, {
+      onSuccess: () => {
+        setDeleteOpen(false);
+        setSelectedTaskId(null);
+        tasksQuery.refetch();
+      },
+      onError: (error: any) => {
+        alert(error.message);
+      },
+    });
+  };
   // const taskItems = tasksQuery.data?.items ?? tasks;
 
   const rawItems = tasksQuery.data?.items ?? [];
@@ -215,7 +234,14 @@ export default function BatchTaskPage() {
               <Info label="Begin Time">{task.begin}</Info>
 
               <div className="flex justify-end pt-2">
-                <Trash2 size={18} className="text-[#ff4d4f] cursor-pointer" />
+                <Trash2
+                  size={16}
+                  className="text-[rgba(0,0,0,0.45)] hover:text-[#ff4d4f] cursor-pointer transition"
+                  onClick={() => {
+                    setSelectedTaskId(String(task.id));
+                    setDeleteOpen(true);
+                  }}
+                />
               </div>
             </div>
           ))}
@@ -244,6 +270,17 @@ export default function BatchTaskPage() {
           targetEndUserId={targetEndUserId}
         />
       )}
+      <DeleteFirmwareModal
+        open={deleteOpen}
+        title="Delete Upgrade Task"
+        message={`Are you sure you want to delete this task? `}
+        onClose={() => {
+          setDeleteOpen(false);
+          setSelectedTaskId(null);
+        }}
+        onConfirm={handleDeleteTask}
+        loading={deleteTask.isPending}
+      />
     </div>
   );
 }

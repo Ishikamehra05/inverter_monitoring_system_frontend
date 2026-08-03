@@ -15,7 +15,7 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   MonitorUserStatusCountsResponse,
-  UpgradeTaskDetail
+  UpgradeTaskDetail,
 } from "./schemas/service";
 
 type ApiEnvelope<T> = {
@@ -116,6 +116,10 @@ export const serviceApi = {
       method: "DELETE",
     }),
 
+  deleteUpgradeTask: (taskId: string) =>
+    apiClient<ApiEnvelope<null>>(`/service/upgrade-tasks/${taskId}`, {
+      method: "DELETE",
+    }),
   upgradeTasks: (params: Record<string, unknown> = {}) =>
     apiClient<
       ApiEnvelope<{
@@ -164,8 +168,8 @@ export const serviceApi = {
       },
     ).then((res) => res.data),
 
-      upgradeTaskDetail: (taskId: string) =>
+  upgradeTaskDetail: (taskId: string) =>
     apiClient<ApiEnvelope<UpgradeTaskDetail>>(
-      `/service/upgrade-tasks/${taskId}`
+      `/service/upgrade-tasks/${taskId}`,
     ).then((res) => res.data),
 };

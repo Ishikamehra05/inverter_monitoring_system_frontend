@@ -161,6 +161,18 @@ export const useDeleteFirmware = () => {
   });
 };
 
+export const useDeleteUpgradeTask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: serviceApi.deleteUpgradeTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...serviceKeys.all, "upgradeTasks"],
+      });
+    },
+  });
+};
 export const useUpgradeTasks = (params: Record<string, unknown> = {}) =>
   useQuery({
     queryKey: serviceKeys.upgradeTasks(params),
