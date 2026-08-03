@@ -9,7 +9,7 @@ import UpgradeInfoModal from "@/components/services/modals/UpgradeInfoModal";
 import DeviceListSidePanel from "@/components/services/sidePanels/deviceListSidePanel";
 import OperationPopover from "@/components/services/Operationpopover";
 import { useSearchParams } from "next/navigation";
-import { usePlantDevices, useDeviceInformation } from "@/hooks/api/useDevices";
+import { usePlantDevices, useDeviceInformation, useDeviceView } from "@/hooks/api/useDevices";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Device {

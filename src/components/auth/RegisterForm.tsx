@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRegister, useSendVerificationCode } from "@/hooks/api/useAuth";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
   const router = useRouter();
   const register = useRegister();
   const sendCode = useSendVerificationCode();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -78,20 +81,40 @@ export default function RegisterForm() {
         onChange={(e) => setField("account", e.target.value)}
         placeholder="Please enter account"
       />
-      <input
-        className="input border border-gray-400 w-full rounded-sm p-1.5"
-        type="password"
-        value={form.password}
-        onChange={(e) => setField("password", e.target.value)}
-        placeholder="Please enter your password"
-      />
-      <input
-        className="input border border-gray-400 w-full rounded-sm p-1.5"
-        type="password"
-        value={form.confirmPassword}
-        onChange={(e) => setField("confirmPassword", e.target.value)}
-        placeholder="Please enter your confirm password"
-      />
+      <div className="relative">
+        <input
+          className="input border border-gray-400 w-full rounded-sm p-1.5 pr-10"
+          type={showPassword ? "text" : "password"}
+          value={form.password}
+          onChange={(e) => setField("password", e.target.value)}
+          placeholder="Please enter your password"
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+        </button>
+      </div>
+      <div className="relative">
+        <input
+          className="input border border-gray-400 w-full rounded-sm p-1.5 pr-10"
+          type={showConfirmPassword ? "text" : "password"}
+          value={form.confirmPassword}
+          onChange={(e) => setField("confirmPassword", e.target.value)}
+          placeholder="Please enter your confirm password"
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+        </button>
+      </div>
       <input
         className="input border border-gray-400 w-full rounded-sm p-1.5"
         value={form.email}

@@ -71,8 +71,8 @@ export default function BatchTaskPage() {
   const rawItems = tasksQuery.data?.items ?? [];
   const taskItems = queryTaskName
     ? rawItems.filter((t) =>
-        t.name.toLowerCase().includes(queryTaskName.toLowerCase()),
-      )
+      t.name.toLowerCase().includes(queryTaskName.toLowerCase()),
+    )
     : rawItems;
   const totalPages =
     tasksQuery.data?.pagination.totalPages ??
@@ -203,6 +203,10 @@ export default function BatchTaskPage() {
                     <Trash2
                       size={16}
                       className="text-[rgba(0,0,0,0.45)] hover:text-[#ff4d4f] cursor-pointer transition"
+                      onClick={() => {
+                        setSelectedTaskId(String(task.id));
+                        setDeleteOpen(true);
+                      }}
                     />
                   </td>
                 </tr>
@@ -292,9 +296,8 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <div className="flex items-center gap-2 text-[14px]">
       <span
-        className={`w-2 h-2 rounded-full ${
-          isFinished ? "bg-[#52c41a]" : "bg-[#ff4d4f]"
-        }`}
+        className={`w-2 h-2 rounded-full ${isFinished ? "bg-[#52c41a]" : "bg-[#ff4d4f]"
+          }`}
       />
       <span className={isFinished ? "text-[#52c41a]" : "text-[#ff4d4f]"}>
         {status}
