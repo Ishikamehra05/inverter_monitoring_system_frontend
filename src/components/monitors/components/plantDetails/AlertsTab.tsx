@@ -37,7 +37,7 @@ const AlertsTab = ({ plantId }: AlertsTabProps) => {
       {alertsQuery.isLoading ? (
         <div className="py-8 text-center">Loading...</div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="overflow-x-auto rounded-lg ">
           <table className="min-w-full table-fixed text-sm text-black">
             <thead className="bg-gray-100 border-b border-gray-300">
               <tr>

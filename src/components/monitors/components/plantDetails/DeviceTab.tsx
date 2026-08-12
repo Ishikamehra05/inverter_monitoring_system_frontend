@@ -126,9 +126,9 @@ const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
     navigateMonitor(router, searchParams, url);
   };
   return (
-    <div className="mt-4 rounded-lg border overflow-hidden">
+    <div className="mt-4 rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full text-md">
+        <table className="min-w-full text-md border-collapse">
           <thead className="bg-gray-100 text-black sticky top-0 z-10">
             <tr>
               <th className="px-3 py-2 text-left">Status</th>
@@ -235,7 +235,7 @@ const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
             {sortedDevices.map((device) => (
               <tr
                 key={device.id}
-                className="border-t border-gray-300 hover:bg-blue-50 whitespace-nowrap text-black transition"
+                className="  hover:bg-blue-50 whitespace-nowrap text-black transition"
               >
                 <td className="px-3 py-4">
                   <span
@@ -478,7 +478,7 @@ const DeviceTab = ({ plantId }: DeviceTabProps) => {
         <div className="flex justify-end">
           <button
             onClick={() => setOpen(true)}
-            className="border rounded p-2 sm:px-3 sm:py-2 cursor-pointer transition-all duration-200 bg-blue-500 text-white hover:bg-blue-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+            className=" rounded p-2 sm:px-3 sm:py-2 cursor-pointer transition-all duration-200 bg-blue-500 text-white hover:bg-blue-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
           >
             <span className="flex items-center gap-2">
               <IoIosAdd className="h-4 w-4" />

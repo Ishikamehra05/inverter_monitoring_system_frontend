@@ -31,7 +31,7 @@ type Log = {
 
 const LogsTable = ({ logs }: { logs: Log[] }) => {
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-lg">
       <table className="min-w-full bg-white text-md">
         <thead className="bg-gray-50 text-black">
           <tr className="whitespace-nowrap">

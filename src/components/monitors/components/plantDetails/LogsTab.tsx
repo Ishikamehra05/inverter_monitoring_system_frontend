@@ -25,7 +25,7 @@ type LogsTableProps = {
 
 const LogsTable = ({ logs }: LogsTableProps) => {
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-lg">
       <table className="min-w-full text-md">
         <thead className="bg-gray-50 text-black">
           <tr className="whitespace-nowrap">

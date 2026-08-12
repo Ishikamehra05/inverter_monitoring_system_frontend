@@ -345,7 +345,7 @@ const PlantTable = ({
 
         <tbody>
           {plants.map((p) => (
-            <tr key={p.name} className="border-t whitespace-nowrap">
+            <tr key={p.name} className=" whitespace-nowrap">
               <td className="p-3">
                 <span
                   className={`text-black text-xs px-2 py-1 rounded font-medium ${getStatusStyle(

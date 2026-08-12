@@ -17,7 +17,7 @@ const StatsGrid = ({ stats }: { stats: Stat[] }) => {
       {stats.map((stat, index) => (
         <div
           key={index}
-          className="flex items-center md:min-w-54 gap-3 rounded-lg border bg-white p-3 shadow-md"
+          className="flex items-center md:min-w-54 gap-3 rounded-lg bg-white p-3 shadow-md"
         >
           {/* <div
             className={`flex h-12 w-12 md:h-20 md:w-20 items-center justify-center rounded-full text-lg`}
