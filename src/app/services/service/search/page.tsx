@@ -23,7 +23,10 @@ import { useDeleteDevice } from "@/hooks/api/useDevices";
 import DeleteInverterModal from "@/components/monitors/modals/DeleteInverterModal";
 import { useDeleteAccount } from "@/hooks/api/useService";
 import UpgradeInfoModal from "@/components/services/modals/UpgradeInfoModal";
+<<<<<<< HEAD
 import { useSearchParams } from "next/navigation";
+=======
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
 
 type Mode = "sn" | "datalogger" | "user" | "module";
 
@@ -34,6 +37,7 @@ const MODE_TITLE: Record<Mode, string> = {
   module: "Search Module",
 };
 
+<<<<<<< HEAD
 interface Device {
   id: number | string;
   name: string;
@@ -55,6 +59,9 @@ export default function GlobalSearchPage() {
   const [upgradeDevice, setUpgradeDevice] = useState<Device | null>(null);
   const [remoteOpen, setRemoteOpen] = useState(false);
   const [remoteDevice, setRemoteDevice] = useState<Device | null>(null);
+=======
+export default function GlobalSearchPage() {
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
   const [mode, setMode] = useState<Mode>("sn");
   const [keyword, setKeyword] = useState("");
   const searchUser = useSearchUser();
@@ -274,10 +281,17 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
 
                     <td colSpan={3} className="px-5 py-2">
                       <div className="flex flex-wrap items-center gap-3 text-[15x]">
+<<<<<<< HEAD
                         {/* <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm">
                           <HiOutlineSwitchHorizontal className="h-5 w-5" />
                           <span>Change Account</span>
                         </button> */}
+=======
+                        <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm">
+                          <HiOutlineSwitchHorizontal className="h-5 w-5" />
+                          <span>Change Account</span>
+                        </button>
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
 
                         <button
                           onClick={() => setDeleteOpen(true)}
@@ -291,14 +305,27 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                               : "Delete Device"}
                           </span>
                         </button>
+<<<<<<< HEAD
                          {/* <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+=======
+
+                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                          <HiOutlineUpload className="h-5 w-5" />
+                          <span>Upgrade Device</span>
+                        </button>
+                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
                           <HiOutlineCog className="h-5 w-5" />
                           <span>Remote Setting</span>
                         </button>
                         <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
                           <HiOutlineTerminal className="h-5 w-5" />
                           <span>Command Operation</span>
+<<<<<<< HEAD
                         </button> */}
+=======
+                        </button>
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
                       </div>
                     </td>
                   </tr>
@@ -413,6 +440,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               onClose={() => setDeleteOpen(false)}
               onConfirm={handleDeleteDevice}
             />
+<<<<<<< HEAD
             
            <UpgradeInfoModal
               isOpen={upgradeOpen && mode === "sn"}
@@ -422,6 +450,8 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               plantId={device.plantId ?? plantId ?? ""}
               status={device.status ?? "DONE"}
             />
+=======
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
             {/* <div className="mt-10">
               <h3 className="text-[18px] font-semibold text-[#333] mb-5">
                 Device Details
@@ -553,7 +583,11 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
             <div className="overflow-x-auto">
               <table className="w-full border border-[#ececec] border-collapse text-[15px]">
                 <tbody>
+<<<<<<< HEAD
                  <tr className="border-b border-[#ececec]">
+=======
+                  <tr className="border-b border-[#ececec]">
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
                     <td className="bg-[#f5f5f5] w-[30%] px-5 py-3">
                       Module Operation
                     </td>
@@ -572,7 +606,11 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   <tr className="border-b border-[#ececec]">
                     <td className="bg-[#f5f5f5] px-5 py-3">Module SN</td>
 
+<<<<<<< HEAD
                     <td className="px-5 py-3">{module.sno ?? "--"}</td>
+=======
+                    <td className="px-5 py-3">{module.mac_address ?? "--"}</td>
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
@@ -588,7 +626,11 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       Associated Device SN
                     </td>
 
+<<<<<<< HEAD
                     <td className="px-5 py-3">{module.mac_address ?? "--" }</td>
+=======
+                    <td className="px-5 py-3">{module.sno}</td>
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
                   </tr>
 
                   <tr>
@@ -668,7 +710,11 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
         isOpen={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
         model={module?.device_model ?? ""}
+<<<<<<< HEAD
         sn={module?.sno ?? ""}
+=======
+        sn={module?.mac_address ?? ""}
+>>>>>>> 216b51bc73fe5a27c1c781115a6fc8da22b5bffa
         // mdsp="311802"
         // sdsp="310601"
         // csb="010607"
