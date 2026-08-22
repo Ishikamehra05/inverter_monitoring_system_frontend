@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import clsx from "clsx";
 import {
   useSearchDevice,
@@ -19,10 +19,13 @@ import {
   HiOutlineTerminal,
   HiOutlineCheckCircle,
 } from "react-icons/hi";
-import { useDeleteDevice } from "@/hooks/api/useDevices";
+import { useDeleteDevice, usePlantDevices } from "@/hooks/api/useDevices";
 import DeleteInverterModal from "@/components/monitors/modals/DeleteInverterModal";
 import { useDeleteAccount } from "@/hooks/api/useService";
 import UpgradeInfoModal from "@/components/services/modals/UpgradeInfoModal";
+import { useSearchParams } from "next/navigation";
+import RemoteSettingModal from "@/components/services/modals/RemoteSettingModal";
+import type { SearchDeviceResponse } from "@/lib/api/schemas/users";
 
 type Mode = "sn" | "datalogger" | "user" | "module";
 
@@ -33,13 +36,34 @@ const MODE_TITLE: Record<Mode, string> = {
   module: "Search Module",
 };
 
+interface Device {
+  id: number | string;
+  name: string;
+  statusImg: string;
+  deviceName: string;
+  sn: string;
+  power: number;
+  eToday: number;
+  eTotal: number;
+  updateTime: string;
+  type?: string;
+  status?: string;
+}
+
 export default function GlobalSearchPage() {
+  const searchParams = useSearchParams();
+  const plantId = searchParams.get("plantId") ?? "";
+  const targetEndUserId = searchParams.get("userid") ?? "";
+  const [upgradeDevice, setUpgradeDevice] = useState<Device | null>(null);
+  const [remoteOpen, setRemoteOpen] = useState(false);
+  const [selectedDevice, setSelectedDevice] =
+    useState<SearchDeviceResponse | null>(null);
   const [mode, setMode] = useState<Mode>("sn");
   const [keyword, setKeyword] = useState("");
   const searchUser = useSearchUser();
   const user = searchUser.data?.user;
   const searchDevice = useSearchDevice();
-  const device = searchDevice.data?.device;
+  const device = selectedDevice;
   const deleteAccountMutation = useDeleteAccount();
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const searchModule = useSearchModule();
@@ -54,10 +78,24 @@ export default function GlobalSearchPage() {
     device?.plantId ?? "",
     deleteDeviceServiceParams,
   );
+  const plantDevicesQuery = usePlantDevices(plantId, {
+    page: 1,
+    pageSize: 100,
+    fromService: true,
+    targetEndUserId,
+  });
+  const monitorDevice = useMemo(() => {
+    if (!device || !plantDevicesQuery.data) return null;
+
+    const devices = plantDevicesQuery.data.items ?? [];
+
+    return devices.find((item) => item.sn === device.sno);
+  }, [device, plantDevicesQuery.data]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const handleSearch = () => {
     const value = keyword.trim();
+    setSelectedDevice(null);
 
     if (!value) {
       toast.error(
@@ -86,6 +124,18 @@ export default function GlobalSearchPage() {
       searchDevice.mutate(
         { sno: value },
         {
+          onSuccess: (data) => {
+            console.log("========== SEARCH DEVICE ==========");
+            console.log("FULL RESPONSE:", data);
+            console.log("DEVICE:", data.device);
+            console.log("DEVICE ID:", data.device?.id);
+            console.log("DEVICE SN:", data.device?.sno);
+            console.log("PLANT ID:", data.device?.plantId);
+            console.log("ALL DEVICE FIELDS:", Object.keys(data.device ?? {}));
+            console.log("===================================");
+
+            setSelectedDevice(data.device);
+          },
           onError: (error: Error) => {
             toast.error(error.message || "Device not found.");
           },
@@ -123,6 +173,7 @@ export default function GlobalSearchPage() {
   const changeMode = (newMode: Mode) => {
     setMode(newMode);
     setKeyword("");
+    setSelectedDevice(null);
     searchDatalogger.reset();
     searchUser.reset();
     searchDevice.reset();
@@ -253,10 +304,10 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
 
                     <td colSpan={3} className="px-5 py-2">
                       <div className="flex flex-wrap items-center gap-3 text-[15x]">
-                        <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm">
+                        {/* <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm">
                           <HiOutlineSwitchHorizontal className="h-5 w-5" />
                           <span>Change Account</span>
-                        </button>
+                        </button> */}
 
                         <button
                           onClick={() => setDeleteOpen(true)}
@@ -271,18 +322,28 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                           </span>
                         </button>
 
-                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => setUpgradeOpen(true)}
+                          className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors"
+                        >
                           <HiOutlineUpload className="h-5 w-5" />
                           <span>Upgrade Device</span>
                         </button>
-                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                        <button
+                          onClick={() => {
+                            if (!device) return;
+                            setRemoteOpen(true);
+                          }}
+                          className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors"
+                        >
                           <HiOutlineCog className="h-5 w-5" />
                           <span>Remote Setting</span>
                         </button>
-                        <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                        {/* <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
                           <HiOutlineTerminal className="h-5 w-5" />
                           <span>Command Operation</span>
-                        </button>
+                        </button>  */}
                       </div>
                     </td>
                   </tr>
@@ -314,7 +375,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                     <td className="bg-[#f5f5f5]  text-sm px-5 py-1">Power</td>
 
                     <td className="px-4 py-1 text-sm">
-                      {device.currentPower ?? 0} kW
+                      {device.currentPower ?? 0} W
                     </td>
                   </tr>
 
@@ -396,6 +457,23 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               loading={deleteDevice.isPending}
               onClose={() => setDeleteOpen(false)}
               onConfirm={handleDeleteDevice}
+            />
+
+            <UpgradeInfoModal
+              isOpen={upgradeOpen && mode === "sn"}
+              onClose={() => setUpgradeOpen(false)}
+              model={device.inverterName ?? ""}
+              sn={device.sno ?? ""}
+              plantId={device.plantId ?? plantId ?? ""}
+              status={device.status ?? "DONE"}
+            />
+            <RemoteSettingModal
+              isOpen={remoteOpen}
+              onClose={() => setRemoteOpen(false)}
+              deviceId={monitorDevice?.id ? String(monitorDevice.id) : ""}
+              plantId={device?.plantId ?? plantId}
+              sn={device?.sno ?? ""}
+              targetEndUserId={device?.userId ?? targetEndUserId}
             />
             {/* <div className="mt-10">
               <h3 className="text-[18px] font-semibold text-[#333] mb-5">
@@ -547,7 +625,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   <tr className="border-b border-[#ececec]">
                     <td className="bg-[#f5f5f5] px-5 py-3">Module SN</td>
 
-                    <td className="px-5 py-3">{module.mac_address ?? "--"}</td>
+                    <td className="px-5 py-3">{module.sno ?? "--"}</td>
                   </tr>
 
                   <tr className="border-b border-[#ececec]">
@@ -563,7 +641,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       Associated Device SN
                     </td>
 
-                    <td className="px-5 py-3">{module.sno}</td>
+                    <td className="px-5 py-3">{module.mac_address ?? "--"}</td>
                   </tr>
 
                   <tr>
@@ -615,7 +693,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   <tr className="border-b border-[#ececec]">
                     <td className="bg-[#f5f5f5] px-5 py-2"> Power</td>
                     <td className="px-5 py-2">
-                      {datalogger.currentPower ?? 0} kW
+                      {datalogger.currentPower ?? 0} W
                     </td>
                   </tr>
 
@@ -638,17 +716,6 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
           </>
         )}
       </section>
-
-      <UpgradeInfoModal
-        isOpen={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
-        model={module?.device_model ?? ""}
-        sn={module?.mac_address ?? ""}
-        // mdsp="311802"
-        // sdsp="310601"
-        // csb="010607"
-        status={module?.status ?? "DONE"}
-      />
     </div>
   );
 }

@@ -70,7 +70,7 @@ const DeviceOverview = ({
         <span className="flex flex-col items-center gap-2 md:gap-4 whitespace-nowrap">
           <p className="font-semibold text-sm sm:text-md">Current Power:</p>
           <p className="text-black text-lg sm:text-2xl font-semibold">
-            {currentPower} kW
+            {currentPower} W
           </p>
         </span>
 

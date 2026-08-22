@@ -53,6 +53,15 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
   const LocationPicker = dynamic(() => import("./LocationPickerModal"), {
     ssr: false,
   });
+  const [picture, setPicture] = useState<File | null>(null);
+
+  const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      setPicture(file);
+    }
+  };
   // const handleSubmit = async () => {
   //   try {
   //     await createPlant.mutateAsync({
@@ -132,20 +141,67 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
 
     try {
       if (plant?.id) {
+        const updatePayload = picture
+          ? (() => {
+              const formData = new FormData();
+
+              Object.entries(payload).forEach(([key, value]) => {
+                if (value !== undefined) {
+                  formData.append(key, String(value));
+                }
+              });
+              formData.append("picture", picture);
+
+              return formData;
+            })()
+          : payload;
+
         await updatePlant.mutateAsync({
           plantId: plant.id,
-          payload,
+          payload: updatePayload,
           serviceParams,
         });
 
         toast.success("Plant updated successfully.");
       } else {
-        await createPlant.mutateAsync(payload);
+        const formData = new FormData();
+
+        formData.append("plantName", form.plantName.trim());
+        formData.append("installedDate", form.installedDate);
+        formData.append("kwp", String(Number(form.kwp)));
+        formData.append("price", String(Number(form.price)));
+        formData.append("priceUnit", "₹ / kWh");
+        formData.append("plantType", form.plantType);
+
+        if (form.longitude) {
+          formData.append("longitude", form.longitude);
+        }
+
+        if (form.latitude) {
+          formData.append("latitude", form.latitude);
+        }
+
+        if (form.address.trim()) {
+          formData.append("address", form.address.trim());
+        }
+
+        if (selectedEndUserId) {
+          formData.append("selectedEndUserId", selectedEndUserId);
+        }
+
+        // Add image
+        if (picture) {
+          formData.append("picture", picture);
+        }
+
+        await createPlant.mutateAsync(formData);
 
         toast.success("Plant created successfully.");
       }
 
       setForm(initialForm);
+
+      setPicture(null);
       onClose();
     } catch (error: any) {
       toast.error(error?.message || "Failed to save plant. Please try again.");
@@ -423,12 +479,30 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
               </div> */}
 
               {/* Upload */}
-              {/* <div>
-                <label className="text-sm font-medium">Upload picture :</label>
-                <button className="block mt-2 bg-blue-500 text-white px-4 py-2 rounded">
+              <div>
+                <label className="text-sm font-medium mr-2">
+                  Upload picture:
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="picture-upload"
+                  className="hidden"
+                  onChange={handlePictureChange}
+                />
+
+                <label
+                  htmlFor="picture-upload"
+                  className="inline-block mt-2 bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
+                >
                   Select picture
-                </button>
-              </div> */}
+                </label>
+
+                {picture && (
+                  <p className="mt-2 text-sm text-gray-600">{picture.name}</p>
+                )}
+              </div>
             </div>
           </motion.div>
         </>

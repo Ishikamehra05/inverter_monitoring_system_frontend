@@ -47,7 +47,7 @@ const EnergyFlow = ({
     icon: Icon,
     label,
     value,
-    unit = "kW",
+    unit = "W",
     isActive,
     colorClass,
     bgClass,

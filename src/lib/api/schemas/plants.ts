@@ -27,6 +27,10 @@ export const plantSchema = z.object({
   effect: z.string(),
   installed: z.string(),
   updated: z.string(),
+  picture: z.unknown().nullable().optional(),
+  pictureUrl: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+  pictureFileId: z.string().nullable().optional(),
 
   plantStatus: plantCurrentStatusSchema,
 });
@@ -68,7 +72,6 @@ export const createPlantRequestSchema = z.object({
   longitude: z.string().optional(),
   latitude: z.string().optional(),
   address: z.string().optional(),
-  pictureFileId: z.string().optional(),
 });
 
 export type PlantListExportResponse = {

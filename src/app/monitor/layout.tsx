@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/monitors/monitorsLayout/header";
 import { getAuthSession } from "@/lib/auth/session";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-
-
+import { usePathname, useSearchParams } from "next/navigation";
 
 export default function MonitorsLayout({
   children,
@@ -16,7 +14,9 @@ export default function MonitorsLayout({
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const fromService = searchParams.get("fromService");
+  const isGlobalMonitoringPage = pathname === "/monitor/plants/global";
 
   // useEffect(() => {
   //   const { token, portal } = getAuthSession();
@@ -69,13 +69,21 @@ export default function MonitorsLayout({
   }
 
   return (
-    <div className="h-screen text-white overflow-hidden">
-      <Header />
+    <div className="relative h-screen overflow-hidden text-white">
+      <div
+        className={
+          isGlobalMonitoringPage
+            ? "absolute inset-x-0 top-0 z-50"
+            : "relative z-50 h-16"
+        }
+      >
+        <Header />
+      </div>
 
-      <div className="flex h-[calc(100vh-56px)] bg-(--background)">
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+      <div
+        className={`flex ${isGlobalMonitoringPage ? "h-screen" : "h-[calc(100vh-56px)]"} min-h-0 bg-(--background)`}
+      >
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

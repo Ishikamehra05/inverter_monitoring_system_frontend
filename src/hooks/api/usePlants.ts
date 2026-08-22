@@ -37,10 +37,17 @@ export const usePlants = (params: PlantListParams = {}) =>
           items: mockPlants,
           statusCounts: {
             All: mockPlants.length,
-            Online: mockPlants.filter((p) => p.plantStatus.status === "Online").length,
-            Offline: mockPlants.filter((p) => p.plantStatus.status === "Offline").length,
-            Abnormal: mockPlants.filter((p) => p.plantStatus.status === "Abnormal").length,
-            Standby: mockPlants.filter((p) => p.plantStatus.status === "Standby").length,
+            Online: mockPlants.filter((p) => p.plantStatus.status === "Online")
+              .length,
+            Offline: mockPlants.filter(
+              (p) => p.plantStatus.status === "Offline",
+            ).length,
+            Abnormal: mockPlants.filter(
+              (p) => p.plantStatus.status === "Abnormal",
+            ).length,
+            Standby: mockPlants.filter(
+              (p) => p.plantStatus.status === "Standby",
+            ).length,
           },
           pagination: {
             page: params.page ?? 1,
@@ -94,7 +101,7 @@ export const useCreatePlant = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: CreatePlantRequest) => {
+    mutationFn: async (payload: CreatePlantRequest | FormData) => {
       try {
         return await plantsApi.create(payload);
       } catch (error) {
@@ -203,7 +210,7 @@ export const useUpdatePlant = () => {
       serviceParams,
     }: {
       plantId: string;
-      payload: Partial<CreatePlantRequest>;
+      payload: Partial<CreatePlantRequest> | FormData;
       serviceParams?: {
         fromService?: boolean;
         targetEndUserId?: string;
