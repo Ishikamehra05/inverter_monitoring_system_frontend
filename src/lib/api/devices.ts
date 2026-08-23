@@ -47,14 +47,17 @@ export const devicesApi = {
       },
     ).then((res) => res.data),
 
-  addLogger: (plantId: string, payload: Omit<AddDeviceRequest, "type">) =>
+  addLogger: (
+    plantId: string,
+    payload: Omit<AddDeviceRequest, "type">,
+  ) =>
     apiClient<ApiEnvelope<{ deviceId: string }>>(
       `/monitor/plants/${plantId}/loggers`,
       {
         method: "POST",
         body: payload,
       },
-    ).then((res) => res.data),
+    ),
 
   detail: (deviceId: string) =>
     apiClient<ApiEnvelope<ApiDevice>>(`/monitor/devices/${deviceId}`).then(

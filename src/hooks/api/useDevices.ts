@@ -75,15 +75,16 @@ export const useAddLogger = (plantId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (serialNumber: string) => {
-      try {
-        return await devicesApi.addLogger(plantId, { serialNumber });
-      } catch (error) {
-        if (!isBackendUnavailable(error)) throw error;
-        return { deviceId: `dev_${serialNumber}` };
-      }
+    mutationFn: (serialNumber: string) =>
+      devicesApi.addLogger(plantId, {
+        serialNumber: serialNumber.trim(),
+      }),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: deviceKeys.all,
+      });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: deviceKeys.all }),
   });
 };
 

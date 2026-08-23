@@ -119,41 +119,19 @@ const PlantsTabPanel = ({
         />}
 
         {activeTab === "information" && (
-
           <InformationTab
-            installationDate={
-              plantInfo?.installationDate ??
-              "-"
-            }
-
-            capacity={
-              plantInfo?.capacity ??
-              "-"
-            }
-
-            address={
-              plantInfo?.address ??
-              "-"
-            }
-
+            plantId={plantId}
+            installationDate={plantInfo?.installationDate ?? "-"}
+            capacity={plantInfo?.capacity ?? "-"}
+            address={plantInfo?.address ?? "-"}
             stats={
-              plantInfo?.stats?.map(
-                (stat: any) => ({
-
-                  label:
-                    stat.label,
-
-                  value:
-                    stat.value,
-                  icon:
-                    stat.icon,
-
-                })
-              ) ?? []
+              plantInfo?.stats?.map((stat: any) => ({
+                label: stat.label,
+                value: stat.value,
+                icon: stat.icon,
+              })) ?? []
             }
-
           />
-
         )}
         {/* {activeTab === "logs" && <LogsTab logs={logs} />} */}
         {activeTab === "logs" && (

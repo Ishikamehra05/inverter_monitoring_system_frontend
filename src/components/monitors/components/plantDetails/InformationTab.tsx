@@ -1,9 +1,11 @@
 "use client";
+
 import { useState } from "react";
 import Image from "next/image";
 import { BiPlusCircle } from "react-icons/bi";
 import AddLoggerModal from "@/components/monitors/modals/AddLoggerModal";
 import { useAddLogger } from "@/hooks/api/useDevices";
+import { toast } from "sonner";
 
 export type Stat = {
   label: string;
@@ -19,9 +21,6 @@ const StatsGrid = ({ stats }: { stats: Stat[] }) => {
           key={index}
           className="flex items-center md:min-w-54 gap-3 rounded-lg bg-white p-3 shadow-md"
         >
-          {/* <div
-            className={`flex h-12 w-12 md:h-20 md:w-20 items-center justify-center rounded-full text-lg`}
-          > */}
           <Image
             className="h-12 w-12 md:h-14 md:w-14 lg:h-20 lg:w-20"
             src={stat.icon}
@@ -29,12 +28,12 @@ const StatsGrid = ({ stats }: { stats: Stat[] }) => {
             width={64}
             height={64}
           />
-          {/* </div> */}
 
           <div>
             <div className="text-xs md:text-md text-gray-500 whitespace-nowrap">
               {stat.label}
             </div>
+
             <div className="text-md md:text-2xl font-semibold text-black whitespace-nowrap">
               {stat.value}
             </div>
@@ -46,6 +45,7 @@ const StatsGrid = ({ stats }: { stats: Stat[] }) => {
 };
 
 type InfoProps = {
+  plantId: string;
   installationDate: string;
   capacity: string;
   address: string;
@@ -53,49 +53,83 @@ type InfoProps = {
 };
 
 const InformationTab = ({
+  plantId,
   installationDate,
   capacity,
   address,
   stats,
 }: InfoProps) => {
   const [open, setOpen] = useState(false);
-  // const addLogger = useAddLogger();
+
+  const addLogger = useAddLogger(plantId);
+
+  const handleAddLogger = async (serialNumber: string) => {
+    try {
+      const response = await addLogger.mutateAsync(serialNumber);
+
+      toast.success(
+        response.message || "Logger added successfully.",
+      );
+
+      setOpen(false);
+    } catch (error: any) {
+      console.error("Failed to add logger:", error);
+
+      toast.error(
+        error?.message || "Failed to add logger.",
+      );
+    }
+  };
+
   return (
     <>
       <div className="mt-4 space-y-4">
         {/* Header info */}
         <div className="flex items-center flex-wrap gap-4 sm:gap-6 md:gap-8 text-sm text-gray-600">
           <div className="whitespace-nowrap">
-            <span className="font-medium pr-2">Installation Time:</span>
+            <span className="font-medium pr-2">
+              Installation Time:
+            </span>
             {installationDate}
           </div>
+
           <div className="whitespace-nowrap">
-            <span className="font-medium">Capacity:</span> {capacity}
+            <span className="font-medium">Capacity:</span>{" "}
+            {capacity}
           </div>
+
           <div className="whitespace-nowrap">
-            <span className="font-medium">Address:</span> {address}
+            <span className="font-medium">Address:</span>{" "}
+            {address}
           </div>
-          {/* <div className="flex items-center gap-2 flex-nowrap">
+
+          <div className="flex items-center gap-2 flex-nowrap">
             <span className="font-medium whitespace-nowrap">
               Datalogger S/N:
             </span>
+
             <button
+              type="button"
               onClick={() => setOpen(true)}
-              className="rounded-full bg-transparent text-blue-500 cursor-pointer"
+              disabled={addLogger.isPending}
+              className="rounded-full bg-transparent text-blue-500 cursor-pointer disabled:opacity-50"
+              title="Add Datalogger"
             >
               <BiPlusCircle className="h-5 w-5" />
             </button>
-          </div> */}
+          </div>
         </div>
 
         {/* Stats */}
         <StatsGrid stats={stats} />
       </div>
-      {/* <AddLoggerModal
+
+      <AddLoggerModal
         open={open}
         onClose={() => setOpen(false)}
-        onSubmit={(value) => addLogger.mutate(value)}
-      /> */}
+        onSubmit={handleAddLogger}
+      // loading={addLogger.isPending}
+      />
     </>
   );
 };

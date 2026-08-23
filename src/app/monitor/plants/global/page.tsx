@@ -554,11 +554,11 @@ export default function GlobalMonitoringPage() {
             py-8
           "
         >
-          <h2 className="mb-6 text-sm">Energy</h2>
+          {/* <h2 className="mb-6 text-sm">Energy</h2> */}
 
           {/* Day / Month / Year */}
 
-          <div className="mb-10 flex">
+          {/* <div className="mb-10 flex">
             {(["day", "month", "year"] as EnergyRange[]).map((item) => (
               <button
                 key={item}
@@ -584,17 +584,17 @@ export default function GlobalMonitoringPage() {
                 {item}
               </button>
             ))}
-          </div>
+          </div> */}
 
           {/* Unit */}
 
-          <p className="mb-3 text-sm font-semibold">
+          {/* <p className="mb-3 text-sm font-semibold">
             {range === "day" ? "kW" : "kWh"}
-          </p>
+          </p> */}
 
           {/* Energy Chart */}
 
-          <div className="h-[300px] w-full">
+          {/* <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={energyData}>
                 <defs>
@@ -664,7 +664,7 @@ export default function GlobalMonitoringPage() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+          </div> */}
 
           {/* Effect */}
 
