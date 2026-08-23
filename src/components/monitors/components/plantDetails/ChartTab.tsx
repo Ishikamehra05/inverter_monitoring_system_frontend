@@ -31,74 +31,56 @@ type SeriesItem = {
   color: string;
 };
 
-const dayTicks = [
-  0, 180, 360, 540,
-  720, 900, 1080,
-  1260, 1440,
-];
+const dayTicks = [0, 180, 360, 540, 720, 900, 1080, 1260, 1440];
 
 const formatTime = (minutes: number) => {
   const hrs = Math.floor(minutes / 60)
     .toString()
     .padStart(2, "0");
 
-  const mins = (minutes % 60)
-    .toString()
-    .padStart(2, "0");
+  const mins = (minutes % 60).toString().padStart(2, "0");
 
   return `${hrs}:${mins}`;
 };
 
-const ChartTab = ({
-  chartDate,
-  setChartDate,
-  plantId,
-}: ChartTabProps) => {
+const ChartTab = ({ chartDate, setChartDate, plantId }: ChartTabProps) => {
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
   // console.log("userid", selectedEndUserId)
 
-  const serviceParams =
-    selectedEndUserId
-      ? {
+  const serviceParams = selectedEndUserId
+    ? {
         fromService: true,
         targetEndUserId: selectedEndUserId,
       }
-      : {};
+    : {};
 
-  const [mode, setMode] =
-    useState<Mode>("total");
+  const [mode, setMode] = useState<Mode>("total");
 
-  const [range, setRange] =
-    useState<Range>("day");
+  const [range, setRange] = useState<Range>("day");
 
-  const [visible, setVisible] =
-    useState<Record<string, boolean>>({});
+  const [visible, setVisible] = useState<Record<string, boolean>>({});
 
-  const chartQuery = usePlantChart(
-    plantId,
-    {
-      date: chartDate,
-      range,
-      mode,
-      ...serviceParams,
-    }
-  );
+  const chartQuery = usePlantChart(plantId, {
+    date: chartDate,
+    range,
+    mode,
+    ...serviceParams,
+  });
   const exportMutation = usePlantChartExport();
 
   const handleExport = async () => {
     try {
-      const result =
-        await exportMutation.mutateAsync({
-          plantId,
-          params: {
-            date: chartDate,
-            range,
-            mode,
-            format: "csv",
-            ...serviceParams
-          },
-        });
+      const result = await exportMutation.mutateAsync({
+        plantId,
+        params: {
+          date: chartDate,
+          range,
+          mode,
+          format: "csv",
+          ...serviceParams,
+        },
+      });
 
       // console.log({
       //   date: chartDate,
@@ -108,111 +90,86 @@ const ChartTab = ({
       //   ...serviceParams,
       // });
 
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL ?? "";
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "";
 
       // console.log(result.downloadUrl);
 
-      window.open(
-        `${apiBase}${result.downloadUrl}`,
-        "_blank"
-      );
+      window.open(`${apiBase}${result.downloadUrl}`, "_blank");
     } catch (error) {
-      console.error(
-        "Export failed",
-        error
-      );
+      console.error("Export failed", error);
     }
   };
 
-  const series: SeriesItem[] =
-    chartQuery.data?.series ?? [];
+  const series: SeriesItem[] = chartQuery.data?.series ?? [];
 
   useEffect(() => {
-    const obj: Record<
-      string,
-      boolean
-    > = {};
+    const obj: Record<string, boolean> = {};
 
     series.forEach((s) => {
       obj[s.key] = true;
     });
 
     setVisible(obj);
-
   }, [chartQuery.data?.series]);
 
   const chartData = useMemo(() => {
+    if (!chartQuery.data?.points) return [];
 
-    if (!chartQuery.data?.points)
-      return [];
+    return chartQuery.data.points.map((p) => {
+      if (range !== "day") return p;
 
-    return chartQuery.data.points.map(
-      (p) => {
+      const date = new Date(p.time.replace(" ", "T"));
 
-        if (range !== "day")
-          return p;
+      return {
+        ...p,
 
-        const date =
-          new Date(
-            p.time.replace(
-              " ",
-              "T"
-            )
-          );
+        originalTime: p.time,
 
-        return {
-          ...p,
-
-          originalTime:
-            p.time,
-
-          timeValue:
-            date.getHours() * 60 +
-            date.getMinutes(),
-        };
-      }
-    );
-
-  }, [
-    chartQuery.data,
-    range,
-  ]);
+        timeValue: date.getHours() * 60 + date.getMinutes(),
+      };
+    });
+  }, [chartQuery.data, range]);
 
   const filteredSeries =
-    mode === "single"
-      ? series.filter(
-        (s) => visible[s.key]
-      )
-      : series;
+    mode === "single" ? series.filter((s) => visible[s.key]) : series;
+
+  const handleRangeChange = (newRange: Range) => {
+    const today = new Date();
+
+    setRange(newRange);
+
+    if (newRange === "day") {
+      setChartDate(today.toISOString().split("T")[0]);
+    } else if (newRange === "month") {
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      setChartDate(`${today.getFullYear()}-${month}`);
+    } else {
+      setChartDate(String(today.getFullYear()));
+    }
+  };
 
   const hasData =
     chartData.length > 0 &&
     chartData.some((row) =>
-      filteredSeries.some(
-        (series) => Number(row[series.key] ?? 0) > 0
-      )
+      filteredSeries.some((series) => Number(row[series.key] ?? 0) > 0),
     );
 
   return (
     <div className="mt-4 w-full">
-
       {/* Controls */}
 
       <div className="flex flex-wrap gap-3 items-center justify-between mb-4">
-
         <div className="flex flex-col sm:flex-row items-center gap-3">
-
           {/* Total / Single */}
 
           <div className="flex rounded-md p-1 bg-gray-100">
-
             <button
               onClick={() => setMode("total")}
-              className={`px-3 py-2 rounded cursor-pointer flex items-center gap-2 ${mode === "total"
-                ? "bg-white shadow text-black"
-                : "text-gray-600"
-                }`}
+              className={`px-3 py-2 rounded cursor-pointer flex items-center gap-2 ${
+                mode === "total"
+                  ? "bg-white shadow text-black"
+                  : "text-gray-600"
+              }`}
             >
               <TfiLayoutGrid2 size={14} />
               Total
@@ -220,102 +177,113 @@ const ChartTab = ({
 
             <button
               onClick={() => setMode("single")}
-              className={`px-3 py-2 rounded cursor-pointer flex items-center gap-2 ${mode === "single"
-                ? "bg-white shadow text-black"
-                : "text-gray-600"
-                }`}
+              className={`px-3 py-2 rounded cursor-pointer flex items-center gap-2 ${
+                mode === "single"
+                  ? "bg-white shadow text-black"
+                  : "text-gray-600"
+              }`}
             >
               <FaList size={14} />
               Single
             </button>
-
           </div>
 
           {/* Day Month Year */}
 
           <div className="flex rounded-md p-1 bg-gray-100">
-
             {(["day", "month", "year"] as Range[]).map((r) => (
-
               <button
                 key={r}
-                onClick={() => setRange(r)}
-                className={`px-3 py-2 rounded capitalize ${range === r
-                  ? "bg-white shadow text-black"
-                  : "text-gray-600"
-                  }`}
+                onClick={() => handleRangeChange(r)}
+                className={`px-3 py-2 rounded capitalize ${
+                  range === r ? "bg-white shadow text-black" : "text-gray-600"
+                }`}
               >
                 {r}
               </button>
-
             ))}
-
           </div>
-
         </div>
 
         {/* Right side */}
 
         <div className="flex items-center gap-3">
+          {range === "day" && (
+            <input
+              type="date"
+              value={chartDate}
+              onChange={(e) => setChartDate(e.target.value)}
+              className="border rounded px-3 py-2 text-black"
+            />
+          )}
 
-          <input
-            type="date"
-            value={chartDate}
-            onChange={(e) =>
-              setChartDate(e.target.value)
-            }
-            className="border rounded px-3 py-2 text-black"
-          />
+          {range === "month" && (
+            <input
+              type="month"
+              value={chartDate}
+              onChange={(e) => setChartDate(e.target.value)}
+              className="border rounded px-3 py-2 text-black"
+            />
+          )}
+
+          {range === "year" && (
+            <select
+              value={chartDate}
+              onChange={(e) => setChartDate(e.target.value)}
+              className="border rounded px-3 py-2 text-black bg-white"
+            >
+              {Array.from({ length: 21 }, (_, index) => {
+                const year = new Date().getFullYear() - 10 + index;
+
+                return (
+                  <option key={year} value={String(year)}>
+                    {year}
+                  </option>
+                );
+              })}
+            </select>
+          )}
 
           <button
             onClick={handleExport}
             disabled={exportMutation.isPending}
             className="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 disabled:opacity-50"
           >
-
             <Download size={16} />
 
-            {exportMutation.isPending
-              ? "Exporting..."
-              : "Download"}
+            {exportMutation.isPending ? "Exporting..." : "Download"}
 
             {/* Download */}
-
           </button>
-
         </div>
-
       </div>
 
       {/* Single mode legend */}
 
-      {mode === "single" &&
-        series.length > 0 && (
-
-          <div className="flex flex-wrap gap-4 mb-5 text-black">
-            {series.map((s) => (
-              <button
-                key={s.key}
-                onClick={() =>
-                  setVisible((prev) => ({
-                    ...prev,
-                    [s.key]:
-                      !prev[s.key],
-                  }))
-                }
-                className={`flex items-center gap-2 ${visible[s.key]
-                  ? ""
-                  : "opacity-40"
-                  }`}
-              >
-                <span className="w-3 h-3 rounded-sm" style={{ background: s.color }}
-                />
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-        )}
+      {mode === "single" && series.length > 0 && (
+        <div className="flex flex-wrap gap-4 mb-5 text-black">
+          {series.map((s) => (
+            <button
+              key={s.key}
+              onClick={() =>
+                setVisible((prev) => ({
+                  ...prev,
+                  [s.key]: !prev[s.key],
+                }))
+              }
+              className={`flex items-center gap-2 ${
+                visible[s.key] ? "" : "opacity-40"
+              }`}
+            >
+              <span
+                className="w-3 h-3 rounded-sm"
+                style={{ background: s.color }}
+              />
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Empty state */}
 
@@ -323,7 +291,6 @@ const ChartTab = ({
         <div className="text-center py-8 text-gray-500">
           No logger data available
         </div>
-
       )}
       {/* Unit */}
 
@@ -340,49 +307,17 @@ const ChartTab = ({
             </div>
           </div>
         ) : (
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
-
-            {chartQuery.data?.chartType ===
-              "area" ? (
-
-              <AreaChart
-                data={chartData}
-              >
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
+          <ResponsiveContainer width="100%" height="100%">
+            {chartQuery.data?.chartType === "area" ? (
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
                 <XAxis
-                  dataKey={
-                    range === "day"
-                      ? "timeValue"
-                      : "time"
-                  }
-                  type={
-                    range === "day"
-                      ? "number"
-                      : "category"
-                  }
-                  domain={
-                    range === "day"
-                      ? [0, 1440]
-                      : undefined
-                  }
-                  ticks={
-                    range === "day"
-                      ? dayTicks
-                      : undefined
-                  }
-                  tickFormatter={(v) =>
-                    range === "day"
-                      ? formatTime(v)
-                      : v
-                  }
+                  dataKey={range === "day" ? "timeValue" : "time"}
+                  type={range === "day" ? "number" : "category"}
+                  domain={range === "day" ? [0, 1440] : undefined}
+                  ticks={range === "day" ? dayTicks : undefined}
+                  tickFormatter={(v) => (range === "day" ? formatTime(v) : v)}
                 />
 
                 <YAxis />
@@ -390,104 +325,60 @@ const ChartTab = ({
                 <Tooltip
                   cursor={false}
                   content={({ active, payload, label }) => {
-                    if (
-                      !active ||
-                      !payload ||
-                      !payload.length
-                    )
-                      return null;
+                    if (!active || !payload || !payload.length) return null;
 
                     return (
                       <div className="bg-white border rounded px-3 py-2 shadow">
-
                         <p className="font-medium text-gray-700 mb-1">
-
                           {range === "day"
-                            ? payload[0].payload
-                              ?.originalTime ??
-                            label
+                            ? (payload[0].payload?.originalTime ?? label)
                             : label}
-
                         </p>
 
                         {payload.map((item) => (
-
                           <div
-                            key={String(
-                              item.dataKey
-                            )}
+                            key={String(item.dataKey)}
                             className="flex gap-2"
                           >
-
                             <span
                               style={{
-                                color:
-                                  item.color,
+                                color: item.color,
                               }}
                             >
-
-                              {String(
-                                item.name ??
-                                item.dataKey
-                              )}
-
+                              {String(item.name ?? item.dataKey)}
                               {" : "}
-
-                              {item.value}
-
-                              {" "}
-
-                              {/* {unit} */}
-
+                              {item.value} {/* {unit} */}
                             </span>
-
                           </div>
-
                         ))}
-
                       </div>
                     );
                   }}
                 />
 
-                {filteredSeries.map(
-                  (s) => (
-
-                    <Area
-                      key={s.key}
-                      dataKey={s.key}
-                      stroke={s.color}
-                      fill={s.color}
-                      fillOpacity={0.15}
-                      strokeWidth={2}
-                      dot={false}
-                      legendType="none"
-                    />
-
-                  )
-                )}
-
+                {filteredSeries.map((s) => (
+                  <Area
+                    key={s.key}
+                    dataKey={s.key}
+                    stroke={s.color}
+                    fill={s.color}
+                    fillOpacity={0.15}
+                    strokeWidth={2}
+                    dot={false}
+                    legendType="none"
+                  />
+                ))}
               </AreaChart>
-
             ) : (
-
-              <BarChart
-                data={chartData}
-              >
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
                 <XAxis
                   dataKey="time"
                   interval="preserveStartEnd"
                   tickFormatter={(value, index) => {
                     if (range === "month") {
-                      return index % 2 === 0
-                        ? value
-                        : "";
+                      return index % 2 === 0 ? value : "";
                     }
 
                     return value;
@@ -502,76 +393,49 @@ const ChartTab = ({
                     outline: "none",
                   }}
                   content={({ active, payload, label }) => {
-
-                    if (
-                      !active ||
-                      !payload ||
-                      !payload.length
-                    ) {
+                    if (!active || !payload || !payload.length) {
                       return null;
                     }
 
                     return (
                       <div className="bg-white border shadow rounded px-3 py-2">
-
                         <div className="text-gray-700 text-sm mb-1">
-
                           {label}
-
                         </div>
 
                         {payload.map((item) => (
-
                           <div
                             key={String(item.dataKey)}
                             style={{
-                              color:
-                                item.color,
+                              color: item.color,
                             }}
                             className="text-sm"
                           >
-
-                            {String(
-                              item.dataKey
-                            )}
-
+                            {String(item.dataKey)}
                             {" : "}
-
-                            {item.value}
-
-                            {" "}
-
-                            {/* {unit} */}
-
+                            {item.value} {/* {unit} */}
                           </div>
-
                         ))}
-
                       </div>
                     );
                   }}
                 />
 
-                {filteredSeries.map(
-                  (s) => (
-
-                    <Bar
-                      key={s.key}
-                      dataKey={s.key}
-                      fill={s.color}
-                      activeBar={false}
-                      radius={[4, 4, 0, 0]}
-                    />
-
-                  )
-                )}
-
+                {filteredSeries.map((s) => (
+                  <Bar
+                    key={s.key}
+                    dataKey={s.key}
+                    fill={s.color}
+                    activeBar={false}
+                    radius={[4, 4, 0, 0]}
+                  />
+                ))}
               </BarChart>
             )}
           </ResponsiveContainer>
         )}
       </div>
-    </div >
+    </div>
   );
 };
 

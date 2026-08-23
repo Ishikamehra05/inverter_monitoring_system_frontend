@@ -67,7 +67,7 @@ export async function apiClient<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const token = getToken();
-  const isForm = Boolean(options.formData);
+  const isForm = Boolean(options.formData) || options.body instanceof FormData;
 
   let response = await fetch(buildUrl(endpoint), {
     method: options.method ?? "GET",
@@ -77,7 +77,7 @@ export async function apiClient<T>(
       ...options.headers,
     },
     body: isForm
-      ? options.formData
+      ? (options.formData ?? (options.body as FormData))
       : options.body === undefined
         ? undefined
         : JSON.stringify(options.body),
@@ -103,7 +103,7 @@ export async function apiClient<T>(
         },
 
         body: isForm
-          ? options.formData
+          ? (options.formData ?? (options.body as FormData))
           : options.body === undefined
             ? undefined
             : JSON.stringify(options.body),

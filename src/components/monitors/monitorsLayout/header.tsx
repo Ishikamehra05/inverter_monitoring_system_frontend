@@ -12,7 +12,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import LanguageDropdown from "@/components/ui/LanguageDropdown";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import LogoutForm from "@/components/auth/LogoutForm";
 import BrandLogo from "@/components/ui/BrandLogo";
 import { navigateMonitor } from "@/utils/monitorNavigation";
@@ -138,9 +138,8 @@ export default function Header({ hideLogout }: { hideLogout?: boolean }) {
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState<"Plant" | "Logs">("Plant");
 
-  const fromService = searchParams.get("fromService") === "true";
-
   const showBackButton = searchParams.get("fromService") === "true";
+  const isGlobalMonitoringPage = pathname === "/monitor/plants/global";
 
   const handleNavigation = (tab: "Plant" | "Logs") => {
     setActiveTab(tab);
@@ -153,41 +152,61 @@ export default function Header({ hideLogout }: { hideLogout?: boolean }) {
   };
 
   return (
-    <header className="w-full h-16 bg-white border-b border-gray-200 px-6">
+    <header
+      className={`w-full h-16 px-6 ${
+        isGlobalMonitoringPage
+          ? "border-b border-white/10 bg-transparent"
+          : "border-b border-gray-200 bg-white"
+      }`}
+    >
       <div className="h-full flex items-center justify-between">
-        {/* LEFT */}
-        <div className="flex items-center gap-6 md:gap-12">
-          {showBackButton && (
-            <button
-              onClick={() => router.back()}
-              className="flex items-center justify-center p-2 rounded hover:bg-[rgba(255,255,255,0.1)] text-gray-600 transition"
-            >
-              <ArrowLeft size={20} />
-            </button>
-          )}
-          <BrandLogo />
+        {isGlobalMonitoringPage ? (
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Go back"
+            title="Go back"
+            className="flex items-center justify-center rounded  text-white transition hover:bg-white/10 hover:text-cyan-300 mb-5"
+          >
+            <ArrowLeft size={22} />
+          </button>
+        ) : (
+          <>
+            {/* LEFT */}
+            <div className="flex items-center gap-6 md:gap-12">
+              {showBackButton && (
+                <button
+                  onClick={() => router.back()}
+                  className="flex items-center justify-center p-2 rounded hover:bg-[rgba(255,255,255,0.1)] text-gray-600 transition"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+              )}
+              <BrandLogo />
 
-          <div className="flex gap-2">
-            <NavButton
-              icon={<Factory size={16} />}
-              label="Plant"
-              active={activeTab === "Plant"}
-              onClick={() => handleNavigation("Plant")}
-            />
-            <NavButton
-              icon={<FileText size={16} />}
-              label="Logs"
-              active={activeTab === "Logs"}
-              onClick={() => handleNavigation("Logs")}
-            />
-          </div>
-        </div>
+              <div className="flex gap-2">
+                <NavButton
+                  icon={<Factory size={16} />}
+                  label="Plant"
+                  active={activeTab === "Plant"}
+                  onClick={() => handleNavigation("Plant")}
+                />
+                <NavButton
+                  icon={<FileText size={16} />}
+                  label="Logs"
+                  active={activeTab === "Logs"}
+                  onClick={() => handleNavigation("Logs")}
+                />
+              </div>
+            </div>
 
-        {/* RIGHT */}
-        <div className="flex items-center justify-between gap-6">
-          <LanguageDropdown />
-          <UserDropdown hideLogout={hideLogout} />
-        </div>
+            {/* RIGHT */}
+            <div className="flex items-center justify-between gap-6">
+              <LanguageDropdown />
+              <UserDropdown hideLogout={hideLogout} />
+            </div>
+          </>
+        )}
       </div>
     </header>
   );

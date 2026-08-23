@@ -162,7 +162,7 @@ export const plantsApi = {
       `/monitor/plants/summary${withQuery(params)}`,
     ).then((res) => res.data),
 
-  create: (payload: CreatePlantRequest) =>
+  create: (payload: CreatePlantRequest | FormData) =>
     apiClient<ApiEnvelope<{ id: string }>>("/monitor/plants/create", {
       method: "POST",
       body: payload,
@@ -170,7 +170,7 @@ export const plantsApi = {
 
   update: (
     plantId: string,
-    payload: Partial<CreatePlantRequest>,
+    payload: Partial<CreatePlantRequest> | FormData,
     params: ServiceScopeParams = {},
   ) =>
     apiClient<ApiEnvelope<null>>(

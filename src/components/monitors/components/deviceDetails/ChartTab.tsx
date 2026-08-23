@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ResponsiveContainer,
@@ -12,7 +12,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Download } from "lucide-react";
-import { useDeviceChartExport } from "@/hooks/api/useDevices"
+import { useDeviceChartExport } from "@/hooks/api/useDevices";
 
 type Range = "day" | "month" | "year";
 
@@ -26,24 +26,17 @@ type ChartTabProps = {
   plantId: string;
 };
 
-const dayTicks = [
-  0, 180, 360, 540,
-  720, 900, 1080,
-  1260, 1440,
-];
+const dayTicks = [0, 180, 360, 540, 720, 900, 1080, 1260, 1440];
 
 const formatTime = (minutes: number) => {
   const hrs = Math.floor(minutes / 60)
     .toString()
     .padStart(2, "0");
 
-  const mins = (minutes % 60)
-    .toString()
-    .padStart(2, "0");
+  const mins = (minutes % 60).toString().padStart(2, "0");
 
   return `${hrs}:${mins}`;
 };
-
 
 const ChartTab = ({
   chartDate,
@@ -57,54 +50,40 @@ const ChartTab = ({
   const searchParams = useSearchParams();
   const selectedEndUserId = searchParams.get("targetEndUserId");
 
-  const serviceParams =
-    selectedEndUserId
-      ? {
-        fromService: true,
-        targetEndUserId: selectedEndUserId,
-      }
-      : {};
+  const serviceParams = selectedEndUserId
+    ? {
+      fromService: true,
+      targetEndUserId: selectedEndUserId,
+    }
+    : {};
   const apiChart = chartData;
 
   const chartPoints = useMemo(() => {
     return (
       apiChart?.points?.map((p: any) => {
         if (apiChart?.range === "day") {
-          const date = new Date(
-            p.time.replace(" ", "T")
-          );
+          const date = new Date(p.time.replace(" ", "T"));
 
           return {
             ...p,
-            timeValue:
-              date.getHours() * 60 +
-              date.getMinutes(),
+            timeValue: date.getHours() * 60 + date.getMinutes(),
             originalTime: p.time,
             total: Number(p.total ?? 0),
           };
         }
 
         return {
-          time:
-            apiChart?.range === "year"
-              ? p.month
-              : p.date,
+          time: apiChart?.range === "year" ? p.month : p.date,
           total: Number(p.total ?? 0),
         };
       }) ?? []
     );
   }, [apiChart]);
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: any) => {
-    if (!active || !payload?.length)
-      return null;
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
 
-    const point =
-      payload[0]?.payload;
+    const point = payload[0]?.payload;
 
     return (
       <div className="bg-white border rounded shadow px-3 py-2">
@@ -125,9 +104,7 @@ const ChartTab = ({
 
   const hasData =
     chartPoints.length > 0 &&
-    chartPoints.some(
-      (item: any) => Number(item.total ?? 0) > 0
-    );
+    chartPoints.some((item: any) => Number(item.total ?? 0) > 0);
 
   const activeBtn = "bg-white text-black shadow-md";
   const inactiveBtn = "bg-gray-100 text-gray-700";
@@ -166,6 +143,52 @@ const ChartTab = ({
       console.error(error);
     }
   };
+  // useEffect(() => {
+  //   const today = new Date();
+
+  //   if (range === "day") {
+  //     const year = today.getFullYear();
+  //     const month = String(today.getMonth() + 1).padStart(2, "0");
+  //     const day = String(today.getDate()).padStart(2, "0");
+
+  //     setChartDate(`${year}-${month}-${day}`);
+  //   }
+  //   if (range === "month") {
+  //     const year = today.getFullYear();
+  //     const month = String(today.getMonth() + 1).padStart(2, "0");
+
+  //     setChartDate(`${year}-${month}`);
+  //   }
+
+  //   if (range === "year") {
+  //     setChartDate(String(today.getFullYear()));
+  //   }
+  // }, [range, setChartDate]);
+
+  useEffect(() => {
+    const today = new Date();
+
+    if (range === "day") {
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+
+      setChartDate(`${year}-${month}-${day}`);
+    }
+
+    if (range === "month") {
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+
+      setChartDate(`${year}-${month}-01`);
+    }
+
+    if (range === "year") {
+      const year = today.getFullYear();
+
+      setChartDate(`${year}-01-01`);
+    }
+  }, [range, setChartDate]);
   return (
     <div className="mt-4 w-full">
       {/* Controls */}
@@ -185,12 +208,71 @@ const ChartTab = ({
         </div>
 
         {/* Date */}
-        <input
-          type="date"
-          className="border rounded px-3 py-1.5 cursor-pointer transition-all duration-200 text-black hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-          value={chartDate}
-          onChange={(e) => setChartDate(e.target.value)}
-        />
+        {/* Date / Month / Year Picker */}
+        {range === "day" && (
+          <input
+            type="date"
+            className="border rounded px-3 py-1.5 cursor-pointer transition-all duration-200 text-black hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+            value={chartDate}
+            onChange={(e) => setChartDate(e.target.value)}
+          />
+        )}
+
+        {/* {range === "month" && (
+          <input
+            type="month"
+            className="border rounded px-3 py-1.5 cursor-pointer transition-all duration-200 text-black hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+            value={chartDate}
+            onChange={(e) => setChartDate(e.target.value)}
+          />
+        )} */}
+        {range === "month" && (
+          <input
+            type="month"
+            className="border rounded px-3 py-1.5 cursor-pointer transition-all duration-200 text-black hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+            value={chartDate.slice(0, 7)}
+            onChange={(e) => {
+              setChartDate(`${e.target.value}-01`);
+            }}
+          />
+        )}
+
+        {/* {range === "year" && (
+          <select
+            value={chartDate}
+            onChange={(e) => setChartDate(e.target.value)}
+            className="border rounded px-3 py-1.5 cursor-pointer transition-all duration-200 text-black hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+          >
+            {Array.from({ length: 21 }, (_, index) => {
+              const year = new Date().getFullYear() - 10 + index;
+
+              return (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              );
+            })}
+          </select>
+        )} */}
+        {range === "year" && (
+          <select
+            value={chartDate.slice(0, 4)}
+            onChange={(e) => {
+              setChartDate(`${e.target.value}-01-01`);
+            }}
+            className="border rounded px-3 py-1.5 cursor-pointer transition-all duration-200 text-black hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+          >
+            {Array.from({ length: 11 }, (_, index) => {
+              const year = new Date().getFullYear() - 10 + index;
+
+              return (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              );
+            })}
+          </select>
+        )}
         <button
           onClick={handleExport}
           disabled={chartExportMutation.isPending}
@@ -198,9 +280,7 @@ const ChartTab = ({
         >
           <span className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            {chartExportMutation.isPending
-              ? "Exporting..."
-              : "Download"}
+            {chartExportMutation.isPending ? "Exporting..." : "Download"}
           </span>
         </button>
       </div>
@@ -218,37 +298,17 @@ const ChartTab = ({
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <div className="text-sm text-gray-500 mb-2">
-                {apiChart?.unit}
-              </div>
+              <div className="text-sm text-gray-500 mb-2">{apiChart?.unit}</div>
               {apiChart?.chartType === "area" ? (
                 <AreaChart data={chartPoints}>
                   <CartesianGrid strokeDasharray="5 5" vertical={false} />
                   <XAxis
-                    dataKey={
-                      range === "day"
-                        ? "timeValue"
-                        : "time"
-                    }
-                    type={
-                      range === "day"
-                        ? "number"
-                        : "category"
-                    }
-                    domain={
-                      range === "day"
-                        ? [0, 1440]
-                        : undefined
-                    }
-                    ticks={
-                      range === "day"
-                        ? dayTicks
-                        : undefined
-                    }
+                    dataKey={range === "day" ? "timeValue" : "time"}
+                    type={range === "day" ? "number" : "category"}
+                    domain={range === "day" ? [0, 1440] : undefined}
+                    ticks={range === "day" ? dayTicks : undefined}
                     tickFormatter={(value) =>
-                      range === "day"
-                        ? formatTime(value)
-                        : value
+                      range === "day" ? formatTime(value) : value
                     }
                   />
                   <YAxis />
@@ -286,14 +346,29 @@ const ChartTab = ({
                   <XAxis dataKey="time" />
                   <YAxis />
                   <Tooltip
-                    cursor={false}
-                    content={<CustomTooltip />}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+
+                      const point = payload[0].payload;
+
+                      return (
+                        <div className="bg-white border rounded shadow px-3 py-2">
+                          <p className="text-black font-medium mb-1">
+                            {range === "day"
+                              ? point.originalTime
+                              : range === "month"
+                                ? `Date: ${point.time}`
+                                : `Month: ${point.time}`}
+                          </p>
+
+                          <p className="text-blue-600">
+                            Total: {payload[0].value} {apiChart?.unit}
+                          </p>
+                        </div>
+                      );
+                    }}
                   />
-                  <Bar
-                    dataKey="total"
-                    fill="#2f80ed"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="total" fill="#2f80ed" radius={[4, 4, 0, 0]} />
                 </BarChart>
               )}
             </ResponsiveContainer>

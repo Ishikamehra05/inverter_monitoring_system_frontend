@@ -105,10 +105,10 @@ const AnalysisChart = ({ selectedParams }: { selectedParams: string[] }) => {
 
           {/* Power */}
           <YAxis
-            yAxisId="kW"
+            yAxisId="W"
             orientation="right"
             offset={60}
-            label={{ value: "(kW)", angle: 0, position: "insideTopRight" }}
+            label={{ value: "(W)", angle: 0, position: "insideTopRight" }}
           />
 
           <Tooltip />

@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus } from "lucide-react";
+import {
+  FlipHorizontal,
+  FlipVertical,
+  RotateCcw,
+  RotateCw,
+  Search,
+  Plus,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import Image from "next/image";
 import { Pagination } from "@/components/monitors/pagination";
 import { FiX } from "react-icons/fi";
@@ -33,6 +42,8 @@ type Plant = {
   address: string;
   longitude: string;
   latitude: string;
+  picture?: string | null;
+  pictureFileId?: string | null;
 
   status: "Offline" | "Online" | "Abnormal" | "Standby";
 
@@ -41,6 +52,27 @@ type Plant = {
   abnormalCount: number;
   standbyCount: number;
   offlineCount: number;
+};
+type PlantSortField = Exclude<keyof Plant, "picture" | "pictureFileId">;
+
+const getPlantPictureUrl = (picture: unknown) => {
+  if (!picture) return "";
+
+  if (typeof picture === "object") {
+    const image = picture as Record<string, unknown>;
+    return getPlantPictureUrl(
+      image.url ?? image.uri ?? image.path ?? image.location,
+    );
+  }
+
+  if (typeof picture !== "string") return "";
+  if (/^(data:|blob:|https?:\/\/)/i.test(picture)) return picture;
+  if (picture.startsWith("/")) return picture;
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!apiBaseUrl) return picture;
+
+  return `${apiBaseUrl.replace(/\/$/, "")}/${picture.replace(/^\//, "")}`;
 };
 
 /* ---------- Stat Card ---------- */
@@ -184,11 +216,11 @@ const SortHeader = ({
   onSort,
 }: {
   label: string;
-  field: keyof Plant;
-  sortField: keyof Plant | null;
+  field: PlantSortField;
+  sortField: PlantSortField | null;
   onClick?: () => void;
   sortOrder: "asc" | "desc";
-  onSort: (field: keyof Plant) => void;
+  onSort: (field: PlantSortField) => void;
 }) => {
   return (
     <th
@@ -218,14 +250,30 @@ const PlantTable = ({
   plants: Plant[];
   plantTypeFilter: string[];
   setPlantTypeFilter: (v: string[]) => void;
-  sortField: keyof Plant | null;
+  sortField: PlantSortField | null;
   sortOrder: "asc" | "desc";
-  onSort: (field: keyof Plant) => void;
+  onSort: (field: PlantSortField) => void;
   onDelete: (id: string) => void;
   onEdit: (plant: Plant) => void;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
+  const [previewRotation, setPreviewRotation] = useState(0);
+  const [previewScale, setPreviewScale] = useState(1);
+  const [previewFlipX, setPreviewFlipX] = useState(false);
+  const [previewFlipY, setPreviewFlipY] = useState(false);
+
+  const openImagePreview = (src: string, alt: string) => {
+    setPreviewImage({ src, alt });
+    setPreviewRotation(0);
+    setPreviewScale(1);
+    setPreviewFlipX(false);
+    setPreviewFlipY(false);
+  };
 
   const handlePlantClick = (plantId: string, status: Plant["status"]) => {
     const userId = searchParams.get("userid");
@@ -250,19 +298,20 @@ const PlantTable = ({
     switch (status.toLowerCase()) {
       case "online":
       case "normal":
-        return "bg-green-100 border border-green-700 text-green-700";
+        return "bg-green-500 text-green-400";
 
       case "abnormal":
       case "fault":
-        return "bg-red-100 border border-[#ff7875] text-red-700";
+        return "bg-red-400 text-white-400";
 
       case "standby":
-        return "bg-yellow-100 border border-yellow-700 text-yellow-700";
+        return "bg-yellow-400  text-white-400";
 
       case "offline":
-        return "bg-gray-100 border border-gray-600 text-gray-700";
+        return "bg-gray-400  text-white-400";
+
       default:
-        return "bg-gray-100 border border-gray-400 text-gray-600";
+        return "bg-gray-400  text-white-400";
     }
   };
 
@@ -286,6 +335,8 @@ const PlantTable = ({
               sortOrder={sortOrder}
               onSort={onSort}
             />
+
+            <th className="p-3 text-left text-gray-600">Image</th>
 
             <th className="p-3 text-left text-gray-600">
               <div className="flex items-center">
@@ -348,7 +399,7 @@ const PlantTable = ({
             <tr key={p.name} className=" whitespace-nowrap">
               <td className="p-3">
                 <span
-                  className={`text-black text-xs px-2 py-1 rounded font-medium ${getStatusStyle(
+                  className={`text-white text-xs px-2 py-1 rounded font-medium ${getStatusStyle(
                     p.status,
                   )}`}
                 >
@@ -360,6 +411,28 @@ const PlantTable = ({
                 onClick={() => handlePlantClick(p.id, p.status)}
               >
                 {p.name}
+              </td>
+              <td className="p-3">
+                {p.picture ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openImagePreview(p.picture as string, `${p.name} plant`)
+                    }
+                    className="cursor-zoom-in"
+                    aria-label={`Preview ${p.name} image`}
+                  >
+                    <img
+                      src={p.picture}
+                      alt={`${p.name} plant`}
+                      className="h-12 w-20 rounded object-cover"
+                    />
+                  </button>
+                ) : (
+                  <span className="text-gray-400">
+                    {p.pictureFileId ? "Image unavailable" : "No image"}
+                  </span>
+                )}
               </td>
               <td className="p-3 text-black">{p.type}</td>
               <td className="p-3 text-black">{p.eToday}</td>
@@ -379,9 +452,104 @@ const PlantTable = ({
           ))}
         </tbody>
       </table>
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image preview"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-2xl text-white hover:bg-black/70"
+            aria-label="Close image preview"
+          >
+            ×
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            className="max-h-[75vh] max-w-[90vw] object-contain shadow-2xl transition-transform duration-200"
+            style={{
+              transform: `rotate(${previewRotation}deg) scale(${previewScale}) scaleX(${previewFlipX ? -1 : 1}) scaleY(${previewFlipY ? -1 : 1})`,
+            }}
+            onClick={(event) => event.stopPropagation()}
+          />
+          <div
+            className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/55 p-2 text-white shadow-lg"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <PreviewToolButton
+              label="Flip vertically"
+              onClick={() => setPreviewFlipY((value) => !value)}
+            >
+              <FlipVertical size={18} />
+            </PreviewToolButton>
+            <PreviewToolButton
+              label="Flip horizontally"
+              onClick={() => setPreviewFlipX((value) => !value)}
+            >
+              <FlipHorizontal size={18} />
+            </PreviewToolButton>
+            <PreviewToolButton
+              label="Rotate left"
+              onClick={() => setPreviewRotation((value) => value - 90)}
+            >
+              <RotateCcw size={18} />
+            </PreviewToolButton>
+            <PreviewToolButton
+              label="Rotate right"
+              onClick={() => setPreviewRotation((value) => value + 90)}
+            >
+              <RotateCw size={18} />
+            </PreviewToolButton>
+            <PreviewToolButton
+              label="Zoom out"
+              onClick={() =>
+                setPreviewScale((value) => Math.max(0.5, value - 0.25))
+              }
+            >
+              <ZoomOut size={18} />
+            </PreviewToolButton>
+            <PreviewToolButton
+              label="Zoom in"
+              onClick={() =>
+                setPreviewScale((value) => Math.min(3, value + 0.25))
+              }
+            >
+              <ZoomIn size={18} />
+            </PreviewToolButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+function PreviewToolButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="flex h-9 w-9 items-center justify-center rounded-full text-white/80 hover:bg-white/15 hover:text-white"
+    >
+      {children}
+    </button>
+  );
+}
 
 /* ---------- Main Page ---------- */
 export default function PlantPage() {
@@ -390,7 +558,7 @@ export default function PlantPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [plantTypeFilter, setPlantTypeFilter] = useState<string[]>([]);
-  const [sortField, setSortField] = useState<keyof Plant | null>(null);
+  const [sortField, setSortField] = useState<PlantSortField | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -462,6 +630,8 @@ export default function PlantPage() {
       },
       installed: p.installed,
       updated: p.updated,
+      picture: getPlantPictureUrl(p.picture ?? p.pictureUrl ?? p.imageUrl),
+      pictureFileId: p.pictureFileId,
 
       // Flatten the nested object for the UI (backend returns `plantStatus` object)
       status: p.plantStatus?.status ?? "Offline",
@@ -555,7 +725,7 @@ export default function PlantPage() {
   //     apiPlantData.filter((p) => p.status === "Offline").length,
   // };
 
-  const handleSort = (field: keyof Plant) => {
+  const handleSort = (field: PlantSortField) => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {

@@ -5,8 +5,37 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
-import { usePlants } from '@/hooks/api/usePlants';
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { usePlants } from "@/hooks/api/usePlants";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FlipHorizontal,
+  FlipVertical,
+  RotateCcw,
+  RotateCw,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+
+const getPlantPictureUrl = (picture: unknown) => {
+  if (!picture) return "";
+
+  if (typeof picture === "object") {
+    const image = picture as Record<string, unknown>;
+    return getPlantPictureUrl(
+      image.url ?? image.uri ?? image.path ?? image.location,
+    );
+  }
+
+  if (typeof picture !== "string") return "";
+  if (/^(data:|blob:|https?:\/\/)/i.test(picture)) return picture;
+  if (picture.startsWith("/")) return picture;
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!apiBaseUrl) return picture;
+
+  return `${apiBaseUrl.replace(/\/$/, "")}/${picture.replace(/^\//, "")}`;
+};
 
 export default function PlantPage() {
   const searchParams = useSearchParams();
@@ -17,6 +46,22 @@ export default function PlantPage() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
+  const [previewRotation, setPreviewRotation] = useState(0);
+  const [previewScale, setPreviewScale] = useState(1);
+  const [previewFlipX, setPreviewFlipX] = useState(false);
+  const [previewFlipY, setPreviewFlipY] = useState(false);
+
+  const openImagePreview = (src: string, alt: string) => {
+    setPreviewImage({ src, alt });
+    setPreviewRotation(0);
+    setPreviewScale(1);
+    setPreviewFlipX(false);
+    setPreviewFlipY(false);
+  };
 
   const pageSize = 10;
 
@@ -99,14 +144,49 @@ export default function PlantPage() {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-black">Status</th>
-                <th className="px-4 py-2 text-left font-medium text-black">PlantName</th>
-                <SortableHeader label="Power" sortKey="power" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <SortableHeader label="E-Today" sortKey="eToday" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <SortableHeader label="E-Total" sortKey="eTotal" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <SortableHeader label="Capacity" sortKey="capacity" currentKey={sortKey} order={sortOrder} onSort={handleSort} />
-                <th className="px-4 py-2 text-left font-medium text-black">Installed Date</th>
-                <th className="px-4 py-2 text-left font-medium text-black">PlantType</th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  Status
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  PlantName
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  Image
+                </th>
+                <SortableHeader
+                  label="Power"
+                  sortKey="power"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="E-Today"
+                  sortKey="eToday"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="E-Total"
+                  sortKey="eTotal"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Capacity"
+                  sortKey="capacity"
+                  currentKey={sortKey}
+                  order={sortOrder}
+                  onSort={handleSort}
+                />
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  Installed Date
+                </th>
+                <th className="px-4 py-2 text-left font-medium text-black">
+                  PlantType
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -126,7 +206,39 @@ export default function PlantPage() {
                   </td>
 
                   <td className="px-4 py-2">
-                    {plant.power?.value ?? 0} {plant.power?.unit ?? ""}
+                    {getPlantPictureUrl(
+                      plant.picture ?? plant.pictureUrl ?? plant.imageUrl,
+                    ) ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openImagePreview(
+                            getPlantPictureUrl(
+                              plant.picture ??
+                                plant.pictureUrl ??
+                                plant.imageUrl,
+                            ),
+                            `${plant.name} plant`,
+                          )
+                        }
+                        className="cursor-zoom-in"
+                        aria-label={`Preview ${plant.name} image`}
+                      >
+                        <img
+                          src={getPlantPictureUrl(
+                            plant.picture ?? plant.pictureUrl ?? plant.imageUrl,
+                          )}
+                          alt={`${plant.name} plant`}
+                          className="h-12 w-20 rounded object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <span className="text-gray-400">No image</span>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-2">
+                    {plant.power?.value ?? 0} {plant.power?.unit ?? "W"}
                   </td>
 
                   <td className="px-4 py-2">
@@ -153,6 +265,79 @@ export default function PlantPage() {
             </tbody>
           </table>
         </div>
+
+        {previewImage && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Image preview"
+            onClick={() => setPreviewImage(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-2xl text-white hover:bg-black/70"
+              aria-label="Close image preview"
+            >
+              ×
+            </button>
+            <img
+              src={previewImage.src}
+              alt={previewImage.alt}
+              className="max-h-[75vh] max-w-[90vw] object-contain shadow-2xl transition-transform duration-200"
+              style={{
+                transform: `rotate(${previewRotation}deg) scale(${previewScale}) scaleX(${previewFlipX ? -1 : 1}) scaleY(${previewFlipY ? -1 : 1})`,
+              }}
+              onClick={(event) => event.stopPropagation()}
+            />
+            <div
+              className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/55 p-2 text-white shadow-lg"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <PreviewToolButton
+                label="Flip vertically"
+                onClick={() => setPreviewFlipY((value) => !value)}
+              >
+                <FlipVertical size={18} />
+              </PreviewToolButton>
+              <PreviewToolButton
+                label="Flip horizontally"
+                onClick={() => setPreviewFlipX((value) => !value)}
+              >
+                <FlipHorizontal size={18} />
+              </PreviewToolButton>
+              <PreviewToolButton
+                label="Rotate left"
+                onClick={() => setPreviewRotation((value) => value - 90)}
+              >
+                <RotateCcw size={18} />
+              </PreviewToolButton>
+              <PreviewToolButton
+                label="Rotate right"
+                onClick={() => setPreviewRotation((value) => value + 90)}
+              >
+                <RotateCw size={18} />
+              </PreviewToolButton>
+              <PreviewToolButton
+                label="Zoom out"
+                onClick={() =>
+                  setPreviewScale((value) => Math.max(0.5, value - 0.25))
+                }
+              >
+                <ZoomOut size={18} />
+              </PreviewToolButton>
+              <PreviewToolButton
+                label="Zoom in"
+                onClick={() =>
+                  setPreviewScale((value) => Math.min(3, value + 0.25))
+                }
+              >
+                <ZoomIn size={18} />
+              </PreviewToolButton>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-4 mt-4 text-sm">
           <span>
@@ -184,6 +369,28 @@ export default function PlantPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function PreviewToolButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="flex h-9 w-9 items-center justify-center rounded-full text-white/80 hover:bg-white/15 hover:text-white"
+    >
+      {children}
+    </button>
   );
 }
 

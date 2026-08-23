@@ -242,6 +242,7 @@ export default function BatchTaskPage() {
                   size={16}
                   className="text-[rgba(0,0,0,0.45)] hover:text-[#ff4d4f] cursor-pointer transition"
                   onClick={() => {
+                    console.log(deleteOpen, selectedTaskId);
                     setSelectedTaskId(String(task.id));
                     setDeleteOpen(true);
                   }}

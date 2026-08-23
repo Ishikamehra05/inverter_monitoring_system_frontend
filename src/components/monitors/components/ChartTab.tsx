@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -27,12 +27,12 @@ const ChartTab = ({
 
   // legend visibility (for single mode)-------------
   const [visible, setVisible] = useState<Record<LoggerKey, boolean>>({
-  inverter1: true,
-  inverter2: true,
-  inverter3: true,
-});
+    inverter1: true,
+    inverter2: true,
+    inverter3: true,
+  });
 
-const loggerKeys: LoggerKey[] = ["inverter1", "inverter2", "inverter3"];
+  const loggerKeys: LoggerKey[] = ["inverter1", "inverter2", "inverter3"];
 
   // ---------- BASE DATA (hourly) ----------
   const baseData = useMemo(() => {
@@ -142,6 +142,30 @@ const loggerKeys: LoggerKey[] = ["inverter1", "inverter2", "inverter3"];
       ))}
     </div>
   );
+  const handleRangeChange = (newRange: Range) => {
+    const today = new Date();
+
+    setRange(newRange);
+
+    if (newRange === "day") {
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+
+      setChartDate(`${year}-${month}-${day}`);
+    }
+
+    if (newRange === "month") {
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+
+      setChartDate(`${year}-${month}`);
+    }
+
+    if (newRange === "year") {
+      setChartDate(String(today.getFullYear()));
+    }
+  };
 
   return (
     <div className="mt-4 w-full">
@@ -175,7 +199,7 @@ const loggerKeys: LoggerKey[] = ["inverter1", "inverter2", "inverter3"];
             {(["day", "month", "year"] as Range[]).map((r) => (
               <button
                 key={r}
-                onClick={() => setRange(r)}
+                onClick={() => handleRangeChange(r)}
                 className={`px-3 py-1 text-sm capitalize ${
                   range === r ? activeBtn : inactiveBtn
                 }`}
@@ -186,12 +210,52 @@ const loggerKeys: LoggerKey[] = ["inverter1", "inverter2", "inverter3"];
           </div>
 
           {/* Date */}
-          <input
-            type="date"
-            className="border border-black rounded-md px-2 py-1 text-sm"
-            value={chartDate}
-            onChange={(e) => setChartDate(e.target.value)}
-          />
+          {/* Date / Month / Year Picker */}
+
+          {range === "day" && (
+            <input
+              key="day-picker"
+              type="date"
+              value={chartDate}
+              onChange={(e) => {
+                setChartDate(e.target.value);
+              }}
+              className="border border-black rounded-md px-3 py-1.5 text-sm cursor-pointer"
+            />
+          )}
+
+          {range === "month" && (
+            <input
+              key="month-picker"
+              type="month"
+              value={chartDate}
+              onChange={(e) => {
+                setChartDate(e.target.value);
+              }}
+              className="border border-black rounded-md px-3 py-1.5 text-sm cursor-pointer"
+            />
+          )}
+
+          {range === "year" && (
+            <select
+              key="year-picker"
+              value={chartDate}
+              onChange={(e) => {
+                setChartDate(e.target.value);
+              }}
+              className="border border-black rounded-md px-3 py-1.5 text-sm cursor-pointer bg-white"
+            >
+              {Array.from({ length: 21 }, (_, index) => {
+                const year = new Date().getFullYear() - 10 + index;
+
+                return (
+                  <option key={year} value={String(year)}>
+                    {year}
+                  </option>
+                );
+              })}
+            </select>
+          )}
         </div>
       </div>
 
@@ -251,9 +315,15 @@ const loggerKeys: LoggerKey[] = ["inverter1", "inverter2", "inverter3"];
 
               {mode === "single" && (
                 <>
-                  {visible.inverter1 && <Bar dataKey="inverter1" fill="#54AF3A" />}
-                  {visible.inverter2 && <Bar dataKey="inverter2" fill="#FAB832" />}
-                  {visible.inverter3 && <Bar dataKey="inverter3" fill="#D32224" />}
+                  {visible.inverter1 && (
+                    <Bar dataKey="inverter1" fill="#54AF3A" />
+                  )}
+                  {visible.inverter2 && (
+                    <Bar dataKey="inverter2" fill="#FAB832" />
+                  )}
+                  {visible.inverter3 && (
+                    <Bar dataKey="inverter3" fill="#D32224" />
+                  )}
                 </>
               )}
 
