@@ -1,7 +1,63 @@
 "use client";
 import { useState } from "react";
-import { IconType } from "react-icons";
-import { FaSolarPanel, FaBolt, FaPlug } from "react-icons/fa";
+import { Volume2 } from "lucide-react";
+
+type FlowIconProps = { className?: string };
+type FlowIcon = React.ComponentType<FlowIconProps>;
+
+const SolarIcon = ({ className }: FlowIconProps) => (
+  <svg className={className} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <path d="M13 25h22l-3-14H16l-3 14Z" fill="currentColor" opacity=".16" />
+    <path
+      d="M13 25h22l-3-14H16l-3 14Z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M20 11 18 25M27 11l3 14M15 18h16M12 29h24M24 25v7M18 36h12"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const GridIcon = ({ className }: FlowIconProps) => (
+  <svg className={className} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <path
+      d="M24 7 13 40M24 7l11 33M17 29h14M14 36h20M18 21h12M15 14h18M24 7v33M19 14l10 7-10 8 10 7"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const InverterIcon = ({ className }: FlowIconProps) => (
+  <svg className={className} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <rect
+      x="10"
+      y="7"
+      width="28"
+      height="34"
+      rx="2"
+      fill="currentColor"
+      opacity=".08"
+    />
+    <rect
+      x="10"
+      y="7"
+      width="28"
+      height="34"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+    <rect x="21" y="17" width="6" height="14" rx="2" fill="currentColor" />
+  </svg>
+);
 
 type EnergyFlowProps = {
   solarPower?: number; // kW from solar
@@ -13,7 +69,7 @@ type EnergyFlowProps = {
 };
 
 type EnergyNodeProps = {
-  icon: IconType;
+  icon: FlowIcon;
   label: string;
   value: number;
   unit?: string;
@@ -54,7 +110,7 @@ const EnergyFlow = ({
     nodeId,
     position,
   }: {
-    icon: any;
+    icon: FlowIcon;
     label: string;
     value: number;
     unit?: string;
@@ -65,17 +121,22 @@ const EnergyFlow = ({
     position: string;
   }) => (
     <div
-      className={`absolute ${position} flex flex-col items-center gap-1 sm:gap-2 transition-all duration-300 z-20 ${hoveredNode === nodeId ? "scale-110 z-10" : ""
-        }`}
+      className={`absolute ${position} flex flex-col items-center gap-1 sm:gap-2 transition-all duration-300 z-20 ${
+        hoveredNode === nodeId ? "scale-110 z-10" : ""
+      }`}
       onMouseEnter={() => setHoveredNode(nodeId)}
       onMouseLeave={() => setHoveredNode(null)}
     >
       <div
-        className={`relative ${isActive ? bgClass : "bg-gray-200"} ${isActive ? colorClass : "text-gray-400"
-          } text-xl sm:text-2xl md:text-3xl p-2 sm:p-3 md:p-4 border-2 ${isActive ? "border-current" : "border-gray-400"
-          } rounded-full transition-all duration-300`}
+        className={`relative flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white text-xl transition-all duration-300 sm:h-14 sm:w-14 sm:text-2xl md:h-16 md:w-16 md:text-3xl ${
+          isActive
+            ? `${colorClass} border-current`
+            : "border-gray-300 text-gray-400"
+        }`}
       >
-        <Icon className={`${isActive ? "animate-pulse" : ""}`} />
+        <Icon
+          className={`h-7 w-7 sm:h-8 sm:w-8 ${isActive ? "animate-pulse" : ""}`}
+        />
         {/* {isActive && (
           <div className="absolute inset-0 rounded-full bg-current opacity-20 animate-ping" />
         )} */}
@@ -109,7 +170,7 @@ const EnergyFlow = ({
         <div className="relative w-full max-w-2xl h-64 sm:h-80 md:h-96">
           {/* Solar */}
           <EnergyNode
-            icon={FaSolarPanel}
+            icon={SolarIcon}
             label="Solar"
             value={solarPower}
             isActive={isSolarActive}
@@ -121,7 +182,7 @@ const EnergyFlow = ({
 
           {/* Grid */}
           <EnergyNode
-            icon={FaBolt}
+            icon={GridIcon}
             label={isGridExporting ? "Grid (Export)" : "Grid"}
             value={gridPower}
             isActive={isGridImporting || isGridExporting}
@@ -137,7 +198,7 @@ const EnergyFlow = ({
 
           {/* Consumption/Load */}
           <EnergyNode
-            icon={FaPlug}
+            icon={InverterIcon}
             label="Consumption"
             value={consumption}
             unit={consumptionUnit}
@@ -262,10 +323,10 @@ const EnergyFlow = ({
       </div>
 
       <style jsx>{`
-       .energy-line-active {
-  stroke-dasharray: 8 4;
-  animation: energy-flow 1.5s linear infinite;
-}
+        .energy-line-active {
+          stroke-dasharray: 8 4;
+          animation: energy-flow 1.5s linear infinite;
+        }
 
         .energy-line-disabled {
           stroke-dasharray: 4 4;

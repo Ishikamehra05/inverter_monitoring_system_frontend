@@ -7,15 +7,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { usePlantSummary, usePlants } from "@/hooks/api/usePlants";
 import { usePlantInformation } from "@/hooks/api/useDashboard";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import AllPlantsChart from "@/components/monitors/components/AllPlantsChart";
 
 type EnergyRange = "day" | "month" | "year";
 
@@ -27,27 +19,19 @@ type Plant = {
   longitude: number;
   status: "Offline" | "Online" | "Abnormal" | "Standby";
   effect: string;
-
   eToday: number;
   eTodayUnit: string;
-
   eTotal: number;
   eTotalUnit: string;
-
   capacity: number;
   capacityUnit: string;
-
   currentPower: number;
   currentPowerUnit: string;
-
   number: number;
-  inverterNumber: number;
-
   normal: number;
   offline: number;
   abnormal: number;
   standby: number;
-
   reductionCO2: number;
   treePlanting: number;
 };
@@ -76,7 +60,7 @@ const fallbackPlant: Plant = {
   currentPowerUnit: "kW",
 
   number: 1,
-  inverterNumber: 4,
+  // inverterNumber: 4,
 
   normal: 4,
   offline: 0,
@@ -200,7 +184,7 @@ export default function GlobalMonitoringPage() {
           currentPower: item.power.value,
           currentPowerUnit: item.power.unit,
           number: 1,
-          inverterNumber: item.plantStatus.totalDevices,
+          // inverterNumber: item.plantStatus.totalDevices,
           normal: item.plantStatus.normalCount,
           offline: item.plantStatus.offlineCount,
           abnormal: item.plantStatus.abnormalCount,
@@ -220,28 +204,56 @@ export default function GlobalMonitoringPage() {
   const activePlant = selectedPlant ?? plant;
   const plantCount = plantsQuery.data?.pagination.totalItems ?? plants.length;
   const summary = summaryQuery.data;
+  const deviceStatus = plants.reduce(
+    (total, item) => ({
+      normal: total.normal + item.normal,
+      offline: total.offline + item.offline,
+      abnormal: total.abnormal + item.abnormal,
+      standby: total.standby + item.standby,
+    }),
+    {
+      normal: 0,
+      offline: 0,
+      abnormal: 0,
+      standby: 0,
+    },
+  );
+
   const deviceStatusTotal =
-    activePlant.normal +
-    activePlant.offline +
-    activePlant.abnormal +
-    activePlant.standby;
+    deviceStatus.normal +
+    deviceStatus.offline +
+    deviceStatus.abnormal +
+    deviceStatus.standby;
+
   const statusSegments = [
-    { count: activePlant.normal, color: "#00e676" },
-    { count: activePlant.offline, color: "#9ca3af" },
-    { count: activePlant.abnormal, color: "#ff3038" },
-    { count: activePlant.standby, color: "#f5b400" },
+    {
+      count: deviceStatus.normal,
+      color: "#00e676",
+    },
+    {
+      count: deviceStatus.offline,
+      color: "#9ca3af",
+    },
+    {
+      count: deviceStatus.abnormal,
+      color: "#ff3038",
+    },
+    {
+      count: deviceStatus.standby,
+      color: "#f5b400",
+    },
   ];
   let statusOffset = 0;
   const statusGradient =
     deviceStatusTotal > 0
       ? statusSegments
-          .filter((segment) => segment.count > 0)
-          .map((segment) => {
-            const start = statusOffset;
-            statusOffset += (segment.count / deviceStatusTotal) * 100;
-            return `${segment.color} ${start}% ${statusOffset}%`;
-          })
-          .join(", ")
+        .filter((segment) => segment.count > 0)
+        .map((segment) => {
+          const start = statusOffset;
+          statusOffset += (segment.count / deviceStatusTotal) * 100;
+          return `${segment.color} ${start}% ${statusOffset}%`;
+        })
+        .join(", ")
       : "#334155 0% 100%";
   const informationQuery = usePlantInformation(activePlant.id);
   const informationStats = informationQuery.data?.stats ?? [];
@@ -385,7 +397,7 @@ export default function GlobalMonitoringPage() {
             global-panel-scroll
             border-r
             border-white/10
-            bg-blue-950/25
+            bg-blue-950/1
             px-6
             py-8
             backdrop-blur-[2px]
@@ -411,11 +423,11 @@ export default function GlobalMonitoringPage() {
           {/* Number */}
 
           <div className="mt-8 grid grid-cols-2 gap-6 animate-[contentIn_.7s_.15s_ease-out_both]">
-            <SimpleValue title="Number" value={plantCount} />
+            {/* <SimpleValue title="Number" value={plantCount} /> */}
 
             <SimpleValue
-              title="Inverter Number"
-              value={activePlant.inverterNumber}
+              title="Plant Number"
+              value={plantsQuery.data?.statusCounts?.All ?? 0}
             />
           </div>
 
@@ -438,73 +450,130 @@ export default function GlobalMonitoringPage() {
           {/* Device status */}
 
           <div className="mt-12 animate-[contentIn_.7s_.35s_ease-out_both]">
-            <p className="mb-7 text-sm">Device Status</p>
+            <p className="mb-7 text-sm font-medium">
+              Device Status
+            </p>
 
-            <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-7 sm:gap-10">
+            <div className="grid grid-cols-[140px_minmax(0,1fr)] items-center gap-8">
+              {/* Ring */}
               <div className="group relative">
                 <div
-                  className="relative h-28 w-28 rounded-full animate-[gaugeIn_.8s_ease-out_both] status-ring-glow"
+                  className="
+          relative
+          h-32
+          w-32
+          rounded-full
+          animate-[gaugeIn_.8s_ease-out_both]
+          status-ring-glow
+        "
                   style={{
                     background: `conic-gradient(${statusGradient})`,
                     WebkitMask:
                       "radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px))",
-                    mask: "radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px))",
+                    mask:
+                      "radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px))",
                   }}
                 >
-                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[#071524]/80 text-center text-xs text-cyan-300">
+                  <span
+                    className="
+            absolute
+            inset-0
+            flex
+            items-center
+            justify-center
+            rounded-full
+            bg-[#071524]/80
+            text-center
+            text-xs
+            text-white
+          "
+                  >
                     {deviceStatusTotal} devices
                   </span>
                 </div>
 
-                <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-3 w-44 -translate-x-1/2 translate-y-1 rounded-md border border-emerald-400 bg-[#071524] px-3 py-2 text-xs opacity-0 shadow-xl transition duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-                  <p className="mb-2 font-medium text-white">Device Status</p>
+                {/* Tooltip */}
+                <div
+                  className="
+    pointer-events-none
+    absolute
+    left-1/2
+    top-full
+    z-30
+    mt-6
+    w-44
+    -translate-x-1/2
+    translate-y-1
+    rounded-md
+    border
+    border-emerald-400
+    bg-[#071524]
+    px-3
+    py-2
+    text-xs
+    opacity-0
+    shadow-xl
+    transition
+    duration-200
+    group-hover:translate-y-0
+    group-hover:opacity-100
+  "
+                >
+                  <p className="mb-2 font-medium text-white">
+                    Device Status
+                  </p>
+
                   <div className="space-y-1">
                     <StatusTooltipRow
                       label="Normal"
-                      value={activePlant.normal}
+                      value={deviceStatus.normal}
                       color="bg-emerald-500"
                     />
+
                     <StatusTooltipRow
                       label="Offline"
-                      value={activePlant.offline}
+                      value={deviceStatus.offline}
                       color="bg-gray-300"
                     />
+
                     <StatusTooltipRow
                       label="Abnormal"
-                      value={activePlant.abnormal}
+                      value={deviceStatus.abnormal}
                       color="bg-red-500"
                     />
+
                     <StatusTooltipRow
                       label="Standby"
-                      value={activePlant.standby}
+                      value={deviceStatus.standby}
                       color="bg-orange-500"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              {/* Legend */}
+              <div className="space-y-4">
                 <Status
                   label="Normal"
-                  value={activePlant.normal}
+                  value={deviceStatus.normal}
                   color="bg-emerald-500"
                 />
 
                 <Status
                   label="Offline"
-                  value={activePlant.offline}
+                  value={deviceStatus.offline}
                   color="bg-gray-500"
                 />
 
                 <Status
                   label="Abnormal"
-                  value={activePlant.abnormal}
+                  value={deviceStatus.abnormal}
                   color="bg-red-500"
                 />
 
                 <Status
                   label="Standby"
-                  value={activePlant.standby}
+                  value={deviceStatus.standby}
                   color="bg-yellow-500"
                 />
               </div>
@@ -513,7 +582,7 @@ export default function GlobalMonitoringPage() {
 
           {/* Environment */}
 
-          <div className="mt-2 grid grid-cols-2 gap-4 sm:gap-10 animate-[contentIn_.7s_.45s_ease-out_both]">
+          <div className="mt-28 grid grid-cols-2 gap-4 sm:gap-10 animate-[contentIn_.7s_.45s_ease-out_both]">
             <HalfGauge value={co2Value} title="Reduction CO2(t)" />
             <HalfGauge value={treePlantingValue} title="Tree Planting" />
           </div>
@@ -549,122 +618,14 @@ export default function GlobalMonitoringPage() {
             global-panel-scroll
             border-l
             border-white/10
-            bg-blue-950/20
+            bg-blue-950/2
             px-8
             py-8
           "
         >
-          {/* <h2 className="mb-6 text-sm">Energy</h2> */}
+          <h2 className="mb-6 text-sm">Energy</h2>
 
-          {/* Day / Month / Year */}
-
-          {/* <div className="mb-10 flex">
-            {(["day", "month", "year"] as EnergyRange[]).map((item) => (
-              <button
-                key={item}
-                onClick={() => setRange(item)}
-                className={`
-                  border
-                  border-gray-300
-                  px-6
-                  py-2
-                  text-sm
-                  capitalize
-
-                  ${
-                    range === item
-                      ? "bg-blue-500 text-white"
-                      : "bg-white text-gray-800"
-                  }
-
-                  ${item === "day" ? "rounded-l-md" : ""}
-                  ${item === "year" ? "rounded-r-md" : ""}
-                `}
-              >
-                {item}
-              </button>
-            ))}
-          </div> */}
-
-          {/* Unit */}
-
-          {/* <p className="mb-3 text-sm font-semibold">
-            {range === "day" ? "kW" : "kWh"}
-          </p> */}
-
-          {/* Energy Chart */}
-
-          {/* <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={energyData}>
-                <defs>
-                  <linearGradient id="energyFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor={energyColor}
-                      stopOpacity={energyFillOpacity}
-                    />
-
-                    <stop
-                      offset="95%"
-                      stopColor={energyColor}
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-
-                <CartesianGrid
-                  strokeDasharray="5 8"
-                  vertical={false}
-                  stroke="rgba(255,255,255,.15)"
-                />
-
-                <XAxis
-                  dataKey="time"
-                  tick={{
-                    fill: "#fff",
-                    fontSize: 11,
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-
-                <YAxis
-                  tick={{
-                    fill: "#fff",
-                    fontSize: 11,
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-
-                <Tooltip
-                  contentStyle={{
-                    background: "#0b1e31",
-                    border: "1px solid rgba(255,255,255,.2)",
-                    borderRadius: 6,
-                  }}
-                />
-
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke={energyColor}
-                  strokeWidth={2}
-                  fill="url(#energyFill)"
-                  dot={false}
-                  isAnimationActive
-                  animationBegin={150}
-                  animationDuration={1400}
-                  animationEasing="ease-out"
-                  activeDot={{
-                    r: 4,
-                    fill: energyColor,
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div> */}
+          <AllPlantsChart />
 
           {/* Effect */}
 
@@ -681,11 +642,10 @@ export default function GlobalMonitoringPage() {
                     key={item.id}
                     type="button"
                     onClick={() => setSelectedPlant(item)}
-                    className={`block w-full text-left transition-opacity ${
-                      item.id === activePlant.id
-                        ? "opacity-100"
-                        : "opacity-70 hover:opacity-100"
-                    }`}
+                    className={`block w-full text-left transition-opacity ${item.id === activePlant.id
+                      ? "opacity-100"
+                      : "opacity-70 hover:opacity-100"
+                      }`}
                     style={{
                       animation: `contentIn .55s ease-out ${index * 80}ms both`,
                     }}
@@ -743,26 +703,34 @@ function PlantPopup({ plant, onClose }: { plant: Plant; onClose: () => void }) {
     >
       {/* Header */}
 
+      {/* Header */}
       <div
         className="
-          relative
-          h-10
-          bg-white
-        "
+    relative
+    flex
+    h-12
+    items-center
+    bg-white
+    px-5
+  "
       >
+        <h3 className="text-lg font-semibold text-gray-800">
+          {plant.name}
+        </h3>
+
         <button
           onClick={onClose}
           className="
-            absolute
-            right-4
-            top-1/2
-            -translate-y-1/2
-            cursor-pointer
-            text-gray-500
-            transition
-            hover:rotate-90
-            hover:text-black
-          "
+      absolute
+      right-4
+      top-1/2
+      -translate-y-1/2
+      cursor-pointer
+      text-gray-500
+      transition
+      hover:rotate-90
+      hover:text-black
+    "
         >
           <X size={25} />
         </button>
@@ -783,7 +751,7 @@ function PlantPopup({ plant, onClose }: { plant: Plant; onClose: () => void }) {
       >
         <img
           src={plant.image}
-          alt={plant.name}
+          // alt={plant.name}
           className="
             h-[115px]
             w-[145px]
@@ -792,7 +760,7 @@ function PlantPopup({ plant, onClose }: { plant: Plant; onClose: () => void }) {
         />
 
         <div className="flex-1">
-          <h3 className="mb-1 text-lg">{plant.name}</h3>
+          {/* <h3 className="mb-1 text-lg">{plant.name}</h3> */}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="mr-2">
@@ -809,8 +777,7 @@ function PlantPopup({ plant, onClose }: { plant: Plant; onClose: () => void }) {
               <p className="text-xs">E-Total</p>
 
               <p className="mt text-sm">
-                {plant.eTotal.toFixed(2)}
-
+                {Number(plant.eTotal ?? 0).toFixed(2)}
                 <span className="ml-2 text-xs">{plant.eTotalUnit}</span>
               </p>
             </div>
@@ -880,7 +847,7 @@ function DigitalValue({
         <span
           className={`
             font-mono
-            text-3xl
+            text-xl
             tracking-wider
 
             ${green ? "text-lime-400" : "text-cyan-400"}

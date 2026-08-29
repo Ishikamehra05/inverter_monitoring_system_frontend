@@ -168,7 +168,6 @@ export default function Header({ hideLogout }: { hideLogout?: boolean }) {
             title="Go back"
             className="flex items-center justify-center rounded  text-white transition hover:bg-white/10 hover:text-cyan-300 mb-5"
           >
-            <ArrowLeft size={22} />
           </button>
         ) : (
           <>

@@ -210,3 +210,20 @@ export const usePlantCurrentAlerts = (
       dashboardApi.plantCurrentAlerts(plantId, params),
     enabled: !!plantId,
   });
+  
+  export const useAllPlantsChart = (
+  params: Record<string, unknown>,
+) =>
+  useQuery({
+    queryKey: [
+      "dashboard",
+      "allPlantsChart",
+      params,
+    ],
+
+    queryFn: async () => {
+      return await dashboardApi.allPlantsChart(
+        params,
+      );
+    },
+  });
