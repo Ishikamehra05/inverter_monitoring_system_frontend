@@ -25,6 +25,7 @@ export type Device = {
   name: string;
   type: string;
   sn: string;
+  macAddress: string | null;
   power: ValueWithUnit;
   today: ValueWithUnit;
   total: ValueWithUnit;
@@ -170,7 +171,7 @@ const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
                   <SortIcon column="sn" activeKey={sortKey} order={sortOrder} />
                 </div>
               </th>
-
+              <th className="px-3 py-4 text-left">Mac Address</th>
               <th
                 onClick={() => handleSort("power")}
                 className="px-3 py-4 text-left cursor-pointer hover:bg-gray-200"
@@ -256,6 +257,7 @@ const DeviceTable = ({ devices, onEdit, onDelete }: DeviceTableProps) => {
 
                 <td className="px-3 py-4">{device.type}</td>
                 <td className="px-3 py-4">{device.sn}</td>
+                <td className="px-3 py-4">{device.macAddress}</td>
                 <td>
                   {device.power.value.toFixed(2)} {device.power.unit}
                 </td>
@@ -331,6 +333,7 @@ const DeviceTab = ({ plantId }: DeviceTabProps) => {
       name: item.name,
       type: item.type,
       sn: item.sn,
+      macAddress: item.macAddress ?? null,
       power: item.power,
       today: item.today,
       total: item.total,
