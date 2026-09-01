@@ -248,26 +248,22 @@ function applyTabData(
 
 function FieldInput({
   label,
-  placeholder,
   value,
   onCommit,
   error,
+  placeholder,
+  setOpenSelect,
 }: {
   label: string;
-  placeholder?: string;
-  value?: number;
-  onCommit?: (value: number | undefined) => void;
+  value?: number | string;
+  onCommit: (value: number | undefined) => void;
   error?: string;
+  placeholder?: string;
+  setOpenSelect?: (id: string | null) => void;
 }) {
-  // const [draft, setDraft] = useState(value != null ? String(value) : "");
-  // const [prevValue, setPrevValue] = useState(value);
-
-  // if (value !== prevValue) {
-  //   setPrevValue(value);
-  //   setDraft(value != null ? String(value) : "");
-  // }
-
-  const [draft, setDraft] = useState(value != null ? String(value) : "");
+  const [draft, setDraft] = useState(
+    value != null ? String(value) : ""
+  );
 
   useEffect(() => {
     setDraft(value != null ? String(value) : "");
@@ -275,65 +271,105 @@ function FieldInput({
 
   return (
     <div>
-      <div className="text-sm text-gray-500 mb-1.5 leading-snug">{label}</div>
+      <div className="text-sm text-gray-500 mb-1.5 leading-snug">
+        {label}
+      </div>
+
       <input
         type="text"
         placeholder={placeholder}
         value={draft}
+        onFocus={() => {
+          setOpenSelect?.(null);
+        }}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
           const trimmed = draft.trim();
+
           if (trimmed === "") {
             onCommit?.(undefined);
             return;
           }
+
           const parsed = Number(trimmed);
-          onCommit?.(Number.isNaN(parsed) ? undefined : parsed);
+
+          onCommit?.(
+            Number.isNaN(parsed) ? undefined : parsed
+          );
         }}
         className={`w-full bg-gray-100 border rounded px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 ${error
           ? "border-red-400 focus:ring-red-400"
           : "border-transparent focus:ring-[#1890FF]"
           }`}
       />
-      {error && <div className="mt-1 text-xs text-red-500">{error}</div>}
+
+      {error && (
+        <div className="mt-1 text-xs text-red-500">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
 
 function FieldSelect({
+  selectId,
+  openSelect,
+  setOpenSelect,
   label,
   placeholder,
   options = [],
   value,
   onChange,
 }: {
+  selectId: string;
+  openSelect: string | null;
+  setOpenSelect: (id: string | null) => void;
   label: string;
   placeholder?: string;
   options?: { value: string; label: string }[];
   value?: string;
   onChange?: (value: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const selectedLabel = options.find((o) => o.value === value)?.label;
+  const open = openSelect === selectId;
+
+  const selectedLabel = options.find(
+    (o) => o.value === value
+  )?.label;
 
   return (
     <div className="relative">
-      <div className="text-sm text-black mb-1.5 leading-snug">{label}</div>
+      <div className="text-sm text-black mb-1.5 leading-snug">
+        {label}
+      </div>
+
       <button
-        onClick={() => setOpen(!open)}
+        type="button"
+        onClick={() =>
+          setOpenSelect(open ? null : selectId)
+        }
         className="w-full bg-gray-100 rounded px-3 py-2 text-sm text-left text-black flex items-center justify-between focus:outline-none focus:ring-1 focus:ring-[#1890FF]"
       >
-        <span>{selectedLabel || placeholder || ""}</span>
-        <ChevronDown size={14} className="text-black shrink-0" />
+        <span>
+          {selectedLabel || placeholder || ""}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`text-black shrink-0 transition-transform ${open ? "rotate-180" : ""
+            }`}
+        />
       </button>
+
       {open && options.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg z-20">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg z-[100]">
           {options.map((o) => (
             <button
+              type="button"
               key={o.value}
               onClick={() => {
                 onChange?.(o.value);
-                setOpen(false);
+                setOpenSelect(null);
               }}
               className="w-full text-left px-3 py-2 text-sm text-black hover:bg-blue-50 transition-colors"
             >
@@ -403,75 +439,186 @@ function GridParametersTab({
   value,
   onChange,
   errors,
+  openSelect,
+  setOpenSelect,
 }: {
   value: GridParameters;
   onChange: (patch: Partial<GridParameters>) => void;
   errors: FieldErrors<GridParameters>;
+  openSelect: string | null;
+  setOpenSelect: (id: string | null) => void;
 }) {
   return (
     <div className="space-y-8">
       {/* Standard Code */}
       <div className="max-w-xs">
         <FieldSelect
+          selectId="standardCode"
+          openSelect={openSelect}
+          setOpenSelect={setOpenSelect}
           label="Standard Code"
           placeholder="IN (IEC61727)"
           options={STANDARD_CODE_OPTIONS}
           value={value.standardCode}
-          onChange={(v) => onChange({ standardCode: v as GridParameters["standardCode"] })}
+          onChange={(v) =>
+            onChange({
+              standardCode: v as GridParameters["standardCode"],
+            })
+          }
         />
       </div>
 
       {/* Row 1 */}
       <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="First Connect Delay Time(s)" placeholder="120" value={value.firstConnectDelayTime} onCommit={(v) => onChange({ firstConnectDelayTime: v })} error={errors.firstConnectDelayTime} />
-        <FieldInput label="Reconnect Delay Time(s)" placeholder="120" value={value.reconnectDelayTime} onCommit={(v) => onChange({ reconnectDelayTime: v })} error={errors.reconnectDelayTime} />
-        <FieldInput label="First Connect Power Gradient(%/min)" placeholder="100" value={value.firstConnectPowerGradient} onCommit={(v) => onChange({ firstConnectPowerGradient: v })} error={errors.firstConnectPowerGradient} />
-        <FieldInput label="Reconnect Power Gradient(%/min)" placeholder="100" value={value.reconnectPowerGradient} onCommit={(v) => onChange({ reconnectPowerGradient: v })} error={errors.reconnectPowerGradient} />
+        <FieldInput
+          label="First Connect Delay Time(s)"
+          placeholder="120"
+          value={value.firstConnectDelayTime}
+          onCommit={(v) =>
+            onChange({ firstConnectDelayTime: v })
+          }
+          error={errors.firstConnectDelayTime}
+          setOpenSelect={setOpenSelect}
+        />
+
+        <FieldInput
+          label="Reconnect Delay Time(s)"
+          placeholder="120"
+          value={value.reconnectDelayTime}
+          onCommit={(v) =>
+            onChange({ reconnectDelayTime: v })
+          }
+          error={errors.reconnectDelayTime}
+          setOpenSelect={setOpenSelect}
+        />
+
+        <FieldInput
+          label="First Connect Power Gradient(%/min)"
+          placeholder="100"
+          value={value.firstConnectPowerGradient}
+          onCommit={(v) =>
+            onChange({ firstConnectPowerGradient: v })
+          }
+          error={errors.firstConnectPowerGradient}
+          setOpenSelect={setOpenSelect}
+        />
+
+        <FieldInput
+          label="Reconnect Power Gradient(%/min)"
+          placeholder="100"
+          value={value.reconnectPowerGradient}
+          onCommit={(v) =>
+            onChange({ reconnectPowerGradient: v })
+          }
+          error={errors.reconnectPowerGradient}
+          setOpenSelect={setOpenSelect}
+        />
       </div>
 
       {/* Row 2 */}
       <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="Grid First Connection Voltage High Limit (V)" placeholder="999.9" value={value.gridFirstConnectionVoltageHighLimit} onCommit={(v) => onChange({ gridFirstConnectionVoltageHighLimit: v })} error={errors.gridFirstConnectionVoltageHighLimit} />
-        <FieldInput label="Grid First Connection Voltage Low Limit (V)" placeholder="0" value={value.gridFirstConnectionVoltageLowLimit} onCommit={(v) => onChange({ gridFirstConnectionVoltageLowLimit: v })} />
-        <FieldInput label="Grid First Connection Frequency High Limit (Hz)" placeholder="99.9" value={value.gridFirstConnectionFrequencyHighLimit} onCommit={(v) => onChange({ gridFirstConnectionFrequencyHighLimit: v })} error={errors.gridFirstConnectionFrequencyHighLimit} />
-        <FieldInput label="Grid First Connection Frequency Low Limit (Hz)" placeholder="0" value={value.gridFirstConnectionFrequencyLowLimit} onCommit={(v) => onChange({ gridFirstConnectionFrequencyLowLimit: v })} />
+        <FieldInput
+          label="Grid First Connection Voltage High Limit (V)"
+          placeholder="999.9"
+          value={value.gridFirstConnectionVoltageHighLimit}
+          onCommit={(v) =>
+            onChange({
+              gridFirstConnectionVoltageHighLimit: v,
+            })
+          }
+          error={errors.gridFirstConnectionVoltageHighLimit}
+          setOpenSelect={setOpenSelect}
+        />
+
+        <FieldInput
+          label="Grid First Connection Voltage Low Limit (V)"
+          placeholder="0"
+          value={value.gridFirstConnectionVoltageLowLimit}
+          onCommit={(v) =>
+            onChange({
+              gridFirstConnectionVoltageLowLimit: v,
+            })
+          }
+          setOpenSelect={setOpenSelect}
+        />
+
+        <FieldInput
+          label="Grid First Connection Frequency High Limit (Hz)"
+          placeholder="99.9"
+          value={value.gridFirstConnectionFrequencyHighLimit}
+          onCommit={(v) =>
+            onChange({
+              gridFirstConnectionFrequencyHighLimit: v,
+            })
+          }
+          error={errors.gridFirstConnectionFrequencyHighLimit}
+          setOpenSelect={setOpenSelect}
+        />
+
+        <FieldInput
+          label="Grid First Connection Frequency Low Limit (Hz)"
+          placeholder="0"
+          value={value.gridFirstConnectionFrequencyLowLimit}
+          onCommit={(v) =>
+            onChange({
+              gridFirstConnectionFrequencyLowLimit: v,
+            })
+          }
+          setOpenSelect={setOpenSelect}
+        />
       </div>
 
       {/* Row 3 */}
       <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="Grid Reconnection Voltage High Limit (V)" placeholder="999.9" value={value.gridReconnectionVoltageHighLimit} onCommit={(v) => onChange({ gridReconnectionVoltageHighLimit: v })} error={errors.gridReconnectionVoltageHighLimit} />
-        <FieldInput label="Grid Reconnection Voltage Low Limit (V)" placeholder="0" value={value.gridReconnectionVoltageLowLimit} onCommit={(v) => onChange({ gridReconnectionVoltageLowLimit: v })} />
-        <FieldInput label="Grid Reconnection Frequency High Limit (Hz)" placeholder="99.9" value={value.gridReconnectionFrequencyHighLimit} onCommit={(v) => onChange({ gridReconnectionFrequencyHighLimit: v })} error={errors.gridReconnectionFrequencyHighLimit} />
-        <FieldInput label="Grid Reconnection Frequency Low Limit (Hz)" placeholder="0" value={value.gridReconnectionFrequencyLowLimit} onCommit={(v) => onChange({ gridReconnectionFrequencyLowLimit: v })} />
+        <FieldInput
+          label="Grid Reconnection Voltage High Limit (V)"
+          placeholder="999.9"
+          value={value.gridReconnectionVoltageHighLimit}
+          onCommit={(v) =>
+            onChange({
+              gridReconnectionVoltageHighLimit: v,
+            })
+          }
+          setOpenSelect={setOpenSelect}
+          error={errors.gridReconnectionVoltageHighLimit}
+        />
+
+        <FieldInput
+          label="Grid Reconnection Voltage Low Limit (V)"
+          placeholder="0"
+          value={value.gridReconnectionVoltageLowLimit}
+          onCommit={(v) =>
+            onChange({
+              gridReconnectionVoltageLowLimit: v,
+            })
+          }
+        />
+
+        <FieldInput
+          label="Grid Reconnection Frequency High Limit (Hz)"
+          placeholder="99.9"
+          value={value.gridReconnectionFrequencyHighLimit}
+          onCommit={(v) =>
+            onChange({
+              gridReconnectionFrequencyHighLimit: v,
+            })
+          }
+          setOpenSelect={setOpenSelect}
+          error={errors.gridReconnectionFrequencyHighLimit}
+        />
+
+        <FieldInput
+          label="Grid Reconnection Frequency Low Limit (Hz)"
+          placeholder="0"
+          value={value.gridReconnectionFrequencyLowLimit}
+          onCommit={(v) =>
+            onChange({
+              gridReconnectionFrequencyLowLimit: v,
+            })
+          }
+          setOpenSelect={setOpenSelect}
+        />
       </div>
-
-      {/* Row 4 */}
-      {/* <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="Frequency High Loss Level_1(Hz)" placeholder="53" value={value.frequencyHighLossLevel1} onCommit={(v) => onChange({ frequencyHighLossLevel1: v })} error={errors.frequencyHighLossLevel1} />
-        <FieldInput label="Frequency Low Loss Level_1(Hz)" placeholder="47" value={value.frequencyLowLossLevel1} onCommit={(v) => onChange({ frequencyLowLossLevel1: v })} />
-        <FieldInput label="Voltage High Loss Level_1(V)" placeholder="280" value={value.voltageHighLossLevel1} onCommit={(v) => onChange({ voltageHighLossLevel1: v })} error={errors.voltageHighLossLevel1} />
-        <FieldInput label="Voltage Low Loss Level_1(V)" placeholder="170" value={value.voltageLowLossLevel1} onCommit={(v) => onChange({ voltageLowLossLevel1: v })} />
-      </div> */}
-
-      {/* Row 5 */}
-      {/* <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="Frequency High Loss Time Level_1(ms)" placeholder="200" value={value.frequencyHighLossTimeLevel1} onCommit={(v) => onChange({ frequencyHighLossTimeLevel1: v })} error={errors.frequencyHighLossTimeLevel1} />
-        <FieldInput label="Frequency Low Loss Time Level_1(ms)" placeholder="200" value={value.frequencyLowLossTimeLevel1} onCommit={(v) => onChange({ frequencyLowLossTimeLevel1: v })} error={errors.frequencyLowLossTimeLevel1} />
-        <FieldInput label="Voltage High Loss Time Level_1(ms)" placeholder="2000" value={value.voltageHighLossTimeLevel1} onCommit={(v) => onChange({ voltageHighLossTimeLevel1: v })} error={errors.voltageHighLossTimeLevel1} />
-        <FieldInput label="Voltage Low Loss Time Level_1(ms)" placeholder="2000" value={value.voltageLowLossTimeLevel1} onCommit={(v) => onChange({ voltageLowLossTimeLevel1: v })} error={errors.voltageLowLossTimeLevel1} />
-      </div> */}
-
-      {/* Row 6 */}
-      {/* <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="Voltage High Loss Level_2(V)" placeholder="310.5" value={value.voltageHighLossLevel2} onCommit={(v) => onChange({ voltageHighLossLevel2: v })} error={errors.voltageHighLossLevel2} />
-        <FieldInput label="Voltage Low Loss Level_2(V)" placeholder="115" value={value.voltageLowLossLevel2} onCommit={(v) => onChange({ voltageLowLossLevel2: v })} />
-      </div> */}
-
-      {/* Row 7 */}
-      {/* <div className="grid grid-cols-4 gap-6">
-        <FieldInput label="Voltage High Loss Time Level_2(ms)" placeholder="50" value={value.voltageHighLossTimeLevel2} onCommit={(v) => onChange({ voltageHighLossTimeLevel2: v })} error={errors.voltageHighLossTimeLevel2} />
-        <FieldInput label="Voltage Low Loss Time Level_2(ms)" placeholder="100" value={value.voltageLowLossTimeLevel2} onCommit={(v) => onChange({ voltageLowLossTimeLevel2: v })} error={errors.voltageLowLossTimeLevel2} />
-      </div> */}
 
       {/* Toggles */}
       <div className="space-y-6">
@@ -593,36 +740,194 @@ function ReactiveTab({
   );
 }
 
+// function PowerLimitTab({
+//   value,
+//   onChange,
+//   errors,
+// }: {
+//   value: PowerLimit;
+//   onChange: (patch: Partial<PowerLimit>) => void;
+//   errors: FieldErrors<PowerLimit>;
+// }) {
+//   return (
+//     <div className="space-y-8">
+//       <div className="grid grid-cols-4 gap-6">
+//         <FieldInput
+//           label="Power Control"
+//           value={Number(value.powerControl)}
+//           onCommit={(v) => onChange({ powerControl: v as any })}
+//         />
+
+//         <FieldInput
+//           label="Meter Location"
+//           value={Number(value.meterLocation)}
+//           onCommit={(v) => onChange({ meterLocation: v as any })}
+//         />
+
+//         <FieldInput
+//           label="Power Flow Direction"
+//           value={Number(value.powerFlowDirection)}
+//           onCommit={(v) => onChange({ powerFlowDirection: v as any })}
+//         />
+
+//         <div className="space-y-2">
+//           <label className="text-sm font-medium">
+//             Maximum Feed In Grid Power (W)
+//           </label>
+
+//           <div className="grid grid-cols-2 gap-4">
+//             <FieldInput
+//               label="Value 1"
+//               value={value.maxFeedInGridPower?.[0]}
+//               onCommit={(v) =>
+//                 onChange({
+//                   maxFeedInGridPower: [
+//                     v ?? 0,
+//                     value.maxFeedInGridPower?.[1] ?? 0,
+//                   ],
+//                 })
+//               }
+//             />
+
+//             <FieldInput
+//               label="Value 2"
+//               value={value.maxFeedInGridPower?.[1]}
+//               onCommit={(v) =>
+//                 onChange({
+//                   maxFeedInGridPower: [
+//                     value.maxFeedInGridPower?.[0] ?? 0,
+//                     v ?? 0,
+//                   ],
+//                 })
+//               }
+//             />
+//           </div>
+//         </div>
+
+//         {/* <FieldInput
+//           label="Maximum Feed In Grid Power(W)"
+//           value={value.maxFeedInGridPower}
+//           onCommit={(v) => onChange({ maxFeedInGridPower: v })}
+//           error={errors.maxFeedInGridPower}
+//         /> */}
+//       </div>
+//       <div className="max-w-xs">
+//         <FieldInput label="Modbus address" value={value.modbusAddress} onCommit={(v) => onChange({ modbusAddress: v })} error={errors.modbusAddress} />
+//       </div>
+//     </div>
+//   );
+// }
+
 function PowerLimitTab({
   value,
   onChange,
   errors,
+  openSelect,
+  setOpenSelect,
 }: {
   value: PowerLimit;
   onChange: (patch: Partial<PowerLimit>) => void;
   errors: FieldErrors<PowerLimit>;
+  openSelect: string | null;
+  setOpenSelect: (id: string | null) => void;
 }) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-4 gap-6">
-        <FieldInput
+
+        {/* Power Control */}
+        <FieldSelect
+          selectId="powerControl"
+          openSelect={openSelect}
+          setOpenSelect={setOpenSelect}
           label="Power Control"
-          value={Number(value.powerControl)}
-          onCommit={(v) => onChange({ powerControl: v as any })}
+          placeholder="Select power control"
+          options={[
+            { value: "0", label: "Disable" },
+            {
+              value: "1",
+              label: "Power limit by external device",
+            },
+            {
+              value: "2",
+              label: "Power limit by PVI external CT",
+            },
+            {
+              value: "3",
+              label: "Power limit by digital meter",
+            },
+          ]}
+          value={
+            value.powerControl !== undefined
+              ? String(value.powerControl)
+              : undefined
+          }
+          onChange={(v) =>
+            onChange({
+              powerControl: Number(v),
+            })
+          }
         />
 
-        <FieldInput
+        {/* Meter Location */}
+        <FieldSelect
+          selectId="meterLocation"
+          openSelect={openSelect}
+          setOpenSelect={setOpenSelect}
           label="Meter Location"
-          value={Number(value.meterLocation)}
-          onCommit={(v) => onChange({ meterLocation: v as any })}
+          placeholder="Select meter location"
+          options={[
+            {
+              value: "0",
+              label: "CT on Grid (Meter on Grid)",
+            },
+            {
+              value: "1",
+              label: "CT on Load (Meter on Load)",
+            },
+          ]}
+          value={
+            value.meterLocation !== undefined
+              ? String(value.meterLocation)
+              : undefined
+          }
+          onChange={(v) =>
+            onChange({
+              meterLocation: Number(v),
+            })
+          }
         />
 
-        <FieldInput
+        {/* Power Flow Direction */}
+        <FieldSelect
+          selectId="powerFlowDirection"
+          openSelect={openSelect}
+          setOpenSelect={setOpenSelect}
           label="Power Flow Direction"
-          value={Number(value.powerFlowDirection)}
-          onCommit={(v) => onChange({ powerFlowDirection: v as any })}
+          placeholder="Select power flow direction"
+          options={[
+            {
+              value: "0",
+              label: "Grid to inverter",
+            },
+            {
+              value: "1",
+              label: "Inverter to grid",
+            },
+          ]}
+          value={
+            value.powerFlowDirection !== undefined
+              ? String(value.powerFlowDirection)
+              : undefined
+          }
+          onChange={(v) =>
+            onChange({
+              powerFlowDirection: Number(v),
+            })
+          }
         />
 
+        {/* Maximum Feed In Grid Power */}
         <div className="space-y-2">
           <label className="text-sm font-medium">
             Maximum Feed In Grid Power (W)
@@ -640,6 +945,7 @@ function PowerLimitTab({
                   ],
                 })
               }
+              setOpenSelect={setOpenSelect}
             />
 
             <FieldInput
@@ -653,60 +959,118 @@ function PowerLimitTab({
                   ],
                 })
               }
+              setOpenSelect={setOpenSelect}
             />
           </div>
         </div>
-
-        {/* <FieldInput
-          label="Maximum Feed In Grid Power(W)"
-          value={value.maxFeedInGridPower}
-          onCommit={(v) => onChange({ maxFeedInGridPower: v })}
-          error={errors.maxFeedInGridPower}
-        /> */}
       </div>
+
+      {/* Modbus Address */}
       <div className="max-w-xs">
-        <FieldInput label="Modbus address" value={value.modbusAddress} onCommit={(v) => onChange({ modbusAddress: v })} error={errors.modbusAddress} />
+        <FieldInput
+          label="Modbus address"
+          value={value.modbusAddress}
+          onCommit={(v) =>
+            onChange({
+              modbusAddress: v,
+            })
+          }
+          setOpenSelect={setOpenSelect}
+          error={errors.modbusAddress}
+        />
       </div>
     </div>
   );
 }
-
 function OtherSettingTab({
   value,
   onChange,
   onCommand,
   commandPending,
+  openSelect,
+  setOpenSelect,
 }: {
   value: OtherSetting;
   onChange: (patch: Partial<OtherSetting>) => void;
   onCommand: (command: RemoteSettingsCommand) => void;
   commandPending: boolean;
+  openSelect: string | null;
+  setOpenSelect: (id: string | null) => void;
 }) {
   return (
     <div className="space-y-8">
       {/* Input fields */}
       <div className="grid grid-cols-4 gap-6">
+
+        {/* AFD Function */}
         <FieldInput
           label="AFD Function"
           value={value.afdFunction as any}
-          onCommit={(v) => onChange({ afdFunction: v as any })}
+          onCommit={(v) =>
+            onChange({
+              afdFunction: v as any,
+            })
+          }
+          setOpenSelect={setOpenSelect}
         />
 
+        {/* Power On */}
         <FieldInput
           label="Power On"
           value={value.powerOn as any}
-          onCommit={(v) => onChange({ powerOn: v as any })}
+          onCommit={(v) =>
+            onChange({
+              powerOn: v as any,
+            })
+          }
+          setOpenSelect={setOpenSelect}
         />
 
-        <FieldInput
+        {/* Grid Voltage Type */}
+        <FieldSelect
+          selectId="gridVoltageType"
+          openSelect={openSelect}
+          setOpenSelect={setOpenSelect}
           label="Grid Voltage Type"
-          value={value.gridVoltageType as any}
-          onCommit={(v) => onChange({ gridVoltageType: v as any })}
+          placeholder="Select grid voltage type"
+          options={[
+            {
+              value: "0",
+              label: "Three Phase L-N voltage",
+            },
+            {
+              value: "1",
+              label: "Three Phase L-L voltage",
+            },
+            {
+              value: "2",
+              label: "Single Phase",
+            },
+            {
+              value: "3",
+              label: "UL Split Phase",
+            },
+            {
+              value: "4",
+              label: "UL 2/3 Phase",
+            },
+          ]}
+          value={
+            value.gridVoltageType !== undefined
+              ? String(value.gridVoltageType)
+              : undefined
+          }
+          onChange={(v) =>
+            onChange({
+              gridVoltageType: Number(v),
+            })
+          }
         />
       </div>
 
       {/* Action buttons */}
-      {/* <div className="grid grid-cols-4 gap-6">
+      {/* 
+      <div className="grid grid-cols-4 gap-6">
         <ActionButton
           label="AFD Reset"
           text="Click to confirm"
@@ -734,7 +1098,8 @@ function OtherSettingTab({
           disabled={commandPending}
           onClick={() => onCommand({ clearAllData: true })}
         />
-      </div> */}
+      </div>
+      */}
     </div>
   );
 }
@@ -774,6 +1139,7 @@ export default function RemoteSettingModal({
   sn = "2502-65764179P",
   targetEndUserId,
 }: RemoteSettingModalProps) {
+  const [openSelect, setOpenSelect] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ModalTab>("grid");
   const [settings, setSettings] = useState<RemoteSettings>({});
   const [changedSettings, setChangedSettings] = useState<RemoteSettings>({});
@@ -1000,7 +1366,7 @@ export default function RemoteSettingModal({
       {/* Dialog */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col pointer-events-auto"
+          className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] max-h-[90vh] flex flex-col pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -1037,19 +1403,59 @@ export default function RemoteSettingModal({
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
-            {activeTab === "grid" && <GridParametersTab value={settings.gridParameters ?? {}} onChange={updateGrid} errors={errors.gridParameters} />}
-            {activeTab === "feature" && <FeatureParametersTab value={settings.featureParameters ?? {}} onChange={updateFeature} errors={errors.featureParameters} />}
-            {activeTab === "reactive" && <ReactiveTab value={settings.reactivePowerControl ?? {}} onChange={updateReactive} errors={errors.reactivePowerControl} />}
-            {activeTab === "powerLimit" && <PowerLimitTab value={settings.powerLimit ?? {}} onChange={updatePowerLimit} errors={errors.powerLimit} />}
+            {activeTab === "grid" && (
+              <GridParametersTab
+                value={settings.gridParameters ?? {}}
+                onChange={updateGrid}
+                errors={errors.gridParameters}
+                openSelect={openSelect}
+                setOpenSelect={setOpenSelect}
+              />
+            )}
+
+            {activeTab === "feature" && (
+              <FeatureParametersTab
+                value={settings.featureParameters ?? {}}
+                onChange={updateFeature}
+                errors={errors.featureParameters}
+              />
+            )}
+
+            {activeTab === "reactive" && (
+              <ReactiveTab
+                value={settings.reactivePowerControl ?? {}}
+                onChange={updateReactive}
+                errors={errors.reactivePowerControl}
+              />
+            )}
+
+            {activeTab === "powerLimit" && (
+              <PowerLimitTab
+                value={settings.powerLimit ?? {}}
+                onChange={updatePowerLimit}
+                errors={errors.powerLimit}
+                openSelect={openSelect}
+                setOpenSelect={setOpenSelect}
+              />
+            )}
+
             {activeTab === "other" && (
               <OtherSettingTab
                 value={settings.otherSetting ?? {}}
                 onChange={updateOther}
                 onCommand={handleCommand}
                 commandPending={submitCommand.isPending}
+                openSelect={openSelect}
+                setOpenSelect={setOpenSelect}
               />
             )}
-            {activeTab === "masking" && <MaskingFaultTab value={settings.maskingFaultDetection ?? {}} onChange={updateMasking} />}
+
+            {activeTab === "masking" && (
+              <MaskingFaultTab
+                value={settings.maskingFaultDetection ?? {}}
+                onChange={updateMasking}
+              />
+            )}
           </div>
 
           {/* Footer */}
