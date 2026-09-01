@@ -403,9 +403,10 @@ export default function AddPlantDrawer({ open, onClose, plant }: Props) {
                   onChange={(e) => setField("plantType", e.target.value)}
                   className="w-full border border-(--border) rounded px-3 py-2 mt-1"
                 >
-                  <option>On Grid</option>
-                  <option>Hybrid</option>
-                  <option>Off Grid</option>
+                  <option>Grid</option>
+                  <option>Grid + Meter</option>
+                  <option>Grid + Storage</option>
+                  <option>Storage</option>
                 </select>
               </div>
 
