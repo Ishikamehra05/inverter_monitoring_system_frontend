@@ -182,4 +182,9 @@ export const dashboardApi = {
     apiClient<ApiEnvelope<DeviceCurrentAlertsResponse>>(
       `/monitor/plants/${plantId}/alerts${withQuery(params)}`
     ).then((res) => res.data),
+    
+      allPlantsChart: (params: Record<string, unknown>) =>
+    apiClient<ApiEnvelope<ChartResponse>>(
+      `/monitor/charts${withQuery(params)}`,
+    ).then((res) => res.data),
 };
