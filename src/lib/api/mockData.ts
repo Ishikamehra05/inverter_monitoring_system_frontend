@@ -1,7 +1,12 @@
 import type { ChartResponse, PlantInformation } from "./schemas/dashboard";
 import type { ApiDevice } from "./schemas/devices";
 import type { Plant, PlantSummary } from "./schemas/plants";
-import type { Firmware, MonitorUser, Profile, ServiceTask } from "./schemas/service";
+import type {
+  Firmware,
+  MonitorUser,
+  Profile,
+  ServiceTask,
+} from "./schemas/service";
 
 export const mockPlantSummary: PlantSummary = {
   currentPower: { value: 0, unit: "W" },
@@ -19,62 +24,62 @@ export const mockPlantSummary: PlantSummary = {
 };
 
 export const mockPlants: Plant[] = [
- {
-  id: "plant_service",
-  name: "Service",
-  type: "Grid",
-
-  price: 0,
-  priceUnit: "INR",
-  kwp: 0,
-  address: "Gandhinagar",
-  latitude: "23.2156",
-  longitude: "72.6369",
-
-  eToday: { value: 0, unit: "Wh" },
-  eTotal: { value: 25, unit: "kWh" },
-  power: { value: 0, unit: "W" },
-  effect: "0",
-  installed: "2025-08-13",
-  updated: "2025-08-25 15:39:21",
-  plantStatus: {
-  status: "Offline",
-  totalDevices: 1,
-  normalCount: 0,
-  abnormalCount: 0,
-  standbyCount: 0,
-  offlineCount: 1,
-  updatedAt: "2025-08-25 15:39:21",
-},
-},
   {
-  id: "plant_service",
-  name: "Service",
-  type: "Grid",
+    id: "plant_service",
+    name: "Service",
+    type: "Grid",
 
-  price: 0,
-  priceUnit: "INR",
-  kwp: 0,
-  address: "Gandhinagar",
-  latitude: "23.2156",
-  longitude: "72.6369",
+    price: 0,
+    priceUnit: "INR",
+    kwp: 0,
+    address: "Gandhinagar",
+    latitude: "23.2156",
+    longitude: "72.6369",
 
-  eToday: { value: 0, unit: "Wh" },
-  eTotal: { value: 25, unit: "kWh" },
-  power: { value: 0, unit: "W" },
-  effect: "0",
-  installed: "2025-08-13",
-  updated: "2025-08-25 15:39:21",
-  plantStatus: {
-  status: "Offline",
-  totalDevices: 1,
-  normalCount: 0,
-  abnormalCount: 0,
-  standbyCount: 0,
-  offlineCount: 1,
-  updatedAt: "2025-08-25 15:39:21",
-},
-},
+    eToday: { value: 0, unit: "Wh" },
+    eTotal: { value: 25, unit: "kWh" },
+    power: { value: 0, unit: "W" },
+    effect: "0",
+    installed: "2025-08-13",
+    updated: "2025-08-25 15:39:21",
+    plantStatus: {
+      status: "Offline",
+      totalDevices: 1,
+      normalCount: 0,
+      abnormalCount: 0,
+      standbyCount: 0,
+      offlineCount: 1,
+      updatedAt: "2025-08-25 15:39:21",
+    },
+  },
+  {
+    id: "plant_service",
+    name: "Service",
+    type: "Grid",
+
+    price: 0,
+    priceUnit: "INR",
+    kwp: 0,
+    address: "Gandhinagar",
+    latitude: "23.2156",
+    longitude: "72.6369",
+
+    eToday: { value: 0, unit: "Wh" },
+    eTotal: { value: 25, unit: "kWh" },
+    power: { value: 0, unit: "W" },
+    effect: "0",
+    installed: "2025-08-13",
+    updated: "2025-08-25 15:39:21",
+    plantStatus: {
+      status: "Offline",
+      totalDevices: 1,
+      normalCount: 0,
+      abnormalCount: 0,
+      standbyCount: 0,
+      offlineCount: 1,
+      updatedAt: "2025-08-25 15:39:21",
+    },
+  },
 ];
 
 export const mockPlantInformation: PlantInformation = {
@@ -82,16 +87,43 @@ export const mockPlantInformation: PlantInformation = {
   capacity: "500 kW",
   address: "Gandhinagar",
   stats: [
-    { label: "Input Power", value: "146.57 kW", icon: "/images/information-tab/info-img-1.png" },
-    { label: "CO2", value: "383.95t", icon: "/images/information-tab/info-img-2.png" },
-    { label: "Tree Planting", value: "1075", icon: "/images/information-tab/info-img-3.png" },
-    { label: "Efficiency", value: "0.35", icon: "/images/information-tab/info-img-4.png" },
-    { label: "Weather", value: "0.35", icon: "/images/information-tab/info-img-5.png" },
-    { label: "Irradiance", value: "0.35", icon: "/images/information-tab/info-img-6.png" },
-    { label: "Cell Temperature", value: "0.35", icon: "/images/information-tab/info-img-7.png" },
+    {
+      label: "Input Power",
+      value: "146.57 kW",
+      icon: "/images/information-tab/info-img-1.png",
+    },
+    {
+      label: "CO2",
+      value: "383.95t",
+      icon: "/images/information-tab/info-img-2.png",
+    },
+    {
+      label: "Tree Planting",
+      value: "1075",
+      icon: "/images/information-tab/info-img-3.png",
+    },
+    {
+      label: "Efficiency",
+      value: "0.35",
+      icon: "/images/information-tab/info-img-4.png",
+    },
+    {
+      label: "Weather",
+      value: "0.35",
+      icon: "/images/information-tab/info-img-5.png",
+    },
+    {
+      label: "Irradiance",
+      value: "0.35",
+      icon: "/images/information-tab/info-img-6.png",
+    },
+    {
+      label: "Cell Temperature",
+      value: "0.35",
+      icon: "/images/information-tab/info-img-7.png",
+    },
   ],
 };
-
 
 export const mockProfile: Profile = {
   account: "polycab.admin",
@@ -99,6 +131,11 @@ export const mockProfile: Profile = {
   phone: "",
   address: "",
   timezone: "(UTC+05:30) Colombo, New Delhi",
+  epcCompany: "",
+  epcInstaller: "",
+  epcMobile: "",
+  epcEmail: "",
+  epcAddress: "",
 };
 
 export const mockMonitorUsers: MonitorUser[] = Array.from({ length: 10 }).map(
@@ -136,7 +173,6 @@ export const mockFirmwares: Firmware[] = [
     remark: "Release Firmware",
   },
 ];
-
 
 export const mockTasks: ServiceTask[] = [
   {
