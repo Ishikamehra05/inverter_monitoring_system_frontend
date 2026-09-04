@@ -21,7 +21,7 @@ export type RemoteSettingsErrors = {
 };
 
 const NON_NEGATIVE_MESSAGE = "Must be 0 or greater";
-const PERCENTAGE_MESSAGE = "Must be between 0 and 100";
+// const PERCENTAGE_MESSAGE = "Must be between 0 and 100";
 const HIGH_LOW_MESSAGE = "High limit must be ≥ low limit";
 
 function validateGridParameters(v: GridParameters): FieldErrors<GridParameters> {
@@ -43,14 +43,14 @@ function validateGridParameters(v: GridParameters): FieldErrors<GridParameters> 
     if (value != null && value < 0) errors[key] = NON_NEGATIVE_MESSAGE;
   });
 
-  (["firstConnectPowerGradient", "reconnectPowerGradient"] as const).forEach(
-    (key) => {
-      const value = v[key];
-      if (value != null && (value < 0 || value > 100)) {
-        errors[key] = PERCENTAGE_MESSAGE;
-      }
-    },
-  );
+  // (["firstConnectPowerGradient", "reconnectPowerGradient"] as const).forEach(
+  //   (key) => {
+  //     const value = v[key];
+  //     if (value != null && (value < 0 || value > 100)) {
+  //       errors[key] = PERCENTAGE_MESSAGE;
+  //     }
+  //   },
+  // );
 
   const limitPairs: [keyof GridParameters, keyof GridParameters][] = [
     ["gridFirstConnectionVoltageHighLimit", "gridFirstConnectionVoltageLowLimit"],
@@ -78,9 +78,9 @@ function validateFeatureParameters(
 ): FieldErrors<FeatureParameters> {
   const errors: FieldErrors<FeatureParameters> = {};
 
-  if (v.deratedPower != null && (v.deratedPower < 0 || v.deratedPower > 100)) {
-    errors.deratedPower = PERCENTAGE_MESSAGE;
-  }
+  // if (v.deratedPower != null && (v.deratedPower < 0 || v.deratedPower > 100)) {
+  //   errors.deratedPower = PERCENTAGE_MESSAGE;
+  // }
 
   (
     ["insulationImpedance", "leakageCurrentPoint", "movingAverageVoltageLimit"] as const

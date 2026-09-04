@@ -31,6 +31,9 @@ import {
   validateRemoteSettings,
   type FieldErrors,
 } from "@/lib/validation/remoteSettings";
+import {
+  STANDARD_CODE_OPTIONS
+} from "@/components/services/modals/standardCodeMap";
 
 interface RemoteSettingModalProps {
   isOpen: boolean;
@@ -49,11 +52,11 @@ type ModalTab =
   | "other"
   | "masking";
 
-const STANDARD_CODE_OPTIONS: { value: "IN" | "EU" | "AU"; label: string }[] = [
-  { value: "IN", label: "IN (IEC61727)" },
-  { value: "EU", label: "EU (EN50549)" },
-  { value: "AU", label: "AU (AS4777)" },
-];
+// const STANDARD_CODE_OPTIONS: { value: "IN" | "EU" | "AU"; label: string }[] = [
+//   { value: "IN", label: "IN (IEC61727)" },
+//   { value: "EU", label: "EU (EN50549)" },
+//   { value: "AU", label: "AU (AS4777)" },
+// ];
 
 const toOptions = (values: string[]) =>
   values.map((v) => ({ value: v, label: v }));
@@ -122,23 +125,6 @@ function transformSettings(data: any) {
       item.value,
     ])
   );
-
-  const standardCodeMap: Record<number, "IN" | "EU" | "AU"> = {
-    94: "IN",
-    95: "EU",
-    96: "AU",
-  };
-
-  obj.standardCode = standardCodeMap[obj.standardCode];
-
-  // obj.overFrequencyDeratingFunction =
-  //   obj.overFrequencyDeratingFunction === 1;
-
-  // obj.underFrequencyFunction =
-  //   obj.underFrequencyFunction === 1;
-
-  // obj.overVoltageDerating =
-  //   obj.overVoltageDerating === 1;
 
   return obj;
 }
@@ -457,12 +443,16 @@ function GridParametersTab({
           openSelect={openSelect}
           setOpenSelect={setOpenSelect}
           label="Standard Code"
-          placeholder="IN (IEC61727)"
+          placeholder="Select Standard Code"
           options={STANDARD_CODE_OPTIONS}
-          value={value.standardCode}
+          value={
+            value.standardCode !== undefined
+              ? String(value.standardCode)
+              : ""
+          }
           onChange={(v) =>
             onChange({
-              standardCode: v as GridParameters["standardCode"],
+              standardCode: Number(v),
             })
           }
         />
