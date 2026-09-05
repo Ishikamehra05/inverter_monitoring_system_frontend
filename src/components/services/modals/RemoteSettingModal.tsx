@@ -1158,15 +1158,14 @@ export default function RemoteSettingModal({
   // Each tab is a distinct backend entity — Read/Upload only ever act on
   // whichever tab is currently open, never on all 6 at once.
   const remoteSettingsTabQuery = useRemoteSettingsTab(
-    deviceId ?? "",
+    sn ?? "",
     activeTabConfig.settingsKey,
-    plantId ?? "",
     scopeParams,
     { enabled: false },
   );
-  const submitTab = useSubmitRemoteSettingsTab(plantId ?? "", scopeParams);
-  const submitCommand = useSubmitRemoteCommand(plantId ?? "", scopeParams);
 
+  const submitTab = useSubmitRemoteSettingsTab(scopeParams);
+  const submitCommand = useSubmitRemoteCommand(scopeParams);
   if (!isOpen) return null;
 
   const errors = validateRemoteSettings(settings);
@@ -1187,11 +1186,12 @@ export default function RemoteSettingModal({
 
   const uploadedForThisTab =
     submitTab.isSuccess &&
-    submitTab.variables?.deviceId === deviceId &&
+    submitTab.variables?.sn === sn &&
     submitTab.variables?.entry.tab === activeTabConfig.settingsKey;
+
   const uploadErrorForThisTab =
     submitTab.isError &&
-    submitTab.variables?.deviceId === deviceId &&
+    submitTab.variables?.sn === sn &&
     submitTab.variables?.entry.tab === activeTabConfig.settingsKey;
 
   // const updateGrid = (patch: Partial<GridParameters>) =>
@@ -1313,7 +1313,7 @@ export default function RemoteSettingModal({
   // };
 
   const handleRead = async () => {
-    if (!deviceId || !plantId) return;
+    if (!sn) return;
 
     try {
       const result = await remoteSettingsTabQuery.refetch();
@@ -1331,15 +1331,24 @@ export default function RemoteSettingModal({
   };
 
   const handleUpload = () => {
-    if (!deviceId || !plantId || activeTabErrorCount > 0) return;
+    if (!sn || activeTabErrorCount > 0) return;
+
     setLastAction("upload");
     setLastActionTab(activeTab);
-    submitTab.mutate({ deviceId, sn, entry: buildTabEntry(activeTab, changedSettings) });
+
+    submitTab.mutate({
+      sn,
+      entry: buildTabEntry(activeTab, changedSettings),
+    });
   };
 
   const handleCommand = (command: RemoteSettingsCommand) => {
-    if (!deviceId || !plantId) return;
-    submitCommand.mutate({ deviceId, sn, command });
+    if (!sn) return;
+
+    submitCommand.mutate({
+      sn,
+      command,
+    });
   };
 
   const isReading = remoteSettingsTabQuery.isFetching;

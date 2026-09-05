@@ -88,15 +88,44 @@ export const devicesApi = {
   // e.g. /monitor/devices/{id}/remote-settings/grid-parameters
   // Lives under /monitor/devices/ (not /service/devices/) and requires
   // plantId, matching every other device sub-resource in the backend.
+  // remoteSettingsTab: <K extends RemoteSettingsTabKey>(
+  //   deviceId: string,
+  //   tab: K,
+  //   plantId: string,
+  //   params: ServiceScopeParams = {},
+  // ) => {
+  //   const url = `/monitor/devices/${deviceId}/remote-settings/${REMOTE_SETTINGS_TAB_SLUGS[tab]}${withQuery({ plantId, ...params })}`;
+  //   console.log(`[remote-settings:${tab}] READ request →`, { method: "GET", url });
+  //   return apiClient<ApiEnvelope<Extract<RemoteSettingsTabEntry, { tab: K }>["settings"]>>(url)
+  //     .then((res) => {
+  //       console.log(`[remote-settings:${tab}] READ response ←`, res);
+  //       return res.data;
+  //     })
+  //     .catch((error) => {
+  //       console.error(`[remote-settings:${tab}] READ failed ✕`, error);
+  //       throw error;
+  //     });
+  // },
   remoteSettingsTab: <K extends RemoteSettingsTabKey>(
-    deviceId: string,
+    sn: string,
     tab: K,
-    plantId: string,
     params: ServiceScopeParams = {},
   ) => {
-    const url = `/monitor/devices/${deviceId}/remote-settings/${REMOTE_SETTINGS_TAB_SLUGS[tab]}${withQuery({ plantId, ...params })}`;
-    console.log(`[remote-settings:${tab}] READ request →`, { method: "GET", url });
-    return apiClient<ApiEnvelope<Extract<RemoteSettingsTabEntry, { tab: K }>["settings"]>>(url)
+    const slug = REMOTE_SETTINGS_TAB_SLUGS[tab];
+
+    const url = `/monitor/devices/remote-settings/${slug}${withQuery({
+      sn,
+      ...params,
+    })}`;
+
+    console.log(`[remote-settings:${tab}] READ request →`, {
+      method: "GET",
+      url,
+    });
+
+    return apiClient<
+      ApiEnvelope<Extract<RemoteSettingsTabEntry, { tab: K }>["settings"]>
+    >(url)
       .then((res) => {
         console.log(`[remote-settings:${tab}] READ response ←`, res);
         return res.data;
@@ -108,15 +137,26 @@ export const devicesApi = {
   },
 
   submitRemoteSettingsTab: (
-    deviceId: string,
-    sn: string | undefined,
+    sn: string,
     entry: RemoteSettingsTabEntry,
-    plantId: string,
     params: ServiceScopeParams = {},
   ) => {
-    const url = `/monitor/devices/${deviceId}/remote-settings/${REMOTE_SETTINGS_TAB_SLUGS[entry.tab]}${withQuery({ plantId, ...params })}`;
-    const payload = { sn, settings: entry.settings };
-    console.log(`[remote-settings:${entry.tab}] UPLOAD request →`, { method: "POST", url, payload });
+    const url = `/monitor/devices/remote-settings/${REMOTE_SETTINGS_TAB_SLUGS[entry.tab]}${withQuery({
+      sn,
+      ...params,
+    })}`;
+
+    const payload = {
+      sn,
+      settings: entry.settings,
+    };
+
+    console.log(`[remote-settings:${entry.tab}] UPLOAD request →`, {
+      method: "POST",
+      url,
+      payload,
+    });
+
     return apiClient<ApiEnvelope<{ taskId: string }>>(url, {
       method: "POST",
       body: payload,
@@ -132,13 +172,20 @@ export const devicesApi = {
   },
 
   submitRemoteCommand: (
-    deviceId: string,
-    payload: { sn?: string; command: RemoteSettingsCommand },
-    plantId: string,
+    payload: {
+      sn: string;
+      command: RemoteSettingsCommand;
+    },
     params: ServiceScopeParams = {},
   ) => {
-    const url = `/monitor/devices/${deviceId}/remote-settings/command${withQuery({ plantId, ...params })}`;
-    console.log("[remote-settings] COMMAND request →", { method: "POST", url, payload });
+    const url = `/monitor/devices/remote-settings/command${withQuery(params)}`;
+
+    console.log("[remote-settings] COMMAND request →", {
+      method: "POST",
+      url,
+      payload,
+    });
+
     return apiClient<ApiEnvelope<{ taskId: string }>>(url, {
       method: "POST",
       body: payload,
@@ -152,6 +199,52 @@ export const devicesApi = {
         throw error;
       });
   },
+
+  // submitRemoteSettingsTab: (
+  //   deviceId: string,
+  //   sn: string | undefined,
+  //   entry: RemoteSettingsTabEntry,
+  //   plantId: string,
+  //   params: ServiceScopeParams = {},
+  // ) => {
+  //   const url = `/monitor/devices/${deviceId}/remote-settings/${REMOTE_SETTINGS_TAB_SLUGS[entry.tab]}${withQuery({ plantId, ...params })}`;
+  //   const payload = { sn, settings: entry.settings };
+  //   console.log(`[remote-settings:${entry.tab}] UPLOAD request →`, { method: "POST", url, payload });
+  //   return apiClient<ApiEnvelope<{ taskId: string }>>(url, {
+  //     method: "POST",
+  //     body: payload,
+  //   })
+  //     .then((res) => {
+  //       console.log(`[remote-settings:${entry.tab}] UPLOAD response ←`, res);
+  //       return res.data;
+  //     })
+  //     .catch((error) => {
+  //       console.error(`[remote-settings:${entry.tab}] UPLOAD failed ✕`, error);
+  //       throw error;
+  //     });
+  // },
+
+  // submitRemoteCommand: (
+  //   deviceId: string,
+  //   payload: { sn?: string; command: RemoteSettingsCommand },
+  //   plantId: string,
+  //   params: ServiceScopeParams = {},
+  // ) => {
+  //   const url = `/monitor/devices/${deviceId}/remote-settings/command${withQuery({ plantId, ...params })}`;
+  //   console.log("[remote-settings] COMMAND request →", { method: "POST", url, payload });
+  //   return apiClient<ApiEnvelope<{ taskId: string }>>(url, {
+  //     method: "POST",
+  //     body: payload,
+  //   })
+  //     .then((res) => {
+  //       console.log("[remote-settings] COMMAND response ←", res);
+  //       return res.data;
+  //     })
+  //     .catch((error) => {
+  //       console.error("[remote-settings] COMMAND failed ✕", error);
+  //       throw error;
+  //     });
+  // },
 
   submitUpgrade: (deviceId: string, payload: { sn?: string; firmwareId: string }) =>
     apiClient<ApiEnvelope<{ taskId: string }>>(
