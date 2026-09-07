@@ -31,6 +31,9 @@ import {
   validateRemoteSettings,
   type FieldErrors,
 } from "@/lib/validation/remoteSettings";
+import {
+  STANDARD_CODE_OPTIONS
+} from "@/components/services/modals/standardCodeMap";
 
 interface RemoteSettingModalProps {
   isOpen: boolean;
@@ -49,11 +52,11 @@ type ModalTab =
   | "other"
   | "masking";
 
-const STANDARD_CODE_OPTIONS: { value: "IN" | "EU" | "AU"; label: string }[] = [
-  { value: "IN", label: "IN (IEC61727)" },
-  { value: "EU", label: "EU (EN50549)" },
-  { value: "AU", label: "AU (AS4777)" },
-];
+// const STANDARD_CODE_OPTIONS: { value: "IN" | "EU" | "AU"; label: string }[] = [
+//   { value: "IN", label: "IN (IEC61727)" },
+//   { value: "EU", label: "EU (EN50549)" },
+//   { value: "AU", label: "AU (AS4777)" },
+// ];
 
 const toOptions = (values: string[]) =>
   values.map((v) => ({ value: v, label: v }));
@@ -122,23 +125,6 @@ function transformSettings(data: any) {
       item.value,
     ])
   );
-
-  const standardCodeMap: Record<number, "IN" | "EU" | "AU"> = {
-    94: "IN",
-    95: "EU",
-    96: "AU",
-  };
-
-  obj.standardCode = standardCodeMap[obj.standardCode];
-
-  // obj.overFrequencyDeratingFunction =
-  //   obj.overFrequencyDeratingFunction === 1;
-
-  // obj.underFrequencyFunction =
-  //   obj.underFrequencyFunction === 1;
-
-  // obj.overVoltageDerating =
-  //   obj.overVoltageDerating === 1;
 
   return obj;
 }
@@ -457,12 +443,16 @@ function GridParametersTab({
           openSelect={openSelect}
           setOpenSelect={setOpenSelect}
           label="Standard Code"
-          placeholder="IN (IEC61727)"
+          placeholder="Select Standard Code"
           options={STANDARD_CODE_OPTIONS}
-          value={value.standardCode}
+          value={
+            value.standardCode !== undefined
+              ? String(value.standardCode)
+              : ""
+          }
           onChange={(v) =>
             onChange({
-              standardCode: v as GridParameters["standardCode"],
+              standardCode: Number(v),
             })
           }
         />
@@ -1168,15 +1158,14 @@ export default function RemoteSettingModal({
   // Each tab is a distinct backend entity — Read/Upload only ever act on
   // whichever tab is currently open, never on all 6 at once.
   const remoteSettingsTabQuery = useRemoteSettingsTab(
-    deviceId ?? "",
+    sn ?? "",
     activeTabConfig.settingsKey,
-    plantId ?? "",
     scopeParams,
     { enabled: false },
   );
-  const submitTab = useSubmitRemoteSettingsTab(plantId ?? "", scopeParams);
-  const submitCommand = useSubmitRemoteCommand(plantId ?? "", scopeParams);
 
+  const submitTab = useSubmitRemoteSettingsTab(scopeParams);
+  const submitCommand = useSubmitRemoteCommand(scopeParams);
   if (!isOpen) return null;
 
   const errors = validateRemoteSettings(settings);
@@ -1197,11 +1186,12 @@ export default function RemoteSettingModal({
 
   const uploadedForThisTab =
     submitTab.isSuccess &&
-    submitTab.variables?.deviceId === deviceId &&
+    submitTab.variables?.sn === sn &&
     submitTab.variables?.entry.tab === activeTabConfig.settingsKey;
+
   const uploadErrorForThisTab =
     submitTab.isError &&
-    submitTab.variables?.deviceId === deviceId &&
+    submitTab.variables?.sn === sn &&
     submitTab.variables?.entry.tab === activeTabConfig.settingsKey;
 
   // const updateGrid = (patch: Partial<GridParameters>) =>
@@ -1323,7 +1313,7 @@ export default function RemoteSettingModal({
   // };
 
   const handleRead = async () => {
-    if (!deviceId || !plantId) return;
+    if (!sn) return;
 
     try {
       const result = await remoteSettingsTabQuery.refetch();
@@ -1341,15 +1331,24 @@ export default function RemoteSettingModal({
   };
 
   const handleUpload = () => {
-    if (!deviceId || !plantId || activeTabErrorCount > 0) return;
+    if (!sn || activeTabErrorCount > 0) return;
+
     setLastAction("upload");
     setLastActionTab(activeTab);
-    submitTab.mutate({ deviceId, sn, entry: buildTabEntry(activeTab, changedSettings) });
+
+    submitTab.mutate({
+      sn,
+      entry: buildTabEntry(activeTab, changedSettings),
+    });
   };
 
   const handleCommand = (command: RemoteSettingsCommand) => {
-    if (!deviceId || !plantId) return;
-    submitCommand.mutate({ deviceId, sn, command });
+    if (!sn) return;
+
+    submitCommand.mutate({
+      sn,
+      command,
+    });
   };
 
   const isReading = remoteSettingsTabQuery.isFetching;

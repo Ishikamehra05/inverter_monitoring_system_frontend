@@ -35,7 +35,7 @@ export const addDeviceRequestSchema = z.object({
 
 
 export const gridParametersSchema = z.object({
-  standardCode: z.enum(["IN", "EU", "AU"]).optional(),
+  standardCode: z.number().optional(),
   firstConnectDelayTime: z.number().optional(),
   reconnectDelayTime: z.number().optional(),
   firstConnectPowerGradient: z.number().optional(),

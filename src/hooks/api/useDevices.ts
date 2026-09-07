@@ -282,43 +282,42 @@ export const useDeviceCurrentAlerts = (
 
 
 export const useRemoteSettingsTab = <K extends RemoteSettingsTabKey>(
-  deviceId: string,
+  sn: string,
   tab: K,
-  plantId: string,
   params: ServiceScopeParams = {},
   options: { enabled?: boolean } = {},
 ) =>
   useQuery({
-    queryKey: deviceKeys.remoteSettingsTab(deviceId, tab, { plantId, ...params }),
-    queryFn: () => devicesApi.remoteSettingsTab(deviceId, tab, plantId, params),
-    enabled: !!deviceId && !!plantId && (options.enabled ?? true),
+    queryKey: deviceKeys.remoteSettingsTab(sn, tab, params),
+    queryFn: () => devicesApi.remoteSettingsTab(sn, tab, params),
+    enabled: !!sn && (options.enabled ?? true),
   });
 
-export const useSubmitRemoteSettingsTab = (plantId: string, params: ServiceScopeParams = {}) => {
+export const useSubmitRemoteSettingsTab = (
+  params: ServiceScopeParams = {},
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (variables: {
-      deviceId: string;
-      sn?: string;
+      sn: string;
       entry: RemoteSettingsTabEntry;
     }) =>
       devicesApi.submitRemoteSettingsTab(
-        variables.deviceId,
         variables.sn,
         variables.entry,
-        plantId,
         params,
       ),
 
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: deviceKeys.remoteSettingsTab(
-          variables.deviceId,
+          variables.sn,
           variables.entry.tab,
-          { plantId, ...params },
+          params,
         ),
       });
+
       queryClient.invalidateQueries({
         queryKey: [...serviceKeys.all, "settingTasks"],
       });
@@ -326,15 +325,22 @@ export const useSubmitRemoteSettingsTab = (plantId: string, params: ServiceScope
   });
 };
 
-export const useSubmitRemoteCommand = (plantId: string, params: ServiceScopeParams = {}) =>
+export const useSubmitRemoteCommand = (
+  params: ServiceScopeParams = {},
+) =>
   useMutation({
     mutationFn: ({
-      deviceId,
       sn,
       command,
     }: {
-      deviceId: string;
-      sn?: string;
+      sn: string;
       command: RemoteSettingsCommand;
-    }) => devicesApi.submitRemoteCommand(deviceId, { sn, command }, plantId, params),
+    }) =>
+      devicesApi.submitRemoteCommand(
+        {
+          sn,
+          command,
+        },
+        params,
+      ),
   });
