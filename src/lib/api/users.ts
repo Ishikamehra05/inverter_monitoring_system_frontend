@@ -92,4 +92,9 @@ export const usersApi = {
     apiClient<ApiEnvelope<any>>(`/users/${userId}/delete`, {
       method: "DELETE",
     }).then((res) => res.data),
+
+  deleteUserById: (userId: string | number) =>
+    apiClient<void>(`/users/${userId}/delete`, {
+      method: "DELETE",
+    }),
 };

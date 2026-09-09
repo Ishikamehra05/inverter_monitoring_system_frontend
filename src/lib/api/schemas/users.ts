@@ -88,6 +88,7 @@ export interface SearchDeviceResponse {
   userId: string | null;
   account: string | null;
   plantId?: string;
+  monitorDeviceId: string | null;
 
   createdAt: string;
   updatedAt: string;

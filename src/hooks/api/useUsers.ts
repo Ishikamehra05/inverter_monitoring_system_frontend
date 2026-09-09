@@ -83,3 +83,10 @@ export const useSearchModule = () => {
       usersApi.searchModule(payload),
   });
 };
+
+export const useDeleteUserById = () => {
+  return useMutation({
+    mutationFn: (userId: string | number) =>
+      usersApi.deleteUserById(userId),
+  });
+};
