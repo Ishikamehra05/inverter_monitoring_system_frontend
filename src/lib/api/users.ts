@@ -10,6 +10,7 @@ import type {
   SearchModuleResponse,
   SearchDataloggerResponse,
   SearchDataloggerRequest,
+  ChangeUserInverterRequest
 } from "./schemas/users";
 
 type ApiEnvelope<T> = {
@@ -91,5 +92,16 @@ export const usersApi = {
   deleteSubAccount: (userId: string) =>
     apiClient<ApiEnvelope<any>>(`/users/${userId}/delete`, {
       method: "DELETE",
+    }).then((res) => res.data),
+    
+    deleteUserById: (userId: string | number) =>
+    apiClient<void>(`/users/${userId}/delete`, {
+      method: "DELETE",
+    }),
+    
+      changeUserInverter: (payload: ChangeUserInverterRequest) =>
+    apiClient<ApiEnvelope<null>>("/users/change_user", {
+      method: "POST",
+      body: payload,
     }).then((res) => res.data),
 };

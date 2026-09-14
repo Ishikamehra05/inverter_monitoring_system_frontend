@@ -6,6 +6,7 @@ import type {
   CreateSubAccountRequest,
   SearchDeviceRequest,
   SearchModuleRequest,
+  ChangeUserInverterRequest
 } from "@/lib/api/schemas/users";
 
 export const useCreateSubAccount = () => {
@@ -81,5 +82,19 @@ export const useSearchModule = () => {
   return useMutation({
     mutationFn: (payload: SearchModuleRequest) =>
       usersApi.searchModule(payload),
+  });
+};
+
+export const useDeleteUserById = () => {
+  return useMutation({
+    mutationFn: (userId: string | number) =>
+      usersApi.deleteUserById(userId),
+  });
+};
+
+export const useChangeUserInverter = () => {
+  return useMutation({
+    mutationFn: (payload: ChangeUserInverterRequest) =>
+      usersApi.changeUserInverter(payload),
   });
 };

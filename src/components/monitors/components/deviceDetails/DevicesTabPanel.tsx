@@ -181,6 +181,8 @@ const DevicesTabPanel = ({
         {activeTab === "alerts" && <AlertsTab
           deviceId={deviceId}
           plantId={plantId}
+          fromService={propFromService}
+          targetEndUserId={selectedEndUserId}
         />}
       </div>
     </div>

@@ -1,29 +1,36 @@
+
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { Pagination } from "@/components/monitors/pagination";
 import { useDeviceCurrentAlerts } from "@/hooks/api/useDevices";
 
 interface AlertsTabProps {
   deviceId: string;
   plantId: string;
+  fromService?: boolean;
+  targetEndUserId?: string | null;
 }
 
-const AlertsTab = ({ deviceId, plantId }: AlertsTabProps) => {
+const AlertsTab = ({
+  deviceId,
+  plantId,
+  fromService,
+  targetEndUserId,
+}: AlertsTabProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const searchParams = useSearchParams();
-
-  const selectedEndUserId = searchParams.get("targetEndUserId");
-
-  const serviceParams = selectedEndUserId
+  const serviceParams = targetEndUserId
     ? {
       fromService: true,
-      targetEndUserId: selectedEndUserId,
+      targetEndUserId,
     }
-    : {};
+    : fromService
+      ? {
+        fromService: true,
+      }
+      : {};
 
   const alertsQuery = useDeviceCurrentAlerts(deviceId, {
     plantId,

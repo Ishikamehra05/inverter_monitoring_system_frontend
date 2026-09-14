@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Tabs from "./Tabs";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
-import { useLogin } from "@/hooks/api/useAuth";
+import { Eye, EyeOff, X } from "lucide-react";
+import { useLogin, useVerifyLoginCode } from "@/hooks/api/useAuth";
 type TabType = "Monitoring" | "Service";
 
 interface LoginErrors {
@@ -15,6 +16,7 @@ interface LoginErrors {
 
 export default function LoginForm() {
   const loginMutation = useLogin();
+  const verifyLoginCodeMutation = useVerifyLoginCode();
 
   const [activeTab, setActiveTab] = useState<TabType>("Monitoring");
   const [account, setAccount] = useState("");
@@ -22,6 +24,11 @@ export default function LoginForm() {
   const [remember, setRemember] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationError, setVerificationError] = useState("");
   const [errors, setErrors] = useState<LoginErrors>({});
 
   const validateFields = (accountValue: string, passwordValue: string) => {
@@ -46,16 +53,53 @@ export default function LoginForm() {
     if (!validateFields(accountValue, passwordValue)) return;
 
     try {
-      await loginMutation.mutateAsync({
+      const response = await loginMutation.mutateAsync({
         portal: activeTab === "Monitoring" ? "monitoring" : "service",
         account: accountValue,
         password: passwordValue,
         remember,
       });
+
+      if (response?.requiresVerification) {
+        setVerificationEmail(response.email || accountValue);
+        setVerificationId(response.verificationId || "");
+        setVerificationCode("");
+        setVerificationError("");
+        setShowVerificationModal(true);
+        return;
+      }
     } catch (err) {
       setErrors({
         general: err instanceof Error ? err.message : "Something went wrong.",
       });
+    }
+  };
+
+  const handleVerificationSubmit = async () => {
+    if (!verificationCode.trim()) {
+      setVerificationError("OTP is required.");
+      return;
+    }
+
+    if (!verificationId.trim()) {
+      setVerificationError("Verification ID is missing.");
+      return;
+    }
+
+    try {
+      setVerificationError("");
+      await verifyLoginCodeMutation.mutateAsync({
+        verificationId,
+        code: verificationCode,
+      });
+      setShowVerificationModal(false);
+      setVerificationCode("");
+      setVerificationId("");
+      setVerificationEmail("");
+    } catch (err) {
+      setVerificationError(
+        err instanceof Error ? err.message : "Verification failed.",
+      );
     }
   };
 
@@ -196,6 +240,66 @@ export default function LoginForm() {
 
         <p className="text-xs text-center text-gray-400 mt-6">V1.1.1.a</p>
       </form>
+
+      {showVerificationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Verification required
+              </h3>
+
+              <button
+                type="button"
+                onClick={() => setShowVerificationModal(false)}
+                className="rounded-full p-1 text-gray-500 hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  value={verificationEmail}
+                  readOnly
+                  className="w-full rounded-md border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">
+                  Enter code
+                </label>
+                <input
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="Enter code"
+                  className="w-full rounded-md border border-gray-300 p-2.5 text-sm outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {verificationError && (
+                <p className="text-sm text-red-500">{verificationError}</p>
+              )}
+
+              <button
+                type="button"
+                onClick={handleVerificationSubmit}
+                disabled={verifyLoginCodeMutation.isPending}
+                className="w-full rounded-md bg-blue-500 px-4 py-2.5 text-white disabled:opacity-50"
+              >
+                {verifyLoginCodeMutation.isPending
+                  ? "Logging in..."
+                  : "Login"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

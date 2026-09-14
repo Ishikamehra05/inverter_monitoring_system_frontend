@@ -67,6 +67,11 @@ export interface UpdateProfileResponse {
     epcEmail?: string | null;
     epcAddress?: string | null;
     updatedAt: string;
+    epcCompany?: string | null;
+    epcInstaller?: string | null;
+    epcMobile?: string | null;
+    epcEmail?: string | null;
+    epcAddress?: string | null;
   };
 }
 
