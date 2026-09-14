@@ -45,6 +45,11 @@ export interface UpdateProfileRequest {
   address?: string;
   timezone?: string;
   email?: string;
+  epcCompany?: string | null;
+  epcInstaller?: string | null;
+  epcMobile?: string | null;
+  epcEmail?: string | null;
+  epcAddress?: string | null;
 }
 
 export interface UpdateProfileResponse {
@@ -57,6 +62,11 @@ export interface UpdateProfileResponse {
     address: string | null;
     timezone: string | null;
     updatedAt: string;
+    epcCompany?: string | null;
+    epcInstaller?: string | null;
+    epcMobile?: string | null;
+    epcEmail?: string | null;
+    epcAddress?: string | null;
   };
 }
 
@@ -103,9 +113,14 @@ export type DeleteAccountResponse = {
 export const profileSchema = z.object({
   account: z.string(),
   email: z.string(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
   timezone: z.string(),
+  epcCompany: z.string().nullable().optional(),
+  epcInstaller: z.string().nullable().optional(),
+  epcMobile: z.string().nullable().optional(),
+  epcEmail: z.string().nullable().optional(),
+  epcAddress: z.string().nullable().optional(),
 });
 
 export const firmwareSchema = z.object({

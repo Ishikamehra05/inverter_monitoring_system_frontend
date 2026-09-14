@@ -12,24 +12,43 @@ import { ApiError } from "@/lib/api/errors";
 
 type SettingsTab = "general" | "security";
 
-const TIMEZONE_OPTIONS = ["(UTC+05:30) Colombo, New Delhi"];
+type ProfileState = {
+  account: string;
+  email: string;
+  phone: string;
+  address: string;
+  timezone: string;
+  epcCompany: string;
+  epcInstaller: string;
+  epcMobile: string;
+  epcEmail: string;
+  epcAddress: string;
+};
 
+const TIMEZONE_OPTIONS = ["(UTC+05:30) Colombo, New Delhi"];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
 const MIN_PASSWORD_LENGTH = 8;
+
+const emptyProfileState: ProfileState = {
+  account: "",
+  email: "",
+  phone: "",
+  address: "",
+  timezone: "",
+  epcCompany: "",
+  epcInstaller: "",
+  epcMobile: "",
+  epcEmail: "",
+  epcAddress: "",
+};
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<SettingsTab>("general");
   const profileQuery = useServiceProfile();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
-  const [profile, setProfile] = useState({
-    account: "",
-    email: "",
-    phone: "",
-    address: "",
-    timezone: "",
-  });
+  const [profile, setProfile] = useState<ProfileState>(emptyProfileState);
   const [passwords, setPasswords] = useState({
     oldPassword: "",
     newPassword: "",
@@ -44,16 +63,22 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!profileQuery.data) return;
+
     setProfile({
-      account: profileQuery.data.account,
-      email: profileQuery.data.email,
+      account: profileQuery.data.account ?? "",
+      email: profileQuery.data.email ?? "",
       phone: profileQuery.data.phone ?? "",
       address: profileQuery.data.address ?? "",
-      timezone: profileQuery.data.timezone,
+      timezone: profileQuery.data.timezone ?? "",
+      epcCompany: profileQuery.data.epcCompany ?? "",
+      epcInstaller: profileQuery.data.epcInstaller ?? "",
+      epcMobile: profileQuery.data.epcMobile ?? "",
+      epcEmail: profileQuery.data.epcEmail ?? "",
+      epcAddress: profileQuery.data.epcAddress ?? "",
     });
   }, [profileQuery.data]);
 
-  const updateProfileField = (field: keyof typeof profile, value: string) => {
+  const updateProfileField = (field: keyof ProfileState, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: "" }));
   };
@@ -91,13 +116,20 @@ export default function SettingsPage() {
     if (!profile.timezone.trim()) nextErrors.timezone = "Timezone is required.";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+
     try {
       const result = await updateProfile.mutateAsync({
         email,
         phone,
         address,
         timezone: profile.timezone,
+        epcCompany: profile.epcCompany.trim() || null,
+        epcInstaller: profile.epcInstaller.trim() || null,
+        epcMobile: profile.epcMobile.trim() || null,
+        epcEmail: profile.epcEmail.trim() || null,
+        epcAddress: profile.epcAddress.trim() || null,
       });
+
       toast.success(result.message || "Profile updated successfully.");
     } catch (error) {
       if (error instanceof ApiError) {
@@ -145,8 +177,10 @@ export default function SettingsPage() {
       nextErrors.confirmPassword = "Confirm password is required.";
     else if (newPassword !== confirmPassword)
       nextErrors.confirmPassword = "Passwords do not match.";
+
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+
     try {
       const result = await changePassword.mutateAsync({
         oldPassword,
@@ -180,10 +214,12 @@ export default function SettingsPage() {
             Security Settings
           </MenuItem>
         </aside>
+
         <section className="flex-1 px-4 py-6 sm:px-8">
           {tab === "general" && (
-            <form onSubmit={handleProfileSubmit} className="w-full max-w-md">
+            <form onSubmit={handleProfileSubmit} className="w-full max-w-2xl">
               <h1 className="mb-6 text-base font-medium">General Settings</h1>
+
               {profileQuery.isLoading ? (
                 <p className="text-sm text-black/50">Loading profile...</p>
               ) : profileQuery.isError ? (
@@ -192,31 +228,62 @@ export default function SettingsPage() {
                 </p>
               ) : (
                 <div className="space-y-5">
-                  <Field label="User Name">
-                    <Input value={profile.account} disabled />
-                  </Field>
-                  <Field label="Email" error={errors.email}>
-                    <Input
-                      type="email"
-                      maxLength={254}
-                      value={profile.email}
-                      onChange={(event) =>
-                        updateProfileField("email", event.target.value)
-                      }
-                      disabled={updateProfile.isPending}
-                    />
-                  </Field>
-                  <Field label="Phone" error={errors.phone}>
-                    <Input
-                      type="tel"
-                      inputMode="tel"
-                      value={profile.phone}
-                      onChange={(event) =>
-                        updateProfileField("phone", event.target.value)
-                      }
-                      disabled={updateProfile.isPending}
-                    />
-                  </Field>
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="User Name">
+                      <Input value={profile.account} disabled />
+                    </Field>
+
+                    <Field label="Timezone" error={errors.timezone}>
+                      <select
+                        value={profile.timezone}
+                        onChange={(event) =>
+                          updateProfileField("timezone", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                        className="h-8 w-full rounded-xs border border-[#d9d9d9] bg-white px-2.75 text-sm focus:border-[#40a9ff] focus:outline-none focus:ring-2 focus:ring-[#1890ff]/20 disabled:bg-[#fafafa]"
+                      >
+                        {!TIMEZONE_OPTIONS.includes(profile.timezone) &&
+                          profile.timezone && (
+                            <option value={profile.timezone}>
+                              {profile.timezone}
+                            </option>
+                          )}
+
+                        {TIMEZONE_OPTIONS.map((timezone) => (
+                          <option key={timezone} value={timezone}>
+                            {timezone}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="Email" error={errors.email}>
+                      <Input
+                        type="email"
+                        maxLength={254}
+                        value={profile.email}
+                        onChange={(event) =>
+                          updateProfileField("email", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                      />
+                    </Field>
+
+                    <Field label="Phone" error={errors.phone}>
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        value={profile.phone}
+                        onChange={(event) =>
+                          updateProfileField("phone", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                      />
+                    </Field>
+                  </div>
+
                   <Field label="Address" error={errors.address}>
                     <Input
                       maxLength={200}
@@ -227,29 +294,64 @@ export default function SettingsPage() {
                       disabled={updateProfile.isPending}
                     />
                   </Field>
-                  <Field label="Timezone" error={errors.timezone}>
-                    <select
-                      value={profile.timezone}
+
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="EPC Company">
+                      <Input
+                        value={profile.epcCompany}
+                        onChange={(event) =>
+                          updateProfileField("epcCompany", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                      />
+                    </Field>
+
+                    <Field label="EPC Installer">
+                      <Input
+                        value={profile.epcInstaller}
+                        onChange={(event) =>
+                          updateProfileField("epcInstaller", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="EPC Mobile">
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        value={profile.epcMobile}
+                        onChange={(event) =>
+                          updateProfileField("epcMobile", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                      />
+                    </Field>
+
+                    <Field label="EPC Email">
+                      <Input
+                        type="email"
+                        value={profile.epcEmail}
+                        onChange={(event) =>
+                          updateProfileField("epcEmail", event.target.value)
+                        }
+                        disabled={updateProfile.isPending}
+                      />
+                    </Field>
+                  </div>
+
+                  <Field label="EPC Address">
+                    <Input
+                      value={profile.epcAddress}
                       onChange={(event) =>
-                        updateProfileField("timezone", event.target.value)
+                        updateProfileField("epcAddress", event.target.value)
                       }
                       disabled={updateProfile.isPending}
-                      className="h-8 w-full rounded-xs border border-[#d9d9d9] bg-white px-2.75 text-sm focus:border-[#40a9ff] focus:outline-none focus:ring-2 focus:ring-[#1890ff]/20 disabled:bg-[#fafafa]"
-                    >
-                      {!TIMEZONE_OPTIONS.includes(profile.timezone) &&
-                        profile.timezone && (
-                          <option value={profile.timezone}>
-                            {profile.timezone}
-                          </option>
-                        )}
-
-                      {TIMEZONE_OPTIONS.map((timezone) => (
-                        <option key={timezone} value={timezone}>
-                          {timezone}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </Field>
+
                   <button
                     type="submit"
                     disabled={updateProfile.isPending}
@@ -261,6 +363,7 @@ export default function SettingsPage() {
               )}
             </form>
           )}
+
           {tab === "security" && (
             <form onSubmit={handlePasswordSubmit} className="w-full max-w-md">
               <h1 className="mb-6 text-base font-medium">Security Settings</h1>
@@ -278,6 +381,7 @@ export default function SettingsPage() {
                     newPassword: "Please enter new password",
                     confirmPassword: "Please confirm password",
                   };
+
                   return (
                     <Field
                       key={field}
@@ -307,6 +411,7 @@ export default function SettingsPage() {
                     </Field>
                   );
                 })}
+
                 <button
                   type="submit"
                   disabled={changePassword.isPending}

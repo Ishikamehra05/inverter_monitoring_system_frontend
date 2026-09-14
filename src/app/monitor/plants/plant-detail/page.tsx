@@ -75,6 +75,7 @@ export default function PlantDetailsPage() {
       </div>
 
       <EnergyFlow
+        plantType={overview.plant.type}
         solarPower={5.2}
         gridPower={-1.5}
         consumption={overview.metrics.currentPower.value}

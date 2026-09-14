@@ -88,10 +88,10 @@ export interface SearchDeviceResponse {
   userId: string | null;
   account: string | null;
   plantId?: string;
-  monitorDeviceId: string | null;
 
   createdAt: string;
   updatedAt: string;
+  monitorDeviceId: string | null;
 }
 
 export const SearchDataloggerSchema = z.object({
@@ -123,6 +123,13 @@ export interface SearchDataloggerResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export type ChangeUserInverterRequest = {
+  accountName: string;
+  confirmAccountName: string;
+  serialNumber: string;
+};
+
 export type SearchDataloggerPayload = z.infer<typeof SearchDataloggerSchema>;
 export type CreateSubAccountRequest = z.infer<
   typeof createSubAccountRequestSchema

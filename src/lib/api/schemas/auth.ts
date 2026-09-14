@@ -1,3 +1,4 @@
+//lib/api/schemas/auth.ts 
 import { z } from "zod";
 
 export const loginRequestSchema = z.object({
@@ -8,17 +9,27 @@ export const loginRequestSchema = z.object({
 });
 
 export const loginResponseSchema = z.object({
-  accessToken: z.string(),
+  accessToken: z.string().optional(),
   refreshToken: z.string().optional(),
   expiresAt: z.string().optional(),
-  redirect: z.string(),
-  user: z.object({
-    id: z.string(),
-    account: z.string(),
-    email: z.string().optional(),
-    role: z.string(),
-    portal: z.enum(["monitoring", "service"]),
-  }),
+  redirect: z.string().optional(),
+  requiresVerification: z.boolean().optional(),
+  verificationId: z.string().optional(),
+  email: z.string().optional(),
+  user: z
+    .object({
+      id: z.string(),
+      account: z.string(),
+      email: z.string().optional(),
+      role: z.string(),
+      portal: z.enum(["monitoring", "service"]),
+    })
+    .optional(),
+});
+
+export const loginVerificationRequestSchema = z.object({
+  verificationId: z.string().min(1),
+  code: z.string().min(1),
 });
 
 export const registerRequestSchema = z.object({
@@ -38,6 +49,7 @@ export const verificationCodeRequestSchema = z.object({
 
 export const forgotPasswordRequestSchema = z.object({
   account: z.string().min(1, "Account is required"),
+  verificationCode: z.string().min(1, "Verification code is required"),
   newPassword: z.string().min(1, "New password is required"),
   confirmPassword: z.string().min(1, "Confirm password is required"),
 });
@@ -51,6 +63,9 @@ export const ChangePasswordRequest = z.object({
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequest>;
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
+export type LoginVerificationRequest = z.infer<
+  typeof loginVerificationRequestSchema
+>;
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export type VerificationCodeRequest = z.infer<
   typeof verificationCodeRequestSchema

@@ -7,6 +7,7 @@ import {
   useSearchUser,
   useSearchModule,
   useSearchDatalogger,
+  useChangeUserInverter
 } from "@/hooks/api/useUsers";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -113,6 +114,9 @@ export default function GlobalSearchPage() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeModuleOpen, setUpgradeModuleOpen] = useState(false);
   const [activateUserOpen, setActivateUserOpen] = useState(false);
+  const changeUserInverter = useChangeUserInverter();
+  const [accountName, setAccountName] = useState("");
+  const [confirmAccountName, setConfirmAccountName] = useState("");
   const handleSearch = () => {
     const value = keyword.trim();
     setSelectedDevice(null);
@@ -145,6 +149,14 @@ export default function GlobalSearchPage() {
         { sno: value },
         {
           onSuccess: (data) => {
+            console.log("========== SEARCH DEVICE ==========");
+            console.log("FULL RESPONSE:", data);
+            console.log("DEVICE:", data.device);
+            console.log("DEVICE ID:", data.device?.id);
+            console.log("DEVICE SN:", data.device?.sno);
+            console.log("PLANT ID:", data.device?.plantId);
+            console.log("ALL DEVICE FIELDS:", Object.keys(data.device ?? {}));
+            console.log("===================================");
 
             setSelectedDevice(data.device);
           },
@@ -192,8 +204,7 @@ export default function GlobalSearchPage() {
     searchModule.reset();
   };
 
-
-  const handleDeleteDevice = async () => {
+    const handleDeleteDevice = async () => {
     if (!device?.monitorDeviceId || !device?.plantId) {
       toast.error("Inverter device ID not found.");
       return;
@@ -214,24 +225,71 @@ export default function GlobalSearchPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!user?.id) {
-      toast.error("No user selected.");
+  if (!user?.id) {
+    toast.error("No user selected.");
+    return;
+  }
+
+  try {
+    await deleteUserByIdMutation.mutateAsync(user.id);
+
+    toast.success("User deleted successfully.");
+
+    setDeleteAccountOpen(false);
+    searchUser.reset();
+    setKeyword("");
+  } catch (error: any) {
+    console.error("Delete user error:", error);
+
+    toast.error(
+      error?.message || "Failed to delete user."
+    );
+  }
+};
+
+  const handleChangeAccount = async () => {
+    if (!device?.sno) {
+      toast.error("Serial number not found.");
+      return;
+    }
+
+    if (!accountName.trim()) {
+      toast.error("Please enter new account.");
+      return;
+    }
+
+    if (!confirmAccountName.trim()) {
+      toast.error("Please confirm new account.");
       return;
     }
 
     try {
-      await deleteUserByIdMutation.mutateAsync(user.id);
+      await changeUserInverter.mutateAsync({
+        accountName: accountName.trim(),
+        confirmAccountName: confirmAccountName.trim(),
+        serialNumber: device.sno,
+      });
 
-      toast.success("User deleted successfully.");
+      toast.success("Account changed successfully.");
 
-      setDeleteAccountOpen(false);
-      searchUser.reset();
-      setKeyword("");
+      setActivateUserOpen(false);
+      setAccountName("");
+      setConfirmAccountName("");
+
+      // Refresh device information
+      searchDevice.mutate(
+        { sno: device.sno },
+        {
+          onSuccess: (data) => {
+            setSelectedDevice(data.device);
+          },
+        },
+      );
     } catch (error: any) {
-      console.error("Delete user error:", error);
+      console.error("Change account error:", error);
 
       toast.error(
-        error?.message || "Failed to delete user."
+        error?.message || "Failed to change account.",
       );
     }
   };
@@ -326,12 +384,20 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
 
                     <td colSpan={3} className="px-5 py-2">
                       <div className="flex flex-wrap items-center gap-3 text-[15x]">
-                        {/* <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm"> */}
-                        {/* <button className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm">
+                         <button
+                          type="button"
+                          onClick={() => {
+                            setAccountName("");
+                            setConfirmAccountName("");
+                            setActivateUserOpen(true);
+                          }}
+                          disabled={changeUserInverter.isPending}
+                          className="flex items-center gap-1 hover:text-[#1890ff] transition-colors text-sm disabled:opacity-50"
+                        >
                           <HiOutlineSwitchHorizontal className="h-5 w-5" />
                           <span>Change Account</span>
-                        </button>  */}
-
+                        </button>
+                        
                         <button
                           onClick={() => setDeleteOpen(true)}
                           disabled={deleteDevice.isPending}
@@ -354,21 +420,21 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                           <span>Upgrade Device</span>
                         </button>
                         <button
-                          type="button"
-                          onClick={() => {
+                            type="button"
+                            onClick={() => {
                             if (!device) {
-                              toast.error("No device selected.");
-                              return;
-                            }
+                            toast.error("No device selected.");
+                            return;
+                        }
 
-                            setRemoteOpen(true);
+                        setRemoteOpen(true);
                           }}
                           className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors"
                         >
                           <HiOutlineCog className="h-5 w-5" />
                           <span>Remote Setting</span>
                         </button>
-                        {/* <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
+                         {/* <button className="flex items-center text-sm gap-1 hover:text-[#1890ff] transition-colors">
                           <HiOutlineTerminal className="h-5 w-5" />
                           <span>Command Operation</span>
                         </button>   */}
@@ -455,7 +521,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                     </td>
                   </tr>
 
-                  <tr className="border-b text-sm border-[#ececec]">
+                   <tr className="border-b text-sm border-[#ececec]">
                     <td className="bg-[#f5f5f5] px-5  text-sm py-1">MDSP</td>
 
                     <td className="px-4 py-1">A10300-06-041332</td>
@@ -503,8 +569,8 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               sn={device?.sno ?? ""}
               targetEndUserId={device?.userId ?? targetEndUserId}
             />
-
-            <UpgradeInfoModal
+            
+           <UpgradeInfoModal
               isOpen={upgradeOpen && mode === "sn"}
               onClose={() => setUpgradeOpen(false)}
               model={device.inverterName ?? ""}
@@ -512,9 +578,100 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
               plantId={device.plantId ?? plantId ?? ""}
               status={device.status ?? "DONE"}
             />
+            
+            {activateUserOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="w-[390px] max-w-[calc(100vw-32px)] bg-white rounded-sm shadow-xl">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8e8e8]">
+                    <h3 className="text-[14px] font-medium text-[#333]">
+                      Exchange Monitor User
+                    </h3>
 
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (changeUserInverter.isPending) return;
 
-            {mode === "sn" && device && (
+                        setActivateUserOpen(false);
+                        setAccountName("");
+                        setConfirmAccountName("");
+                      }}
+                      className="text-[#999] hover:text-[#333] text-[24px] leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Body */}
+                  <div className="px-4 py-5">
+                    <div className="mb-5">
+                      <label className="block text-[13px] text-[#333] mb-2">
+                        <span className="text-red-500 mr-1">*</span>
+                        New User
+                      </label>
+
+                      <input
+                        type="text"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        placeholder=""
+                        disabled={changeUserInverter.isPending}
+                        className="w-full h-9 border border-[#d9d9d9] px-3 text-[13px] outline-none focus:border-[#1890ff] disabled:bg-[#f5f5f5]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[13px] text-[#333] mb-2">
+                        <span className="text-red-500 mr-1">*</span>
+                        Confirm the new user
+                      </label>
+
+                      <input
+                        type="text"
+                        value={confirmAccountName}
+                        onChange={(e) =>
+                          setConfirmAccountName(e.target.value)
+                        }
+                        placeholder=""
+                        disabled={changeUserInverter.isPending}
+                        className="w-full h-9 border border-[#d9d9d9] px-3 text-[13px] outline-none focus:border-[#1890ff] disabled:bg-[#f5f5f5]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex justify-end gap-2 px-4 py-3 border-t border-[#e8e8e8]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActivateUserOpen(false);
+                        setAccountName("");
+                        setConfirmAccountName("");
+                      }}
+                      disabled={changeUserInverter.isPending}
+                      className="h-8 px-4 border border-[#d9d9d9] text-[13px] text-[#555] bg-white hover:bg-[#f5f5f5] disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleChangeAccount}
+                      disabled={changeUserInverter.isPending}
+                      className="h-8 px-5 bg-[#1890ff] text-white text-[13px] hover:bg-[#40a9ff] disabled:opacity-50"
+                    >
+                      {changeUserInverter.isPending
+                        ? "Confirming..."
+                        : "Confirm"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            
+          {mode === "sn" && device && (
               <div className="mt-10">
                 <h3 className="text-[18px] font-semibold text-[#333] mb-5">
                   Device Details
@@ -565,7 +722,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                       <td colSpan={3} className="px-5 py-2">
                         <div className="flex items-center flex-wrap gap-4 text-[15px]">
                           {/* Activate User */}
-                          <button onClick={() => setActivateUserOpen(true)} className="flex items-center gap-1 text-[#555] hover:text-green-600 transition-colors">
+                          <button onClick={()=>setActivateUserOpen(true)} className="flex items-center gap-1 text-[#555] hover:text-green-600 transition-colors">
                             <HiOutlineCheckCircle className="h-5 w-5" />
                             <span>Activate User</span>
                           </button>
@@ -581,14 +738,14 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                             <HiOutlineTrash className="h-5 w-5" />
                             <span>
                               {deleteUserByIdMutation.isPending
-                                ? "Deleting..."
-                                : "Delete Account"}
+                              ? "Deleting..."
+                              : "Delete Account"}
                             </span>
                           </button>
                         </div>
                       </td>
                     </tr>
-
+                    
                     <tr className="border-b border-[#ededed]">
                       <td className="bg-[#f7f7f7] px-5 py-4">E-mail</td>
 
@@ -623,57 +780,57 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
                   </tbody>
                 </table>
                 {activateUserOpen && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div
-                      className="absolute inset-0 bg-black/40"
-                      onClick={() => setActivateUserOpen(false)}
-                    />
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="absolute inset-0 bg-black/40"
+      onClick={() => setActivateUserOpen(false)}
+    />
 
-                    <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-                      <h3 className="mb-3 text-base font-semibold text-gray-900">
-                        Activate User
-                      </h3>
+    <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+      <h3 className="mb-3 text-base font-semibold text-gray-900">
+        Activate User
+      </h3>
 
-                      <p className="mb-6 text-sm text-gray-600">
-                        Do you want to activate the user?
-                      </p>
+      <p className="mb-6 text-sm text-gray-600">
+        Do you want to activate the user?
+      </p>
 
-                      <div className="flex justify-end gap-3">
-                        <button
-                          onClick={() => setActivateUserOpen(false)}
-                          className="rounded border border-gray-300 px-5 py-2 text-sm hover:bg-gray-50"
-                        >
-                          No
-                        </button>
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setActivateUserOpen(false)}
+          className="rounded border border-gray-300 px-5 py-2 text-sm hover:bg-gray-50"
+        >
+          No
+        </button>
 
-                        <button
-                          onClick={() => setActivateUserOpen(false)}
-                          className="rounded bg-[#1890ff] px-5 py-2 text-sm text-white hover:bg-[#40a9ff]"
-                        >
-                          Yes
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+        <button
+          onClick={() => setActivateUserOpen(false)}
+          className="rounded bg-[#1890ff] px-5 py-2 text-sm text-white hover:bg-[#40a9ff]"
+        >
+          Yes
+        </button>
+      </div>
+    </div>
+  </div>
+)}
               </>
             )}
 
             <DeleteInverterModal
-              open={deleteAccountOpen}
-              device={
-                user
-                  ? {
-                    id: user.id,
-                    name: user.account,
-                  }
-                  : null
-              }
-              loading={deleteUserByIdMutation.isPending}
-              onClose={() => setDeleteAccountOpen(false)}
-              onConfirm={handleDeleteAccount}
-              title="Delete Account"
-            />
+  open={deleteAccountOpen}
+  device={
+    user
+      ? {
+          id: user.id,
+          name: user.account,
+        }
+      : null
+  }
+ loading={deleteUserByIdMutation.isPending}
+  onClose={() => setDeleteAccountOpen(false)}
+  onConfirm={handleDeleteAccount}
+  title="Delete Account"
+/>
           </>
         )}
 
@@ -686,7 +843,7 @@ sm:w-90 h-10 border border-[#d9d9d9] px-4 text-[14px] outline-none"
             <div className="overflow-x-auto">
               <table className="w-full border border-[#ececec] border-collapse text-[15px]">
                 <tbody>
-                  <tr className="border-b border-[#ececec]">
+                 <tr className="border-b border-[#ececec]">
                     <td className="bg-[#f5f5f5] w-[30%] px-5 py-3">
                       Module Operation
                     </td>

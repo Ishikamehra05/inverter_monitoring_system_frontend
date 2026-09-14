@@ -1,8 +1,10 @@
+//lib/api/auth.ts 
 import { apiClient } from "./apiClient";
 import type {
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
+  LoginVerificationRequest,
   RegisterRequest,
   VerificationCodeRequest,
   ChangePasswordRequest,
@@ -17,6 +19,12 @@ type ApiEnvelope<T> = {
 export const authApi = {
   login: (payload: LoginRequest) =>
     apiClient<ApiEnvelope<LoginResponse>>("/auth/login", {
+      method: "POST",
+      body: payload,
+    }).then((res) => res.data),
+
+  verifyLoginCode: (payload: LoginVerificationRequest) =>
+    apiClient<ApiEnvelope<LoginResponse>>("/auth/verify-code", {
       method: "POST",
       body: payload,
     }).then((res) => res.data),
