@@ -1,235 +1,167 @@
-// "use client";
-
-// import { useMutation, useQueryClient } from "@tanstack/react-query";
-// import { useRouter } from "next/navigation";
-// import { authApi } from "@/lib/api/auth";
-// import { isBackendUnavailable } from "@/lib/api/errors";
-// import { clearAuthSession, setAuthSession } from "@/lib/auth/session";
-// import type {
-//   ForgotPasswordRequest,
-//   LoginRequest,
-//   RegisterRequest,
-//   VerificationCodeRequest,
-//   ChangePasswordRequest,
-// } from "@/lib/api/schemas/auth";
-// import { UserRole } from "@/types/auth";
-
-// export const useLogin = () => {
-//   const router = useRouter();
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (payload: LoginRequest) => {
-//       try {
-//         return await authApi.login(payload);
-//       } catch (error) {
-//         if (!isBackendUnavailable(error)) throw error;
-//         if (
-//           payload.portal === "monitoring" &&
-//           payload.account === "PMPLASTIC" &&
-//           payload.password === "polycab123"
-//         ) {
-//           return {
-//             accessToken: "dev-monitoring-token",
-//             redirect: "/monitor/plants",
-//             user: {
-//               id: "dev_monitoring",
-//               account: payload.account,
-//               role: "monitoring_user",
-//               portal: "monitoring" as const,
-//             },
-//           };
-//         }
-//         if (
-//           payload.portal === "service" &&
-//           payload.account === "service" &&
-//           payload.password === "service123"
-//         ) {
-//           return {
-//             accessToken: "dev-service-token",
-//             redirect: "/services/monitor/list",
-//             user: {
-//               id: "dev_service",
-//               account: payload.account,
-//               role: "service_admin",
-//               portal: "service" as const,
-//             },
-//           };
-//         }
-//         throw new Error(
-//           payload.portal === "monitoring"
-//             ? "Invalid Monitoring credentials."
-//             : "Invalid Service credentials.",
-//         );
-//       }
-//     },
-//     onSuccess: (data, variables) => {
-//       if (variables.remember) {
-//         localStorage.setItem(
-//           "rememberedLogin",
-//           JSON.stringify({
-//             account: variables.account,
-//             password: variables.password,
-//             portal: variables.portal,
-//           }),
-//         );
-//       } else {
-//         localStorage.removeItem("rememberedLogin");
-//       }
-
-//       setAuthSession(
-//         data.accessToken,
-//         data.refreshToken!,
-//         data.user.portal,
-//         data.user.account || variables.account,
-//         data.user.role as UserRole,
-//       );
-//       queryClient.clear();
-//       router.push(data.redirect);
-//     },
-//   });
-// };
-
-// export const useLogout = () => {
-//   const router = useRouter();
-
-//   return useMutation({
-//     mutationFn: async () => {
-//       try {
-//         await authApi.logout();
-//       } catch (error) {
-//         if (!isBackendUnavailable(error)) throw error;
-//       }
-//     },
-//     onSettled: () => {
-//       clearAuthSession();
-//       router.push("/login");
-//     },
-//   });
-// };
-
-// export const useRegister = () =>
-//   useMutation({
-//     mutationFn: (payload: RegisterRequest) => authApi.register(payload),
-//   });
-
-// export const useSendVerificationCode = () =>
-//   useMutation({
-//     mutationFn: (payload: VerificationCodeRequest) =>
-//       authApi.sendVerificationCode(payload),
-//   });
-
-// export const useForgotPassword = () =>
-//   useMutation({
-//     mutationFn: (payload: ForgotPasswordRequest) =>
-//       authApi.forgotPassword(payload),
-//   });
-
-// export const useChangePassword = () =>
-//   useMutation({
-//     mutationFn: (payload: ChangePasswordRequest) =>
-//       authApi.changePassword(payload),
-//   });
-
-//useAuth.ts
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+
 import { useRouter } from "next/navigation";
+
 import { authApi } from "@/lib/api/auth";
-import { isBackendUnavailable } from "@/lib/api/errors";
-import { clearAuthSession, setAuthSession } from "@/lib/auth/session";
+
+import {
+  clearAuthSession,
+  setAuthSession,
+} from "@/lib/auth/session";
+
 import type {
+  ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
-  LoginResponse,
-  LoginVerificationRequest,
   RegisterRequest,
+  TwoFactorLoginVerifyRequest,
+  TwoFactorSetupRequest,
+  TwoFactorVerifyRequest,
   VerificationCodeRequest,
-  ChangePasswordRequest,
 } from "@/lib/api/schemas/auth";
+
 import { UserRole } from "@/types/auth";
 
+/*
+ * LOGIN
+ *
+ * Username/password authentication only.
+ *
+ * The backend returns the 2FA choice
+ * information instead of issuing JWT immediately.
+ */
 export const useLogin = () => {
+  return useMutation({
+    mutationFn: (payload: LoginRequest) =>
+      authApi.login(payload),
+  });
+};
+
+/*
+ * Generate/reset Google Authenticator setup.
+ *
+ * Used when:
+ *
+ * NO
+ *
+ * OR
+ *
+ * YES + 2FA disabled
+ */
+export const useSetupTwoFactor = () => {
+  return useMutation({
+    mutationFn: (
+      payload: TwoFactorSetupRequest,
+    ) =>
+      authApi.setupTwoFactor(payload),
+  });
+};
+
+/*
+ * GOOGLE AUTHENTICATOR VERIFICATION
+ *
+ * This single hook handles BOTH cases:
+ *
+ * 1. Existing enabled 2FA:
+ *
+ *    setup is omitted
+ *
+ * 2. Fresh 2FA setup:
+ *
+ *    setup: true
+ *
+ * In both cases the request goes to:
+ *
+ * POST /auth/2fa/verify
+ */
+export const useVerifyTwoFactor = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: LoginRequest) => {
-      try {
-        return await authApi.login(payload);
-      } catch (error) {
-        if (!isBackendUnavailable(error)) throw error;
-        if (
-          payload.portal === "monitoring" &&
-          payload.account === "PMPLASTIC" &&
-          payload.password === "polycab123"
-        ) {
-          return {
-            accessToken: "dev-monitoring-token",
-            redirect: "/monitor/plants",
-            user: {
-              id: "dev_monitoring",
-              account: payload.account,
-              role: "monitoring_user",
-              portal: "monitoring" as const,
-            },
-          };
-        }
-        if (
-          payload.portal === "service" &&
-          payload.account === "service" &&
-          payload.password === "service123"
-        ) {
-          return {
-            accessToken: "dev-service-token",
-            redirect: "/services/monitor/list",
-            user: {
-              id: "dev_service",
-              account: payload.account,
-              role: "service_admin",
-              portal: "service" as const,
-            },
-          };
-        }
-        throw new Error(
-          payload.portal === "monitoring"
-            ? "Invalid Monitoring credentials."
-            : "Invalid Service credentials.",
-        );
-      }
-    },
-    onSuccess: (data, variables) => {
-      if (data.requiresVerification) return;
+    mutationFn: (
+      payload: TwoFactorVerifyRequest,
+    ) =>
+      authApi.verifyTwoFactor(payload),
 
-      if (variables.remember) {
-        localStorage.setItem(
-          "rememberedLogin",
-          JSON.stringify({
-            account: variables.account,
-            password: variables.password,
-            portal: variables.portal,
-          }),
-        );
-      } else {
-        localStorage.removeItem("rememberedLogin");
+    onSuccess: (data) => {
+      /*
+       * Backend must return the complete
+       * authentication session after a
+       * successful 2FA verification.
+       */
+      if (
+        !data.accessToken ||
+        !data.refreshToken ||
+        !data.user ||
+        !data.redirect
+      ) {
+        return;
       }
-
-      if (!data.user || !data.accessToken) return;
 
       setAuthSession(
         data.accessToken,
-        data.refreshToken!,
+        data.refreshToken,
         data.user.portal,
-        data.user.account || variables.account,
+        data.user.account,
         data.user.role as UserRole,
       );
+
       queryClient.clear();
-      router.push(data.redirect ?? "/login");
+
+      router.push(data.redirect);
     },
   });
 };
 
+/*
+ * LEGACY 2FA LOGIN VERIFICATION
+ *
+ * Kept so existing code/endpoints do not break.
+ */
+export const useVerifyTwoFactorLogin = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      payload: TwoFactorLoginVerifyRequest,
+    ) =>
+      authApi.verifyTwoFactorLogin(payload),
+
+    onSuccess: (data) => {
+      if (
+        !data.accessToken ||
+        !data.refreshToken ||
+        !data.user ||
+        !data.redirect
+      ) {
+        return;
+      }
+
+      setAuthSession(
+        data.accessToken,
+        data.refreshToken,
+        data.user.portal,
+        data.user.account,
+        data.user.role as UserRole,
+      );
+
+      queryClient.clear();
+
+      router.push(data.redirect);
+    },
+  });
+};
+
+/*
+ * LOGOUT
+ */
 export const useLogout = () => {
   const router = useRouter();
 
@@ -237,59 +169,59 @@ export const useLogout = () => {
     mutationFn: async () => {
       try {
         await authApi.logout();
-      } catch (error) {
-        if (!isBackendUnavailable(error)) throw error;
+      } finally {
+        clearAuthSession();
       }
     },
+
     onSettled: () => {
       clearAuthSession();
+
       router.push("/login");
     },
   });
 };
 
+/*
+ * REGISTER
+ */
 export const useRegister = () =>
   useMutation({
-    mutationFn: (payload: RegisterRequest) => authApi.register(payload),
+    mutationFn: (
+      payload: RegisterRequest,
+    ) =>
+      authApi.register(payload),
   });
 
+/*
+ * SEND VERIFICATION CODE
+ */
 export const useSendVerificationCode = () =>
   useMutation({
-    mutationFn: (payload: VerificationCodeRequest) =>
+    mutationFn: (
+      payload: VerificationCodeRequest,
+    ) =>
       authApi.sendVerificationCode(payload),
   });
 
-export const useVerifyLoginCode = () => {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: LoginVerificationRequest) =>
-      authApi.verifyLoginCode(payload),
-    onSuccess: (data) => {
-      if (!data.user || !data.accessToken) return;
-
-      setAuthSession(
-        data.accessToken,
-        data.refreshToken!,
-        data.user.portal,
-        data.user.account,
-        data.user.role as UserRole,
-      );
-      queryClient.clear();
-      router.push(data.redirect ?? "/monitor/plants");
-    },
-  });
-};
-
+/*
+ * FORGOT PASSWORD
+ */
 export const useForgotPassword = () =>
   useMutation({
-    mutationFn: (payload: ForgotPasswordRequest) =>
+    mutationFn: (
+      payload: ForgotPasswordRequest,
+    ) =>
       authApi.forgotPassword(payload),
   });
 
+/*
+ * CHANGE PASSWORD
+ */
 export const useChangePassword = () =>
   useMutation({
-    mutationFn: (payload: ChangePasswordRequest) =>
+    mutationFn: (
+      payload: ChangePasswordRequest,
+    ) =>
       authApi.changePassword(payload),
   });
