@@ -117,8 +117,9 @@ export default function MonitorsLayout({
       </div>
 
       <div
-        className={`flex min-h-0 flex-1 bg-(--background) ${isGlobalMonitoringPage ? "pt-0" : ""
-          }`}
+        className={`flex min-h-0 flex-1 bg-(--background) ${
+          isGlobalMonitoringPage ? "pt-0" : ""
+        }`}
       >
         {isServicePortal && (
           <div className="shrink-0 self-stretch">
@@ -126,9 +127,7 @@ export default function MonitorsLayout({
           </div>
         )}
 
-        <main className="min-h-0 flex-1 overflow-auto">
-          {children}
-        </main>
+        <main className="min-h-0 flex-1 overflow-auto">{children}</main>
       </div>
 
       <Footer />

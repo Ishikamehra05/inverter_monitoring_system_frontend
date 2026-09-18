@@ -606,19 +606,19 @@ export default function SettingsPage() {
 
         {!isTwoFactorOnlyRole && (
           <aside className="flex w-full overflow-x-auto border-b border-black/5 lg:w-60 lg:flex-col lg:border-b-0 lg:border-r">
-          <MenuItem
-            active={tab === "general"}
-            onClick={() => setTab("general")}
-          >
-            General Settings
-          </MenuItem>
+            <MenuItem
+              active={tab === "general"}
+              onClick={() => setTab("general")}
+            >
+              General Settings
+            </MenuItem>
 
-          <MenuItem
-            active={tab === "security"}
-            onClick={() => setTab("security")}
-          >
-            Security Settings
-          </MenuItem>
+            <MenuItem
+              active={tab === "security"}
+              onClick={() => setTab("security")}
+            >
+              Security Settings
+            </MenuItem>
           </aside>
         )}
 
@@ -793,68 +793,68 @@ export default function SettingsPage() {
 
               {!isTwoFactorOnlyRole && (
                 <form onSubmit={handlePasswordSubmit} className="max-w-md">
-                <h2 className="mb-4 text-sm font-medium">Change Password</h2>
+                  <h2 className="mb-4 text-sm font-medium">Change Password</h2>
 
-                <div className="space-y-5">
-                  {(
-                    ["oldPassword", "newPassword", "confirmPassword"] as const
-                  ).map((field) => {
-                    const labels = {
-                      oldPassword: "Old Password",
-                      newPassword: "New Password",
-                      confirmPassword: "Confirm Password",
-                    };
+                  <div className="space-y-5">
+                    {(
+                      ["oldPassword", "newPassword", "confirmPassword"] as const
+                    ).map((field) => {
+                      const labels = {
+                        oldPassword: "Old Password",
+                        newPassword: "New Password",
+                        confirmPassword: "Confirm Password",
+                      };
 
-                    const placeholders = {
-                      oldPassword: "Please enter old password",
-                      newPassword: "Please enter new password",
-                      confirmPassword: "Please confirm password",
-                    };
+                      const placeholders = {
+                        oldPassword: "Please enter old password",
+                        newPassword: "Please enter new password",
+                        confirmPassword: "Please confirm password",
+                      };
 
-                    return (
-                      <Field
-                        key={field}
-                        label={labels[field]}
-                        required
-                        error={errors[field]}
-                      >
-                        <PasswordInput
-                          value={passwords[field]}
-                          placeholder={placeholders[field]}
-                          visible={visiblePasswords[field]}
-                          disabled={changePassword.isPending}
-                          onChange={(event) => {
-                            setPasswords((current) => ({
-                              ...current,
-                              [field]: event.target.value,
-                            }));
+                      return (
+                        <Field
+                          key={field}
+                          label={labels[field]}
+                          required
+                          error={errors[field]}
+                        >
+                          <PasswordInput
+                            value={passwords[field]}
+                            placeholder={placeholders[field]}
+                            visible={visiblePasswords[field]}
+                            disabled={changePassword.isPending}
+                            onChange={(event) => {
+                              setPasswords((current) => ({
+                                ...current,
+                                [field]: event.target.value,
+                              }));
 
-                            setErrors((current) => ({
-                              ...current,
-                              [field]: "",
-                            }));
-                          }}
-                          onToggle={() =>
-                            setVisiblePasswords((current) => ({
-                              ...current,
-                              [field]: !current[field],
-                            }))
-                          }
-                        />
-                      </Field>
-                    );
-                  })}
+                              setErrors((current) => ({
+                                ...current,
+                                [field]: "",
+                              }));
+                            }}
+                            onToggle={() =>
+                              setVisiblePasswords((current) => ({
+                                ...current,
+                                [field]: !current[field],
+                              }))
+                            }
+                          />
+                        </Field>
+                      );
+                    })}
 
-                  <button
-                    type="submit"
-                    disabled={changePassword.isPending}
-                    className="h-8 rounded-xs border border-[#1890ff] bg-[#1890ff] px-4 text-sm text-white transition hover:border-[#40a9ff] hover:bg-[#40a9ff] disabled:opacity-50"
-                  >
-                    {changePassword.isPending
-                      ? "Updating..."
-                      : "Update Password"}
-                  </button>
-                </div>
+                    <button
+                      type="submit"
+                      disabled={changePassword.isPending}
+                      className="h-8 rounded-xs border border-[#1890ff] bg-[#1890ff] px-4 text-sm text-white transition hover:border-[#40a9ff] hover:bg-[#40a9ff] disabled:opacity-50"
+                    >
+                      {changePassword.isPending
+                        ? "Updating..."
+                        : "Update Password"}
+                    </button>
+                  </div>
                 </form>
               )}
 
