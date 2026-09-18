@@ -1,25 +1,18 @@
 "use client";
 
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useRouter } from "next/navigation";
 
 import { authApi } from "@/lib/api/auth";
 
-import {
-  clearAuthSession,
-  setAuthSession,
-} from "@/lib/auth/session";
+import { clearAuthSession, setAuthSession } from "@/lib/auth/session";
 
 import type {
   ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
   RegisterRequest,
-  TwoFactorLoginVerifyRequest,
   TwoFactorSetupRequest,
   TwoFactorVerifyRequest,
   VerificationCodeRequest,
@@ -30,15 +23,40 @@ import { UserRole } from "@/types/auth";
 /*
  * LOGIN
  *
- * Username/password authentication only.
- *
- * The backend returns the 2FA choice
- * information instead of issuing JWT immediately.
+ * New flow:
+ * - 2FA disabled: backend returns tokens immediately.
+ * - 2FA enabled: backend returns requiresTwoFactor + challengeId.
  */
 export const useLogin = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: (payload: LoginRequest) =>
-      authApi.login(payload),
+    mutationFn: (payload: LoginRequest) => authApi.login(payload),
+
+    onSuccess: (data) => {
+      // Password-only login is complete when backend returns tokens.
+      if (data.accessToken && data.refreshToken && data.user) {
+        const userId = data.user.userId ?? data.user.id;
+
+        if (!userId) {
+          return;
+        }
+
+        setAuthSession(
+          data.accessToken,
+          data.refreshToken,
+          data.user.portal,
+          data.user.account,
+          data.user.role as UserRole,
+        );
+
+        queryClient.clear();
+
+        router.push(data.redirect ?? getDefaultRoute(data.user.portal));
+      }
+      // When requiresTwoFactor=true, LoginForm displays the OTP screen.
+    },
   });
 };
 
@@ -55,9 +73,7 @@ export const useLogin = () => {
  */
 export const useSetupTwoFactor = () => {
   return useMutation({
-    mutationFn: (
-      payload: TwoFactorSetupRequest,
-    ) =>
+    mutationFn: (payload: TwoFactorSetupRequest) =>
       authApi.setupTwoFactor(payload),
   });
 };
@@ -84,9 +100,7 @@ export const useVerifyTwoFactor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (
-      payload: TwoFactorVerifyRequest,
-    ) =>
+    mutationFn: (payload: TwoFactorVerifyRequest) =>
       authApi.verifyTwoFactor(payload),
 
     onSuccess: (data) => {
@@ -95,12 +109,7 @@ export const useVerifyTwoFactor = () => {
        * authentication session after a
        * successful 2FA verification.
        */
-      if (
-        !data.accessToken ||
-        !data.refreshToken ||
-        !data.user ||
-        !data.redirect
-      ) {
+      if (!data.accessToken || !data.refreshToken || !data.user) {
         return;
       }
 
@@ -114,50 +123,14 @@ export const useVerifyTwoFactor = () => {
 
       queryClient.clear();
 
-      router.push(data.redirect);
+      router.push(data.redirect ?? getDefaultRoute(data.user.portal));
     },
   });
 };
 
-/*
- * LEGACY 2FA LOGIN VERIFICATION
- *
- * Kept so existing code/endpoints do not break.
- */
-export const useVerifyTwoFactorLogin = () => {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (
-      payload: TwoFactorLoginVerifyRequest,
-    ) =>
-      authApi.verifyTwoFactorLogin(payload),
-
-    onSuccess: (data) => {
-      if (
-        !data.accessToken ||
-        !data.refreshToken ||
-        !data.user ||
-        !data.redirect
-      ) {
-        return;
-      }
-
-      setAuthSession(
-        data.accessToken,
-        data.refreshToken,
-        data.user.portal,
-        data.user.account,
-        data.user.role as UserRole,
-      );
-
-      queryClient.clear();
-
-      router.push(data.redirect);
-    },
-  });
-};
+function getDefaultRoute(portal: "monitoring" | "service") {
+  return portal === "service" ? "/services" : "/monitor";
+}
 
 /*
  * LOGOUT
@@ -187,10 +160,7 @@ export const useLogout = () => {
  */
 export const useRegister = () =>
   useMutation({
-    mutationFn: (
-      payload: RegisterRequest,
-    ) =>
-      authApi.register(payload),
+    mutationFn: (payload: RegisterRequest) => authApi.register(payload),
   });
 
 /*
@@ -198,9 +168,7 @@ export const useRegister = () =>
  */
 export const useSendVerificationCode = () =>
   useMutation({
-    mutationFn: (
-      payload: VerificationCodeRequest,
-    ) =>
+    mutationFn: (payload: VerificationCodeRequest) =>
       authApi.sendVerificationCode(payload),
   });
 
@@ -209,9 +177,7 @@ export const useSendVerificationCode = () =>
  */
 export const useForgotPassword = () =>
   useMutation({
-    mutationFn: (
-      payload: ForgotPasswordRequest,
-    ) =>
+    mutationFn: (payload: ForgotPasswordRequest) =>
       authApi.forgotPassword(payload),
   });
 
@@ -220,8 +186,6 @@ export const useForgotPassword = () =>
  */
 export const useChangePassword = () =>
   useMutation({
-    mutationFn: (
-      payload: ChangePasswordRequest,
-    ) =>
+    mutationFn: (payload: ChangePasswordRequest) =>
       authApi.changePassword(payload),
   });

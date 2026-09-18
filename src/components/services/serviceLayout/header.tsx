@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, LogOut, Menu, User } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings, User } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import LanguageDropdown from "@/components/ui/LanguageDropdown";
 import BrandLogo from "@/components/ui/BrandLogo";
 import LogoutForm from "@/components/auth/LogoutForm";
@@ -38,13 +39,23 @@ const UserDropdown = () => {
         <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white">
           <User size={16} />
         </div>
-        <span className="hidden sm:block text-sm text-gray-300">{accountName}</span>
+        <span className="hidden sm:block text-sm text-gray-300">
+          {accountName}
+        </span>
         <ChevronDown size={16} className="hidden sm:block text-gray-400" />
       </button>
 
       {/* Dropdown */}
       {open && (
         <div className="absolute right-0 mt-4 w-44 bg-white border rounded-md shadow-md z-50">
+          <Link
+            href="/monitor/settings"
+            onClick={() => setOpen(false)}
+            className="w-full px-4 py-2 text-sm flex items-center gap-2 text-black hover:bg-gray-100"
+          >
+            <Settings size={16} /> Settings
+          </Link>
+
           {/* ✅ Logout Button */}
           <button
             onClick={() => setLogoutOpen(true)}

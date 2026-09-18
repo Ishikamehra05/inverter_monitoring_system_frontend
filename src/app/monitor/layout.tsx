@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Header from "@/components/monitors/monitorsLayout/header";
+import Sidebar from "@/components/services/serviceLayout/sidebar";
 import { getAuthSession } from "@/lib/auth/session";
 import { useRouter } from "next/navigation";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -14,6 +15,7 @@ export default function MonitorsLayout({
 }) {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isServicePortal, setIsServicePortal] = useState(false);
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const fromService = searchParams.get("fromService");
@@ -62,6 +64,7 @@ export default function MonitorsLayout({
       return;
     }
 
+    setIsServicePortal(portal === "service");
     setIsAuthorized(true);
   }, [router]);
 
@@ -117,6 +120,12 @@ export default function MonitorsLayout({
         className={`flex min-h-0 flex-1 bg-(--background) ${isGlobalMonitoringPage ? "pt-0" : ""
           }`}
       >
+        {isServicePortal && (
+          <div className="shrink-0 self-stretch">
+            <Sidebar isOpen={false} onClose={() => undefined} />
+          </div>
+        )}
+
         <main className="min-h-0 flex-1 overflow-auto">
           {children}
         </main>

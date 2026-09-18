@@ -10,7 +10,10 @@ import type {
   TwoFactorSetupRequest,
   TwoFactorSetupResponse,
   TwoFactorVerifyRequest,
-  TwoFactorLoginVerifyRequest,
+  SettingsTwoFactorStatusResponse,
+  SettingsTwoFactorSetupResponse,
+  SettingsTwoFactorVerifyResponse,
+  SettingsTwoFactorDisableResponse,
 } from "./schemas/auth";
 
 type ApiEnvelope<T> = {
@@ -43,6 +46,7 @@ export type TwoFactorVerifyResponse = {
   recoveryVerified?: boolean;
 
   challengeId?: string;
+  twoFactorChallengeId?: string;
 };
 
 export const authApi = {
@@ -51,20 +55,15 @@ export const authApi = {
    *
    * Username/password authentication.
    *
-   * New backend response can contain:
-   *
-   * requiresTwoFactorChoice
-   * challengeId
-   * twoFactorEnabled
+   * Backend response:
+   * - accessToken/refreshToken when 2FA is disabled
+   * - requiresTwoFactor + challengeId when 2FA is enabled
    */
   login: (payload: LoginRequest) =>
-    apiClient<ApiEnvelope<LoginResponse>>(
-      "/auth/login",
-      {
-        method: "POST",
-        body: payload,
-      },
-    ).then((res) => res.data),
+    apiClient<ApiEnvelope<LoginResponse>>("/auth/login", {
+      method: "POST",
+      body: payload,
+    }).then((res) => res.data),
 
   /*
    * Generate/reset Google Authenticator setup.
@@ -75,12 +74,8 @@ export const authApi = {
    * OR
    * YES + 2FA disabled
    */
-  setupTwoFactor: (
-    payload: TwoFactorSetupRequest,
-  ) =>
-    apiClient<
-      ApiEnvelope<TwoFactorSetupResponse>
-    >("/auth/2fa/setup", {
+  setupTwoFactor: (payload: TwoFactorSetupRequest) =>
+    apiClient<ApiEnvelope<TwoFactorSetupResponse>>("/auth/2fa/setup", {
       method: "POST",
       body: payload,
     }).then((res) => res.data),
@@ -105,85 +100,74 @@ export const authApi = {
    *
    * POST /auth/2fa/verify
    */
-  verifyTwoFactor: (
-    payload: TwoFactorVerifyRequest,
-  ) =>
-    apiClient<
-      ApiEnvelope<TwoFactorVerifyResponse>
-    >("/auth/2fa/verify", {
+  verifyTwoFactor: (payload: TwoFactorVerifyRequest) =>
+    apiClient<ApiEnvelope<TwoFactorVerifyResponse>>("/auth/2fa/verify", {
       method: "POST",
       body: payload,
     }).then((res) => res.data),
 
-  /*
-   * Legacy login verification endpoint.
-   *
-   * Kept for backward compatibility.
-   */
-  verifyTwoFactorLogin: (
-    payload: TwoFactorLoginVerifyRequest,
-  ) =>
-    apiClient<
-      ApiEnvelope<{
-        accessToken: string;
-        refreshToken: string;
-        user: AuthenticatedUser;
-        redirect: string;
-      }>
-    >("/auth/2fa/login-verify", {
-      method: "POST",
-      body: payload,
-    }).then((res) => res.data),
+  getSettingsTwoFactorStatus: () =>
+    apiClient<ApiEnvelope<SettingsTwoFactorStatusResponse>>(
+      "/auth/2fa/status",
+    ).then((res) => res.data),
 
-  logout: () =>
-    apiClient<ApiEnvelope<null>>(
-      "/auth/logout",
+  setupSettingsTwoFactor: () =>
+    apiClient<ApiEnvelope<SettingsTwoFactorSetupResponse>>(
+      "/auth/2fa/settings/setup",
       {
         method: "POST",
         body: {},
       },
-    ),
+    ).then((res) => res.data),
 
-  register: (
-    payload: RegisterRequest,
+  verifySettingsTwoFactor: (code: string) =>
+    apiClient<ApiEnvelope<SettingsTwoFactorVerifyResponse>>(
+      "/auth/2fa/settings/verify",
+      {
+        method: "POST",
+        body: { code },
+      },
+    ).then((res) => res.data),
+
+  disableSettingsTwoFactor: (
+    code: string,
+    method: "authenticator" | "recovery" = "authenticator",
   ) =>
-    apiClient<
-      ApiEnvelope<{ userId: string }>
-    >("/auth/register", {
+    apiClient<ApiEnvelope<SettingsTwoFactorDisableResponse>>(
+      "/auth/2fa/settings/disable",
+      {
+        method: "POST",
+        body: { code, method },
+      },
+    ).then((res) => res.data),
+
+  logout: () =>
+    apiClient<ApiEnvelope<null>>("/auth/logout", {
+      method: "POST",
+      body: {},
+    }),
+
+  register: (payload: RegisterRequest) =>
+    apiClient<ApiEnvelope<{ userId: string }>>("/auth/register", {
       method: "POST",
       body: payload,
     }).then((res) => res.data),
 
-  sendVerificationCode: (
-    payload: VerificationCodeRequest,
-  ) =>
-    apiClient<ApiEnvelope<null>>(
-      "/auth/verification-code",
-      {
-        method: "POST",
-        body: payload,
-      },
-    ),
+  sendVerificationCode: (payload: VerificationCodeRequest) =>
+    apiClient<ApiEnvelope<null>>("/auth/verification-code", {
+      method: "POST",
+      body: payload,
+    }),
 
-  forgotPassword: (
-    payload: ForgotPasswordRequest,
-  ) =>
-    apiClient<ApiEnvelope<null>>(
-      "/auth/forgetpassword",
-      {
-        method: "POST",
-        body: payload,
-      },
-    ),
+  forgotPassword: (payload: ForgotPasswordRequest) =>
+    apiClient<ApiEnvelope<null>>("/auth/forgetpassword", {
+      method: "POST",
+      body: payload,
+    }),
 
-  changePassword: (
-    payload: ChangePasswordRequest,
-  ) =>
-    apiClient<ApiEnvelope<null>>(
-      "/auth/changePassword",
-      {
-        method: "POST",
-        body: payload,
-      },
-    ),
+  changePassword: (payload: ChangePasswordRequest) =>
+    apiClient<ApiEnvelope<null>>("/auth/changePassword", {
+      method: "POST",
+      body: payload,
+    }),
 };
